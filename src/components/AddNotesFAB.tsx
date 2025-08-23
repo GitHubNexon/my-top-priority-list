@@ -254,7 +254,7 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
             </Animated.View>
             <Pressable style={styles.contentContainer} onPress={() => handlePress()}>
                 <Animated.View style={[plusIcon]}>
-                    <PlusIcon size={55} color="#253D2C" />
+                    <PlusIcon size={55} color="#2E6F40" />
                 </Animated.View>
             </Pressable>
         </>

@@ -9,16 +9,22 @@ const Stack = createNativeStackNavigator<CalendarTabStackParamList>();
 
 const CalendarTabStack = () => {
     return (
-        <Stack.Navigator>
+        <Stack.Navigator
+            screenOptions={{
+                headerShown: true,
+                headerStyle: { backgroundColor: '#fff' },
+                headerTitleAlign: "center",
+                animation: "none",
+                headerLargeTitle: false,
+            }}
+        >
             <Stack.Screen
                 name="CalendarScreen"
                 component={CalendarScreen}
-                options={{ title: 'Calendar' }}
             />
             <Stack.Screen
                 name="CurrentNotesScreen"
                 component={CurrentNotesScreen}
-                options={{ title: 'Scheduled Note' }}
             />
         </Stack.Navigator>
     );

@@ -9,21 +9,26 @@ const Stack = createNativeStackNavigator<ProfileTabStackParamList>();
 
 const ProfileTabStack = () => {
     return (
-        <Stack.Navigator>
+        <Stack.Navigator
+            screenOptions={{
+                headerShown: true,
+                headerStyle: { backgroundColor: '#fff' },
+                headerTitleAlign: "center",
+                animation: "none",
+                headerLargeTitle: false,
+            }}
+        >
             <Stack.Screen
                 name="ProfileScreen"
                 component={ProfileScreen}
-                options={{ title: 'My Profile' }}
             />
             <Stack.Screen
                 name="AppSettingsScreen"
                 component={AppSettingsScreen}
-                options={{ title: 'App Settings' }}
             />
             <Stack.Screen
                 name="FaQScreen"
                 component={FaQScreen}
-                options={{ title: 'FaQ' }}
             />
         </Stack.Navigator>
     );

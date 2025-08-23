@@ -27,7 +27,7 @@ export class NotificationService {
 
     const channelId = await notifee.createChannel({
       id: "notes-reminders",
-      name: "Your Priority",
+      name: "Your Priorities",
       sound: "urgent",
       importance: AndroidImportance.HIGH,
     });
@@ -51,17 +51,17 @@ export class NotificationService {
           {
             id: notificationId,
             title: note.Title,
-            body: note.Description || "You have a scheduled note",
+            body: note.Description || 'You have a scheduled note',
             android: {
               channelId,
-              sound: "urgent",
-              largeIcon: "ic_stat_note",
-              smallIcon: "ic_stat_note",
-              pressAction: { id: "default" },
+              sound: 'urgent',
+              largeIcon: 'notif_icon',
+              smallIcon: 'notif_icon',
+              pressAction: { id: 'default' },
               actions: [
                 {
-                  title: "Stop Alarm",
-                  pressAction: { id: "stop" },
+                  title: 'Stop Alarm',
+                  pressAction: { id: 'stop' },
                 },
               ],
             },
@@ -78,7 +78,7 @@ export class NotificationService {
               type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE,
               allowWhileIdle: true,
             },
-          }
+          },
         );
       }
     } else {
@@ -100,17 +100,17 @@ export class NotificationService {
         {
           id: note.id,
           title: note.Title,
-          body: note.Description || "You have a scheduled note",
+          body: note.Description || 'You have a scheduled note',
           android: {
             channelId,
-            sound: "urgent",
-            largeIcon: "ic_stat_note",
-            smallIcon: "ic_stat_note",
-            pressAction: { id: "default" },
+            sound: 'urgent',
+            largeIcon: 'notif_icon',
+            smallIcon: 'notif_icon',
+            pressAction: { id: 'default' },
             actions: [
               {
-                title: "Stop Alarm",
-                pressAction: { id: "stop" },
+                title: 'Stop Alarm',
+                pressAction: { id: 'stop' },
               },
             ],
           },
@@ -126,7 +126,7 @@ export class NotificationService {
             type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE,
             allowWhileIdle: true,
           },
-        }
+        },
       );
     }
   }

@@ -1,13 +1,13 @@
 // src/navigation/tabs/NotesStack.tsx
-import ChartScreen from '../../screens/tabs/Chart/ChartScreen';
-import MoreDetailsScreen from '../../screens/tabs/Chart/MoreDetailsScreen';
-import { ChartTabStackParamList } from '../../types/navigation';
+import NotesDetailScreen from '../../screens/tabs/NotesDetailScreen';
+import NotesScreen from '../../screens/tabs/Notes/NotesScreen';
+import { NotesTabStackParamList } from '../../types/navigation';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
-const Stack = createNativeStackNavigator<ChartTabStackParamList>();
+const Stack = createNativeStackNavigator<NotesTabStackParamList>();
 
-const CalendarTabStack = () => {
+const NotesTabStack = () => {
     return (
         <Stack.Navigator
             screenOptions={{
@@ -19,15 +19,15 @@ const CalendarTabStack = () => {
             }}
         >
             <Stack.Screen
-                name="ChartScreen"
-                component={ChartScreen}
+                name="NotesScreen"
+                component={NotesScreen}
             />
             <Stack.Screen
-                name="MoreDetailsScreen"
-                component={MoreDetailsScreen}
+                name="NotesDetailScreen"
+                component={NotesDetailScreen}
             />
         </Stack.Navigator>
     );
 };
 
-export default CalendarTabStack;
+export default NotesTabStack;

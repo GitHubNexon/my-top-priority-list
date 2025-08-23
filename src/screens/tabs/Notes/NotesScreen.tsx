@@ -8,7 +8,6 @@ import SpiritualScreen from '../../../components/BottomSheetScreens/SpiritualScr
 import WorkScreen from '../../../components/BottomSheetScreens/WorkScreen';
 import CustomBottomSheet from '../../../components/CustomBottomSheet';
 import {
-    DefaultHandleIcon,
     FinanceHandleIcon,
     HealthHandleIcon,
     HobbyHandleIcon,
@@ -29,7 +28,12 @@ import {
 } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 
-const NoteListScreen = () => {
+type HandlePressArgs = {
+    screen?: string;
+    note?: Notes;
+};
+
+const NotesScreen = () => {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -56,28 +60,42 @@ const NoteListScreen = () => {
 
     const bottomSheetRef = useRef<BottomSheetRefType>(null);
     const [renderedView, setRenderedView] = useState<() => React.ReactNode>(() => () => null);
-    const [renderedHandle, setRenderedHandle] = useState<(props: BottomSheetHandleProps) => React.ReactNode>(
-        () => DefaultHandleIcon
-    );
+    const [renderedHandle, setRenderedHandle] = useState<((props: BottomSheetHandleProps) => React.ReactNode) | null>(null);
+    const [pendingOpen, setPendingOpen] = useState(false);
+
+    const waitForRender = () => new Promise(resolve => requestAnimationFrame(resolve));
+
+    /**
+    * Temporary fixed for delay rendering
+    * of bottomsheet
+    * @waitForRender
+    * @useEffect ({},[pendingOpen, renderedHandle])
+    * @requestAnimationFrame
+    */
+    useEffect(() => {
+        if (pendingOpen && renderedHandle) {
+            bottomSheetRef.current?.expand?.();
+            setPendingOpen(false);
+        }
+    }, [pendingOpen, renderedHandle]);
 
     // Memoized openWith function
-    const openWith = useCallback((
+    const openWith = useCallback(async (
         view: () => React.ReactNode,
         handle: (props: BottomSheetHandleProps) => React.ReactNode
     ) => {
         setRenderedView(() => view);
         setRenderedHandle(() => handle);
 
-        // Add timeout to ensure state updates before showing
-        setTimeout(() => {
-            bottomSheetRef.current?.show?.();
-        }, 50);
+        /**
+         * Temporary fixed for delay rendering
+         * of bottomsheet
+         */
+        await waitForRender();
+        requestAnimationFrame(() => {
+            setPendingOpen(true);
+        });
     }, []);
-
-    type HandlePressArgs = {
-        screen?: string;
-        note?: Notes;
-    };
 
     // Handle press with proper error boundaries
     const handlePress = useCallback((args?: HandlePressArgs) => {
@@ -163,11 +181,13 @@ const NoteListScreen = () => {
                 visible={showToast}
                 onHide={() => setShowToast(false)}
             />
-            <CustomBottomSheet
-                ref={bottomSheetRef}
-                view={renderedView}
-                handleIcon={renderedHandle}
-            />
+            {renderedView && renderedHandle && (
+                <CustomBottomSheet
+                    ref={bottomSheetRef}
+                    view={renderedView}
+                    handleIcon={renderedHandle}
+                />
+            )}
             <AddNotesFAB onPress={(screen) => handlePress({ screen })} />
             <BgImage
                 width='100%'
@@ -215,4 +235,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default NoteListScreen;
+export default NotesScreen;

@@ -15,7 +15,7 @@ const BottomTabIcons: Record<string, (props: IconProps) => JSX.Element> = {
             <Ionicons name={isFocused ? 'person-circle' : 'person-circle-outline'} {...props} />
         )
     },
-    NoteList: (props) => {
+    Notes: (props) => {
         const { isFocused } = props;
 
         return (

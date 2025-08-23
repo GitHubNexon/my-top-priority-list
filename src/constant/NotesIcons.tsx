@@ -1,6 +1,4 @@
 import AntDesign from "@react-native-vector-icons/ant-design";
-import FontAwesome5 from "@react-native-vector-icons/fontawesome5";
-import FontAwesome6 from "@react-native-vector-icons/fontawesome6";
 import Fontisto from "@react-native-vector-icons/fontisto";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { MaterialDesignIcons } from '@react-native-vector-icons/material-design-icons';
@@ -343,7 +341,11 @@ export const SpiritualCategoryIcon = ({ icon, size, color, enableFill = false }:
             );
         case 'journaling':
             return (
-                <FontAwesome5 name='pen-nib' iconStyle='solid'/>
+                <MaterialDesignIcons
+                    name={enableFill ? 'fountain-pen-tip' : 'fountain-pen-tip'}
+                    size={size}
+                    color={color}
+                />
             );
         case 'other-outdoor-activities':
             return (
@@ -375,7 +377,11 @@ export const FinanceCategoryIcon = ({ icon, size, color, enableFill = false }: P
             );
         case 'budget':
             return (
-                <FontAwesome6 name='sack-dollar' iconStyle='solid' />
+                <MaterialIcons
+                    name={enableFill ? 'attach-money' : 'attach-money'}
+                    size={size}
+                    color={color}
+                />
             );
         case 'miscellaneous':
             return (

@@ -1,55 +1,32 @@
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useEffect, useState } from 'react';
-import { Keyboard, LayoutChangeEvent, StyleSheet, View } from 'react-native';
-import {
-  useSharedValue,
-  withSpring
-} from 'react-native-reanimated';
+import { Keyboard, StyleSheet, View } from 'react-native';
 import TabBarButton from './TabBarButton';
 
 const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
-  /**
-   * Block of codes for 
-   * measuring the tab bar width
-   * by dividing into number of tabBar item
-   * And changing the background properties based on onPress function
-   */
-  const [dimensions, setDimensions] = useState({ height: 20, width: 100 });
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  const buttonWidth = dimensions.width / state.routes.length;
-
-  const onTabBarLayout = (e: LayoutChangeEvent) => {
-    setDimensions({
-      height: e.nativeEvent.layout.height,
-      width: e.nativeEvent.layout.width,
-    })
-  };
-
-  const tabPositionX = useSharedValue(0);
 
   useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
-      setKeyboardVisible(true);
-    });
-    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardVisible(false);
-    });
+    const showSub = Keyboard.addListener('keyboardDidShow', () =>
+      setKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener('keyboardDidHide', () =>
+      setKeyboardVisible(false)
+    );
 
     return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
+      showSub.remove();
+      hideSub.remove();
     };
   }, []);
 
-  useEffect(() => {
-    // Ensure this reacts when the focused tab (state.index) changes
-    tabPositionX.value = withSpring(buttonWidth * state.index, { duration: 100 });
-  }, [state.index, buttonWidth, tabPositionX]);
-
-  if (isKeyboardVisible) return null;
-
   return (
-    <View onLayout={onTabBarLayout} style={styles.tabBar}>
+    <View
+      style={[
+        styles.tabBar,
+        { display: isKeyboardVisible ? 'none' : 'flex' }
+      ]}
+    >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const rawLabel =
@@ -64,8 +41,6 @@ const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
         const isFocused = state.index === index;
 
         const onPress = () => {
-          tabPositionX.value = withSpring(buttonWidth * index, { duration: 100 })
-
           const event = navigation.emit({
             type: 'tabPress',
             target: route.key,
@@ -93,7 +68,6 @@ const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
             routeName={route.name}
             color={isFocused ? '#2E640' : '#FFF'}
             label={label}
-            tabBarShowLabel={false}
             tabBarHideOnKeyboard={true}
           />
         );
@@ -107,10 +81,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffff',
+    backgroundColor: '#303030',
     paddingVertical: 12,
     borderWidth: 2.5,
-    borderColor: '#FFFF',
+    borderColor: '#242323',
     elevation: 10,
   },
 });

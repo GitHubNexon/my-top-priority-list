@@ -8,7 +8,6 @@ import SpiritualScreen from '../../../components/BottomSheetScreens/SpiritualScr
 import WorkScreen from '../../../components/BottomSheetScreens/WorkScreen';
 import CustomBottomSheet from '../../../components/CustomBottomSheet';
 import {
-    DefaultHandleIcon,
     FinanceHandleIcon,
     HealthHandleIcon,
     HobbyHandleIcon,
@@ -19,38 +18,57 @@ import {
 import { BottomSheetRefType } from '../../../types/BottomSheet';
 import { Notes } from '../../../types/Notes';
 import { BottomSheetHandleProps } from '@gorhom/bottom-sheet';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     KeyboardAvoidingView,
     StyleSheet,
     Text,
 } from 'react-native';
 
+type HandlePressArgs = {
+    screen?: string;
+    note?: Notes;
+};
+
 const CalendarScreen = () => {
     const bottomSheetRef = useRef<BottomSheetRefType>(null);
     const [renderedView, setRenderedView] = useState<() => React.ReactNode>(() => () => null);
-    const [renderedHandle, setRenderedHandle] = useState<(props: BottomSheetHandleProps) => React.ReactNode>(
-        () => DefaultHandleIcon
-    );
+    const [renderedHandle, setRenderedHandle] = useState<((props: BottomSheetHandleProps) => React.ReactNode) | null>(null);
+    const [pendingOpen, setPendingOpen] = useState(false);
+    
+    const waitForRender = () => new Promise(resolve => requestAnimationFrame(resolve));
+
+    /**
+    * Temporary fixed for delay rendering
+    * of bottomsheet
+    * @waitForRender
+    * @useEffect ({},[pendingOpen, renderedHandle])
+    * @requestAnimationFrame
+    */
+    useEffect(() => {
+        if (pendingOpen && renderedHandle) {
+            bottomSheetRef.current?.expand?.();
+            setPendingOpen(false);
+        }
+    }, [pendingOpen, renderedHandle]);
 
     // Memoized openWith function
-    const openWith = useCallback((
+    const openWith = useCallback(async (
         view: () => React.ReactNode,
         handle: (props: BottomSheetHandleProps) => React.ReactNode
     ) => {
         setRenderedView(() => view);
         setRenderedHandle(() => handle);
 
-        // Add timeout to ensure state updates before showing
-        setTimeout(() => {
-            bottomSheetRef.current?.show?.();
-        }, 50);
+        /**
+         * Temporary fixed for delay rendering
+         * of bottomsheet
+         */
+        await waitForRender();
+        requestAnimationFrame(() => {
+            setPendingOpen(true);
+        });
     }, []);
-
-    type HandlePressArgs = {
-        screen?: string;
-        note?: Notes;
-    };
 
     // Handle press with proper error boundaries
     const handlePress = useCallback((args?: HandlePressArgs) => {
@@ -116,36 +134,40 @@ const CalendarScreen = () => {
     }, [openWith]);
 
     return (
-        <KeyboardAvoidingView
-            /**
-             * Required this for
-             * the KB avoiding view
-             * to work
-             */
-            behavior='height'
-            /**
-             * Need exactly at 70
-             * or it cause some bugs
-             * flickering at the bottom screen
-             */
-            keyboardVerticalOffset={0}
-            style={styles.container}
-        >
-            <CustomBottomSheet
-                ref={bottomSheetRef}
-                view={renderedView}
-                handleIcon={renderedHandle}
-            />
-            <AddNotesFAB onPress={(screen) => handlePress({ screen })} />
-            <WIP
-                width='100%'
-                height='100%'
-                style={styles.backgroundImage}
-            />
-            <Text style={styles.text}>
-                W.I.P
-            </Text>
-        </KeyboardAvoidingView>
+        <>
+            <KeyboardAvoidingView
+                /**
+                 * Required this for
+                 * the KB avoiding view
+                 * to work
+                 */
+                behavior='height'
+                /**
+                 * Need exactly at 70
+                 * or it cause some bugs
+                 * flickering at the bottom screen
+                 */
+                keyboardVerticalOffset={0}
+                style={styles.container}
+            >
+                {renderedView && renderedHandle && (
+                    <CustomBottomSheet
+                        ref={bottomSheetRef}
+                        view={renderedView}
+                        handleIcon={renderedHandle}
+                    />
+                )}
+                <AddNotesFAB onPress={(screen) => handlePress({ screen })} />
+                <WIP
+                    width='100%'
+                    height='100%'
+                    style={styles.backgroundImage}
+                />
+                <Text style={styles.text}>
+                    W.I.P
+                </Text>
+            </KeyboardAvoidingView>
+        </>
     )
 };
 

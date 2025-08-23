@@ -13,7 +13,7 @@ export type AuthStackParamList = {
 export type BottomTabStackParamList = {
   Priorities: NavigatorScreenParams<PrioritiesTabStackParamList>;
   Profile: NavigatorScreenParams<ProfileTabStackParamList>;
-  NoteList: NavigatorScreenParams<NoteListTabStackParamList>;
+  Notes: NavigatorScreenParams<NotesTabStackParamList>;
   Calendar: NavigatorScreenParams<CalendarTabStackParamList>;
   Chart: NavigatorScreenParams<ChartTabStackParamList>;
 };
@@ -29,9 +29,9 @@ export type PrioritiesTabStackParamList = {
   NoteDetailsScreen: undefined;
 };
 
-export type NoteListTabStackParamList = {
-  NoteListScreen: undefined;
-  NoteDetailsScreen: undefined;
+export type NotesTabStackParamList = {
+  NotesScreen: undefined;
+  NotesDetailScreen: undefined;
 };
 
 export type CalendarTabStackParamList = {

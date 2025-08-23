@@ -1,5 +1,3 @@
-import { PrioritiesTabStackParamList } from '../../types/navigation';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React from 'react';
 import {
     ScrollView,
@@ -7,9 +5,7 @@ import {
     Text
 } from 'react-native';
 
-type Props = NativeStackScreenProps<PrioritiesTabStackParamList, 'NoteDetails'>;
-
-const NoteDetailsScreen = () => {
+const NotesDetailScreen = () => {
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.title}>Note Title</Text>
@@ -18,7 +14,6 @@ const NoteDetailsScreen = () => {
     );
 };
 
-export default NoteDetailsScreen;
 
 const styles = StyleSheet.create({
     container: {
@@ -34,3 +29,5 @@ const styles = StyleSheet.create({
         lineHeight: 22,
     },
 });
+
+export default NotesDetailScreen;

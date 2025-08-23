@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BottomTabStackParamList } from '../types/navigation';
 import CalendarTabStack from './tabs/CalendarTabStack';
 import ChartTabStack from './tabs/ChartTabStack';
-import NoteListTabStack from './tabs/NoteListTabStack';
+import NotesTabStack from './tabs/NotesTabStack';
 import PrioritiesTabStack from './tabs/PrioritiesTabStack';
 import ProfileTabStack from './tabs/ProfileTabStack';
 
@@ -17,7 +17,8 @@ const BottomTabNavigator = () => {
       screenOptions={{
         tabBarHideOnKeyboard: true,
         headerShown: false,
-        lazy: true
+        lazy: true,
+        freezeOnBlur: true,
       }}
     >
       <Tab.Screen
@@ -25,8 +26,8 @@ const BottomTabNavigator = () => {
         component={ProfileTabStack}
       />
       <Tab.Screen
-        name='NoteList'
-        component={NoteListTabStack}
+        name='Notes'
+        component={NotesTabStack}
       />
       <Tab.Screen
         name='Priorities'

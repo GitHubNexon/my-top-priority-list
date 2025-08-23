@@ -11,10 +11,6 @@ import BottomSheet, {
     BottomSheetScrollView,
     BottomSheetView,
 } from '@gorhom/bottom-sheet';
-/**
- * To avoid Bottom TabBar
- * Overlapping on BottomSheet
- */
 import { Portal } from '@gorhom/portal';
 import React, {
     useCallback,
@@ -69,8 +65,9 @@ const CustomBottomSheet = ({ view, handleIcon, ref }: Props) => {
     );
 
     useImperativeHandle(ref, () => ({
-        show: () => bottomSheetRef.current?.expand(),
+        snapToIndex: () => bottomSheetRef.current?.snapToIndex(0),
         close: () => bottomSheetRef.current?.close(),
+        expand: () => bottomSheetRef.current?.expand(),
     }));
 
     return (
