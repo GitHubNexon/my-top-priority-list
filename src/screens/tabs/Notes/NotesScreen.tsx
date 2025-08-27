@@ -1,12 +1,17 @@
 import BgImage from '../../../assets/images/undraw_select_u1sa.svg';
-import AddNotesFAB from '../../../components/AddNotesFAB';
-import FinanceScreen from '../../../components/BottomSheetScreens/FinanceScreen';
-import HealthScreen from '../../../components/BottomSheetScreens/HealthScreen';
-import HobbyScreen from '../../../components/BottomSheetScreens/HobbyScreen';
-import OtherScreen from '../../../components/BottomSheetScreens/OtherScreen';
-import SpiritualScreen from '../../../components/BottomSheetScreens/SpiritualScreen';
-import WorkScreen from '../../../components/BottomSheetScreens/WorkScreen';
-import CustomBottomSheet from '../../../components/CustomBottomSheet';
+import {
+    AddNotesFAB,
+    CustomBottomSheet,
+    NoteItemCardView
+} from '../../../components/index';
+import {
+    WorkScreen,
+    HealthScreen,
+    SpiritualScreen,
+    FinanceScreen,
+    HobbyScreen,
+    OtherScreen
+} from '../../../components/BottomSheetScreens/index';
 import {
     FinanceHandleIcon,
     HealthHandleIcon,
@@ -15,16 +20,20 @@ import {
     SpiritualHandleIcon,
     WorkHandleIcon
 } from '../../../components/HandleIcons';
-import NoteItemCardView from '../../../components/NoteItemCardView';
 import Toast from '../../../components/ToastMessage';
-import { useNotes } from '../../../context/NotesContext';
+import { useNotes, useTheme } from '../../../hooks';
 import { BottomSheetRefType } from '../../../types/BottomSheet';
 import { Notes } from '../../../types/Notes';
 import { BottomSheetHandleProps } from '@gorhom/bottom-sheet';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useRef,
+    useState
+} from 'react';
 import {
-    KeyboardAvoidingView,
-    StyleSheet
+    StyleSheet,
+    View
 } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 
@@ -34,6 +43,9 @@ type HandlePressArgs = {
 };
 
 const NotesScreen = () => {
+    const { theme } = useTheme();
+    const themeColor = theme.colors.background;
+
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -161,21 +173,9 @@ const NotesScreen = () => {
     }, [openWith]);
 
     return (
-        <KeyboardAvoidingView
-            /**
-             * Required this for
-             * the KB avoiding view
-             * to work
-             */
-            behavior='height'
-            /**
-             * Need exactly at 70
-             * or it cause some bugs
-             * flickering at the bottom screen
-             */
-            keyboardVerticalOffset={0}
-            style={styles.container}
-        >
+        <View style={[styles.container, {
+            backgroundColor: themeColor,
+        }]}>
             <Toast
                 message={toastMessage ?? ''}
                 visible={showToast}
@@ -209,14 +209,13 @@ const NotesScreen = () => {
                 maxToRenderPerBatch={5}
                 style={styles.flatlist}
             />
-        </KeyboardAvoidingView>
+        </View>
     )
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F1F1F1',
         alignItems: 'center',
     },
     text: {

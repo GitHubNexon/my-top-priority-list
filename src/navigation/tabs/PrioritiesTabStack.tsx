@@ -10,11 +10,11 @@ const PrioritiesTabStack = () => {
     return (
         <Stack.Navigator
             screenOptions={{
-                headerShown: true,
-                headerStyle: { backgroundColor: '#fff' },
-                headerTitleAlign: "center",
+                headerShown: false,
+                //headerStyle: { backgroundColor: '#fff' },
+                //headerTitleAlign: "center",
                 animation: "none",
-                headerLargeTitle: false,
+                //headerLargeTitle: false,
             }}
         >
             <Stack.Screen

@@ -11,24 +11,30 @@ const ProfileTabStack = () => {
     return (
         <Stack.Navigator
             screenOptions={{
-                headerShown: true,
-                headerStyle: { backgroundColor: '#fff' },
-                headerTitleAlign: "center",
+                headerShown: false,
+                //headerStyle: { backgroundColor: '#fff' },
+                //headerTitleAlign: "center",
                 animation: "none",
-                headerLargeTitle: false,
+                //headerLargeTitle: false,
             }}
         >
             <Stack.Screen
                 name="ProfileScreen"
                 component={ProfileScreen}
+                options={{ title: 'Profile' }}
             />
             <Stack.Screen
                 name="AppSettingsScreen"
                 component={AppSettingsScreen}
+                options={{ title: 'App Settings' }}
             />
             <Stack.Screen
                 name="FaQScreen"
                 component={FaQScreen}
+                options={{
+                    title: 'FaQ',
+                    headerShown: true
+                }}
             />
         </Stack.Navigator>
     );

@@ -4,10 +4,16 @@ import {
     StyleSheet,
     Text
 } from 'react-native';
+import { useTheme } from '../../hooks';
 
 const NotesDetailScreen = () => {
+    const { theme } = useTheme();
+    const themeColor = theme.colors.background;
+
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={[styles.container, {
+            backgroundColor: themeColor,
+        }]}>
             <Text style={styles.title}>Note Title</Text>
             <Text style={styles.content}>Note content...</Text>
         </ScrollView>

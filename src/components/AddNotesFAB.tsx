@@ -262,13 +262,6 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        height: '100%',
-        width: '100%',
-        backgroundColor: '#2E6F40',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     text: {
         fontSize: 24,
     },
@@ -277,7 +270,7 @@ const styles = StyleSheet.create({
         bottom: 30,
         right: 25,
         marginTop: 20,
-        zIndex: 1000,
+        zIndex: 5000,
     },
     iconContainer: {
         height: 38,

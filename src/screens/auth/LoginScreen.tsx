@@ -1,6 +1,6 @@
 import LoginBG from '../../assets/images/loginBg.png';
 import Toast from '../../components/ToastMessage';
-import { useAuth } from '../../hooks/useAuths';
+import { useAuth } from '../../hooks';
 import { useNavigationTyped } from '../../hooks/useNavigation';
 import { Entypo } from '@react-native-vector-icons/entypo';
 import { FontAwesome } from '@react-native-vector-icons/fontawesome';

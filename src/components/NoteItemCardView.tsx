@@ -7,9 +7,11 @@ import {
   SpiritualCategoryIcon,
   WorkCategoryIcon,
 } from '../constant/NotesIcons';
-import { useAuth } from '../hooks/useAuths';
-import { useFirestore } from '../context/FirestoreContext';
-import { useNotes } from '../context/NotesContext';
+import {
+  useAuth,
+  useFirestore,
+  useNotes,
+} from '../hooks';
 import { Notes } from '../types/Notes';
 import {
   formatDate,

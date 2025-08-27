@@ -1,19 +1,29 @@
-import { useAuth } from "../../../hooks/useAuths";
-import { useFirestore } from "../../../context/FirestoreContext";
-import { useNotes } from "../../../context/NotesContext";
+import {
+  useAuth,
+  useFirestore,
+  useNotes,
+  useTheme,
+} from "../../../hooks";
 import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
   Pressable,
   StyleSheet,
   Text,
-  useWindowDimensions
+  useWindowDimensions,
+  View
 } from "react-native";
+import { ProfileTabStackParamList } from "../../../types/navigation";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
+
+type ProfileNav = NativeStackNavigationProp<ProfileTabStackParamList>;
 
 const ProfileScreen = () => {
   const { width, height } = useWindowDimensions();
+  const { theme } = useTheme();
+  const themeColor = theme.colors.background;
 
   const [isSyncing, setIsSyncing] = useState(false);
   const { syncNotesFromCloud, clearNotes } = useNotes();
@@ -22,6 +32,8 @@ const ProfileScreen = () => {
     getNotesFromFirestore,
     syncAllData,
   } = useFirestore();
+
+  const navigation = useNavigation<ProfileNav>();
 
   const syncMyData = async () => {
     try {
@@ -64,22 +76,14 @@ const ProfileScreen = () => {
     }
   };
 
+  const faqHandle = () => {
+    navigation.push("FaQScreen");
+  };
+
   return (
-    <KeyboardAvoidingView
-      /**
-       * Required this for
-       * the KB avoiding view
-       * to work
-       */
-      behavior='height'
-      /**
-       * Need exactly at 70
-       * or it cause some bugs
-       * flickering at the bottom screen
-       */
-      keyboardVerticalOffset={0}
-      style={styles.container}
-    >
+    <View style={[styles.container, {
+      backgroundColor: themeColor,
+    }]}>
       {!!isSyncing &&
         <ActivityIndicator
           size={'large'}
@@ -91,6 +95,15 @@ const ProfileScreen = () => {
         />
       }
       <Text style={styles.text}>My Profile</Text>
+
+      <Pressable
+        onPress={faqHandle}
+        style={styles.loginButton}
+      >
+        <Text style={styles.loginText}>
+          FaQ
+        </Text>
+      </Pressable>
 
       <Pressable
         onPress={syncMyData}
@@ -109,7 +122,7 @@ const ProfileScreen = () => {
           Log Out
         </Text>
       </Pressable>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -117,7 +130,6 @@ const styles = StyleSheet.create({
   container: {
     height: '100%',
     width: '100%',
-    backgroundColor: '#F1F1F1',
     justifyContent: 'center',
     alignItems: 'center',
   },

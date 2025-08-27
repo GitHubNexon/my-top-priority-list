@@ -4,11 +4,17 @@ import {
   getFirebaseSignInErrorMessage,
   getFirebaseSignUpErrorMessage,
 } from '../utils/firebaseErrorMessages';
-import auth, {
+import {
+  createUserWithEmailAndPassword,
   FacebookAuthProvider,
   FirebaseAuthTypes,
   getAuth,
+  GoogleAuthProvider,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithCredential,
+  signInWithEmailAndPassword,
+  signOut,
 } from "@react-native-firebase/auth";
 import {
   GoogleSignin,
@@ -33,7 +39,7 @@ export class AuthServices {
     password: string
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
-      return await auth().signInWithEmailAndPassword(email, password);
+      return await signInWithEmailAndPassword(getAuth(), email, password);
     } catch (error: unknown) {
       let errorMessage = "Sign in failed. Please check your credentials";
 
@@ -53,13 +59,14 @@ export class AuthServices {
     password: string
   ): Promise<FirebaseAuthTypes.UserCredential> {
     try {
-      const response = await auth().createUserWithEmailAndPassword(
+      const response = await createUserWithEmailAndPassword(
+        getAuth(),
         email,
         password
       );
 
       if (response.user) {
-        await response.user.sendEmailVerification();
+        await sendEmailVerification(response.user);
       }
 
       return response;
@@ -78,17 +85,17 @@ export class AuthServices {
 
   // Get Current User
   static getCurrentUser() {
-    return auth().currentUser;
+    return getAuth().currentUser;
   }
 
   // Verify Email of Current User
   static verifyCurrentUserEmail(): boolean {
-    return auth().currentUser?.emailVerified ?? false;
+    return this.getCurrentUser()?.emailVerified ?? false;
   }
 
   // Get UID
   static getcurrentUserUid(): string {
-    const uid = auth().currentUser?.uid;
+    const uid = this.getCurrentUser()?.uid;
     if (!uid) {
       throw new Error("No authenticated user");
     }
@@ -98,7 +105,7 @@ export class AuthServices {
   // Sign Out
   static async signOut(): Promise<void> {
     try {
-      await auth().signOut();
+      await signOut(getAuth());
       await GoogleSignin.signOut();
     } catch (error: unknown) {
       let message = "Sign out failed.";
@@ -115,7 +122,7 @@ export class AuthServices {
   static async resetPassword(email: string): Promise<void> {
     try {
       console.log("Password reset email sent.");
-      await auth().sendPasswordResetEmail(email);
+      await sendPasswordResetEmail(getAuth(), email);
     } catch (error: unknown) {
       let errorMessage = "Failed to send reset email";
       if (isErrorWithCode(error)) {
@@ -175,11 +182,11 @@ export class AuthServices {
       const fullName = data.user.name;
 
       // Create Firebase credential with Google token
-      const googleCredential = auth.GoogleAuthProvider.credential(data.idToken);
+      const googleCredential = GoogleAuthProvider.credential(data.idToken);
 
       // Sign in to Firebase
       const userCredential =
-        await auth().signInWithCredential(googleCredential);
+        await signInWithCredential(getAuth(), googleCredential);
 
       return {
         firebaseUser: userCredential.user,

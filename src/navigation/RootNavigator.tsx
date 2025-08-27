@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import { useAuth } from '../hooks/useAuths';
+import { useAuth } from '../hooks';
 import AuthNavigator from './AuthNavigator';
 import BottomTabNavigator from './BottomTabNavigator';
 

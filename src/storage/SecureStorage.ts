@@ -1,20 +1,20 @@
-import { Encryption } from "../services/EncryptionServices";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import EncryptedStorage from "react-native-encrypted-storage";
+import { Encryption } from '../services/EncryptionServices';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import EncryptedStorage from 'react-native-encrypted-storage';
 
 export class SecureStorage {
   // Save secure data
   static async saveSecureItem<T>(
     storageKey: string, // AsyncStorage KEY for storing encrypted data
     data: T, // Data that need to be encrypted
-    encryptionKey: string // EncrytedStorage KEY for stored password or password creation for encrypting data
+    encryptionKey: string, // EncrytedStorage KEY for stored password or password creation for encrypting data
   ): Promise<void> {
     try {
       const json = JSON.stringify(data);
       const encrypted = await Encryption.encryptData(json, encryptionKey);
       await AsyncStorage.setItem(storageKey, encrypted);
     } catch (error: unknown) {
-      let errorMessage = "Failed to save encrypted data.";
+      let errorMessage = 'Failed to save encrypted data.';
       if (error instanceof Error) {
         errorMessage = error.message;
       }
@@ -26,7 +26,7 @@ export class SecureStorage {
   // Retrieve secure data
   static async getSecureItem<T>(
     storageKey: string, // AsyncStorage KEY for stored encrypted data
-    encryptionKey: string // EncrytedStorage KEY for stored password of stored encrypted data
+    encryptionKey: string, // EncrytedStorage KEY for stored password of stored encrypted data
   ): Promise<T | null> {
     try {
       const encrypted = await AsyncStorage.getItem(storageKey);
@@ -36,7 +36,7 @@ export class SecureStorage {
       const decrypted = await Encryption.decryptData(encrypted, encryptionKey);
       return JSON.parse(decrypted);
     } catch (error: unknown) {
-      let errorMessage = "Failed to get encrypted data.";
+      let errorMessage = 'Failed to get encrypted data.';
       if (error instanceof Error) {
         errorMessage = error.message;
       }
@@ -51,7 +51,7 @@ export class SecureStorage {
       await AsyncStorage.clear();
       await EncryptedStorage.clear();
     } catch (error: unknown) {
-      let errorMessage = "Failed to clear local storage.";
+      let errorMessage = 'Failed to clear local storage.';
       if (error instanceof Error) {
         errorMessage = error.message;
       }
@@ -72,7 +72,7 @@ export class SecureStorage {
 
       return asyncResults;
     } catch (error: unknown) {
-      let errorMessage = "Failed to verify local storage cleanup.";
+      let errorMessage = 'Failed to verify local storage cleanup.';
       if (error instanceof Error) {
         errorMessage = error.message;
       }

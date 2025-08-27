@@ -1,22 +1,22 @@
 import {
     ENCRYPTED_AUTH_STATES_KEY,
     ENCRYPTED_AUTH_STATES_PASSWORD_KEY
-} from "../constant/keys";
-import { AuthServices } from "../services/AuthServices";
-import { FireStoreServices } from "../services/FirestoreServices";
-import { SecureStorage } from "../storage/SecureStorage";
-import { AuthStateType } from "../types/AuthStateType";
-import { UserCredentials } from "../types/UserCredentials";
-import { FirebaseAuthTypes } from "@react-native-firebase/auth";
+} from '../constant/keys';
+import { AuthServices } from '../services/AuthServices';
+import { FireStoreServices } from '../services/FirestoreServices';
+import { SecureStorage } from '../storage/SecureStorage';
+import { AuthStateType } from '../types/AuthStateType';
+import { UserCredentials } from '../types/UserCredentials';
+import { FirebaseAuthTypes, reload } from '@react-native-firebase/auth';
 import {
     createContext,
     PropsWithChildren,
     useEffect,
     useState
-} from "react";
-import BootSplash from "react-native-bootsplash";
+} from 'react';
+import BootSplash from 'react-native-bootsplash';
 
-type AuthState = {
+type AuthContextType = {
     isLoggedIn: boolean;
     isReady: boolean;
     uid: string | null;
@@ -31,7 +31,7 @@ type AuthState = {
     facebookSignIn: () => void;
 };
 
-export const AuthContext = createContext<AuthState>({
+export const AuthContext = createContext<AuthContextType>({
     isLoggedIn: false,
     isReady: false,
     uid: null,
@@ -42,7 +42,7 @@ export const AuthContext = createContext<AuthState>({
     facebookSignIn: async () => { },
 });
 
-export const AuthProvider = ({ children }: PropsWithChildren) => {
+const AuthProvider = ({ children }: PropsWithChildren) => {
     const [isReady, setIsReady] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [uid, setUid] = useState<string | null>(null);
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
                 ENCRYPTED_AUTH_STATES_PASSWORD_KEY
             );
         } catch (error) {
-            console.log("Error saving auth state", error);
+            console.log('Error saving auth state', error);
         }
     };
 
@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         try {
             return await storeAuthState({ isLoggedIn: true, uid: userUid });
         } catch (error: unknown) {
-            let errorMessage = "Error saving auth state.";
+            let errorMessage = 'Error saving auth state.';
             if (error instanceof Error) {
                 errorMessage = error.message;
             }
@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
                     }
                 }
             } catch (error: unknown) {
-                let errorMessage = "Error fetching auth state from local storage";
+                let errorMessage = 'Error fetching auth state from local storage';
                 if (error instanceof Error) {
                     errorMessage = error.message;
                 }
@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
 
         const checkVerification = async () => {
             try {
-                await currentUser.user.reload();
+                await reload(currentUser.user);
 
                 const updatedUser = AuthServices.getCurrentUser();
                 if (!isMounted || !updatedUser) return;
@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
                     );
                 }
             } catch (error) {
-                console.error("Verification check failed:", error);
+                console.error('Verification check failed:', error);
             }
         };
 
@@ -170,7 +170,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
                 password,
             );
             if (!result?.user?.uid) {
-                throw new Error("Invalid sign-in result: missing UID.");
+                throw new Error('Invalid sign-in result: missing UID.');
             }
             const userUid = result.user.uid;
             await applyAuthState(userUid);
@@ -236,7 +236,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
             await applyAuthState(userUid);
         } catch (error: unknown) {
             if (error instanceof Error) {
-                console.error("Sign in error:", error.message);
+                console.error('Sign in error:', error.message);
             }
         }
     };
@@ -285,3 +285,5 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         </AuthContext.Provider>
     );
 };
+
+export default AuthProvider;

@@ -1,31 +1,23 @@
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { useEffect, useState } from 'react';
-import { Keyboard, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import TabBarButton from './TabBarButton';
+import { useTheme } from '../hooks';
+import { useNavBarType } from '../hooks';
 
 const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const { theme } = useTheme();
+  const { navigationType } = useNavBarType();
 
-  useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', () =>
-      setKeyboardVisible(true)
-    );
-    const hideSub = Keyboard.addListener('keyboardDidHide', () =>
-      setKeyboardVisible(false)
-    );
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
+  const navBarPadding = navigationType === 'gesture' ? 8
+    : navigationType === '2-button' ? 14
+      : navigationType === '3-button' ? 30 : 8
 
   return (
     <View
-      style={[
-        styles.tabBar,
-        { display: isKeyboardVisible ? 'none' : 'flex' }
-      ]}
+      style={[styles.tabBar, {
+        backgroundColor: theme.colors.primary,
+        paddingBottom: navBarPadding,
+      }]}
     >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
@@ -66,9 +58,7 @@ const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
             onLongPress={onLongPress}
             isFocused={isFocused}
             routeName={route.name}
-            color={isFocused ? '#2E640' : '#FFF'}
             label={label}
-            tabBarHideOnKeyboard={true}
           />
         );
       })}
@@ -79,14 +69,15 @@ const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
 const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
+    paddingVertical: 10,
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#303030',
-    paddingVertical: 12,
-    borderWidth: 2.5,
-    borderColor: '#242323',
     elevation: 10,
   },
 });
 
-export default TabBar;
+const ThemedTabBar = (props: BottomTabBarProps) => {
+  return <TabBar {...props} />;
+};
+
+export default ThemedTabBar;

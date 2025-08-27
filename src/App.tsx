@@ -2,20 +2,29 @@ import { NavigationContainer } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AuthProvider } from './context/AuthContext';
-import RootNavigator from './navigation/RootNavigator';
 import {
-    StyleSheet,
-} from 'react-native';
+    AuthProvider,
+    FirestoreProvider,
+    NotesProvider,
+    ThemeProvider
+} from './context';
+import RootNavigator from './navigation/RootNavigator';
+import { StyleSheet } from 'react-native';
 import { AuthServices } from './services/AuthServices';
-import { FirestoreProvider } from './context/FirestoreContext';
-import { NotesProvider } from './context/NotesContext';
 import { PortalProvider } from '@gorhom/portal';
-import { SystemBars } from "react-native-edge-to-edge";
-import { isReadyRef, navigate, navigationRef, pendingNavigation } from './hooks/useNavigation';
+import { SystemBars } from 'react-native-edge-to-edge';
+import {
+    isReadyRef,
+    navigate,
+    navigationRef,
+    pendingNavigation
+} from './hooks/useNavigation';
 import notifee, { EventType } from '@notifee/react-native';
+import { NavigationTypeProvider } from './context';
+import { useTheme } from './hooks';
 
 export default function App() {
+    const { theme } = useTheme();
 
     useEffect(() => {
         AuthServices.initializeGoogleSDK();
@@ -66,7 +75,6 @@ export default function App() {
             }
         });
 
-
         /**
          * Can't make a one function call for navigation
          * because....
@@ -101,27 +109,32 @@ export default function App() {
 
     return (
         <GestureHandlerRootView style={styles.container}>
-            <SafeAreaProvider>
-                <SystemBars style='auto' />
-                <NavigationContainer
-                    ref={navigationRef}
-                    onReady={() => {
-                        isReadyRef.current = true;
-                        pendingNavigation.forEach(fn => fn());
-                        pendingNavigation.length = 0;
-                    }}
-                >
-                    <AuthProvider>
-                        <FirestoreProvider>
-                            <NotesProvider>
-                                <PortalProvider>
-                                    <RootNavigator />
-                                </PortalProvider>
-                            </NotesProvider>
-                        </FirestoreProvider>
-                    </AuthProvider>
-                </NavigationContainer>
-            </SafeAreaProvider>
+            <ThemeProvider>
+                <SafeAreaProvider>
+                    <SystemBars style='auto' />
+                    <NavigationContainer
+                        theme={theme}
+                        ref={navigationRef}
+                        onReady={() => {
+                            isReadyRef.current = true;
+                            pendingNavigation.forEach(fn => fn());
+                            pendingNavigation.length = 0;
+                        }}
+                    >
+                        <NavigationTypeProvider>
+                            <AuthProvider>
+                                <FirestoreProvider>
+                                    <NotesProvider>
+                                        <PortalProvider>
+                                            <RootNavigator />
+                                        </PortalProvider>
+                                    </NotesProvider>
+                                </FirestoreProvider>
+                            </AuthProvider>
+                        </NavigationTypeProvider>
+                    </NavigationContainer>
+                </SafeAreaProvider>
+            </ThemeProvider>
         </GestureHandlerRootView >
     );
 };

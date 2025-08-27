@@ -1,10 +1,15 @@
-import { Notes } from "../types/Notes";
-import { UserCredentials } from "../types/UserCredentials";
-import { getFirestoreErrorMessage } from "../utils/firebaseErrorMessages";
-import firestore, {
+import { Notes } from '../types/Notes';
+import { UserCredentials } from '../types/UserCredentials';
+import { getFirestoreErrorMessage } from '../utils/firebaseErrorMessages';
+import {
+  collection,
+  doc,
   FirebaseFirestoreTypes,
-} from "@react-native-firebase/firestore";
-import { isErrorWithCode } from "@react-native-google-signin/google-signin";
+  getDocs,
+  getFirestore,
+  setDoc,
+} from '@react-native-firebase/firestore';
+import { isErrorWithCode } from '@react-native-google-signin/google-signin';
 
 const cache = new Map<string, FirebaseFirestoreTypes.CollectionReference>();
 type data = FirebaseFirestoreTypes.DocumentData | undefined;
@@ -15,7 +20,7 @@ export class FireStoreServices {
     if (!uid) return null;
     if (cache.has(uid)) return cache.get(uid)!;
 
-    const ref = firestore().collection("users").doc(uid).collection("notes");
+    const ref = collection(doc(getFirestore(), 'users', uid), 'notes');
     cache.set(uid, ref);
     return ref;
   }
@@ -25,13 +30,15 @@ export class FireStoreServices {
     try {
       const collectionRef = this.getUserNotesCollectionRef(uid);
       if (!collectionRef) {
-        throw new Error("Invalid user ID.");
+        throw new Error('Invalid user ID.');
       }
 
-      const snapshot = await collectionRef.get();
-      return snapshot.docs.map((doc) => doc.data()) as Notes[];
+      const snapshot = await getDocs(collectionRef);
+      return snapshot.docs.map((docs: FirebaseFirestoreTypes.DocumentData) =>
+        docs.data(),
+      ) as Notes[];
     } catch (error: unknown) {
-      let errorMessage = "Failed to fetch notes.";
+      let errorMessage = 'Failed to fetch notes.';
       if (isErrorWithCode(error)) {
         errorMessage = getFirestoreErrorMessage(error.code);
         throw new Error(errorMessage);
@@ -48,12 +55,12 @@ export class FireStoreServices {
     try {
       const collectionRef = this.getUserNotesCollectionRef(uid);
       if (!collectionRef) {
-        throw new Error("Invalid user ID.");
+        throw new Error('Invalid user ID.');
       }
 
       await collectionRef.doc(note.id).set(note);
     } catch (error: unknown) {
-      let errorMessage = "Failed to upload user notes.";
+      let errorMessage = 'Failed to upload user notes.';
       if (isErrorWithCode(error)) {
         errorMessage = getFirestoreErrorMessage(error.code);
         throw new Error(errorMessage);
@@ -69,17 +76,17 @@ export class FireStoreServices {
   static async updateNotes(
     uid: string,
     id: string,
-    data: Partial<Notes>
+    data: Partial<Notes>,
   ): Promise<void> {
     try {
       const collectionRef = this.getUserNotesCollectionRef(uid);
       if (!collectionRef) {
-        throw new Error("Invalid user ID.");
+        throw new Error('Invalid user ID.');
       }
 
       await collectionRef.doc(id).update(data);
     } catch (error: unknown) {
-      let errorMessage = "Failed to update notes.";
+      let errorMessage = 'Failed to update notes.';
       if (isErrorWithCode(error)) {
         errorMessage = getFirestoreErrorMessage(error.code);
         throw new Error(errorMessage);
@@ -96,12 +103,12 @@ export class FireStoreServices {
     try {
       const collectionRef = this.getUserNotesCollectionRef(uid);
       if (!collectionRef) {
-        throw new Error("Invalid user ID.");
+        throw new Error('Invalid user ID.');
       }
 
       await collectionRef.doc(id).delete();
     } catch (error: unknown) {
-      let errorMessage = "Failed to delete notes.";
+      let errorMessage = 'Failed to delete notes.';
       if (isErrorWithCode(error)) {
         errorMessage = getFirestoreErrorMessage(error.code);
         throw new Error(errorMessage);
@@ -114,15 +121,14 @@ export class FireStoreServices {
   }
 
   static async checkUserCredentials(uid: string): Promise<data> {
-    const docRef = firestore()
-      .collection("users")
-      .doc(uid)
-      .collection("credentials")
-      .doc("additional_info");
+    const docRef = doc(
+      collection(doc(getFirestore(), 'users', uid), 'credentials'),
+      'additional_info',
+    );
 
-    const docSnapshot = await docRef.get();
+    const docSnapshot = await getDocs(docRef);
 
-    if (!docSnapshot.exists) console.log("No user credentials found.");
+    if (!docSnapshot.exists()) console.log('No user credentials found.');
 
     const data = docSnapshot.data();
 
@@ -132,17 +138,15 @@ export class FireStoreServices {
   // Save additional data in Firestore
   static async uploadUserCredentials(
     uid: string,
-    credentials: UserCredentials
+    credentials: UserCredentials,
   ): Promise<void> {
     try {
-      await firestore()
-        .collection("users")
-        .doc(uid)
-        .collection("credentials")
-        .doc("additional_info")
-        .set(credentials);
+      await setDoc(
+        doc(getFirestore(), 'users', uid, 'credentials', 'additional_info'),
+        credentials,
+      );
     } catch (error: unknown) {
-      let errorMessage = "Failed to upload user credentials.";
+      let errorMessage = 'Failed to upload user credentials.';
       if (isErrorWithCode(error)) {
         errorMessage = getFirestoreErrorMessage(error.code);
         throw new Error(errorMessage);

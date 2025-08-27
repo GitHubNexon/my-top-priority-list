@@ -1,11 +1,13 @@
-import { 
+import {
     CategoryLeftIcon,
     CategoryRightIcon,
     WorkCategoryIcon,
- } from '../../constant/NotesIcons';
-import { useAuth } from '../../hooks/useAuths';
-import { useFirestore } from '../../context/FirestoreContext';
-import { useNotes } from '../../context/NotesContext';
+} from '../../constant/NotesIcons';
+import {
+    useAuth,
+    useFirestore,
+    useNotes,
+} from '../../hooks';
 import { BottomSheetScreenProps } from '../../types/BottomSheet';
 import { Notes, NoteType } from '../../types/Notes';
 import React, { useEffect, useState } from 'react';

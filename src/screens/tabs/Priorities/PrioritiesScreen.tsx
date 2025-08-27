@@ -1,12 +1,17 @@
 import WIP from '../../../assets/images/undraw_programming_65t2.svg';
-import AddNotesFAB from '../../../components/AddNotesFAB';
-import FinanceScreen from '../../../components/BottomSheetScreens/FinanceScreen';
-import HealthScreen from '../../../components/BottomSheetScreens/HealthScreen';
-import HobbyScreen from '../../../components/BottomSheetScreens/HobbyScreen';
-import OtherScreen from '../../../components/BottomSheetScreens/OtherScreen';
-import SpiritualScreen from '../../../components/BottomSheetScreens/SpiritualScreen';
-import WorkScreen from '../../../components/BottomSheetScreens/WorkScreen';
-import CustomBottomSheet from '../../../components/CustomBottomSheet';
+import {
+  AddNotesFAB,
+  CustomBottomSheet,
+  NoteItemCardView
+} from '../../../components/index';
+import {
+  WorkScreen,
+  HealthScreen,
+  SpiritualScreen,
+  FinanceScreen,
+  HobbyScreen,
+  OtherScreen
+} from '../../../components/BottomSheetScreens/index';
 import {
   FinanceHandleIcon,
   HealthHandleIcon,
@@ -15,16 +20,18 @@ import {
   SpiritualHandleIcon,
   WorkHandleIcon
 } from '../../../components/HandleIcons';
-import NoteItemCardView from '../../../components/NoteItemCardView';
 import Toast from '../../../components/ToastMessage';
-import { useFirestore } from '../../../context/FirestoreContext';
-import { useNotes } from '../../../context/NotesContext';
+import {
+  useFirestore,
+  useNotes,
+  useTheme
+} from '../../../hooks';
 import { AuthServices } from '../../../services/AuthServices';
 import { NotificationService } from '../../../services/NotificationServices';
 import { BottomSheetRefType } from '../../../types/BottomSheet';
 import { Notes } from '../../../types/Notes';
 import { BottomSheetHandleProps } from '@gorhom/bottom-sheet';
-import {
+import React, {
   useCallback,
   useEffect,
   useRef,
@@ -33,9 +40,9 @@ import {
 import {
   ActivityIndicator,
   FlatList,
-  KeyboardAvoidingView,
   StyleSheet,
-  useWindowDimensions
+  useWindowDimensions,
+  View
 } from 'react-native';
 
 type HandlePressArgs = {
@@ -45,6 +52,8 @@ type HandlePressArgs = {
 
 const PrioritiesScreen = () => {
   const { width, height } = useWindowDimensions();
+  const { theme } = useTheme();
+  const themeColor = theme.colors.background;
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -198,21 +207,9 @@ const PrioritiesScreen = () => {
 
   return (
     <>
-      <KeyboardAvoidingView
-        /**
-         * Required this for
-         * the KB avoiding view
-         * to work
-         */
-        behavior='height'
-        /**
-         * Need exactly at 70
-         * or it cause some bugs
-         * flickering at the bottom screen
-         */
-        keyboardVerticalOffset={0}
-        style={styles.container}
-      >
+      <View style={[styles.container, {
+        backgroundColor: themeColor,
+      }]}>
         {!!isSyncing &&
           <ActivityIndicator
             size={'large'}
@@ -262,7 +259,7 @@ const PrioritiesScreen = () => {
           maxToRenderPerBatch={7}
           style={styles.flatlist}
         />
-      </KeyboardAvoidingView>
+      </View>
     </>
   )
 };
@@ -270,7 +267,6 @@ const PrioritiesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F1F1F1',
     alignItems: 'center',
   },
   text: {

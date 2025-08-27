@@ -1,29 +1,20 @@
 import WIP from '../../../assets/images/undraw_analytics_6mru.svg';
 import React from 'react';
 import {
-  KeyboardAvoidingView,
   StyleSheet,
-  Text
+  Text,
+  View
 } from 'react-native';
+import { useTheme } from '../../../hooks';
 
 const ChartScreen = () => {
+  const { theme } = useTheme();
+  const themeColor = theme.colors.background;
 
   return (
-    <KeyboardAvoidingView
-      /**
-       * Required this for
-       * the KB avoiding view
-       * to work
-       */
-      behavior='height'
-      /**
-       * Need exactly at 70
-       * or it cause some bugs
-       * flickering at the bottom screen
-       */
-      keyboardVerticalOffset={0}
-      style={styles.container}
-    >
+    <View style={[styles.container, {
+      backgroundColor: themeColor,
+    }]}>
       <WIP
         width='100%'
         height='100%'
@@ -32,14 +23,13 @@ const ChartScreen = () => {
       <Text style={styles.text}>
         W.I.P
       </Text>
-    </KeyboardAvoidingView>
+    </View>
   )
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F1F1F1',
     alignItems: 'center',
   },
   text: {

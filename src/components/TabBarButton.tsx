@@ -1,9 +1,11 @@
+/* eslint-disable react-native/no-inline-styles */
 import BottomTabIcons from '../constant/BottomTabIcons';
 import { GestureResponderEvent, Pressable, StyleSheet, Text } from 'react-native';
 import Animated, {
     useAnimatedStyle,
     withSpring
 } from 'react-native-reanimated';
+import { useTheme } from '../hooks';
 
 const TabBarButton = (
     {
@@ -11,22 +13,20 @@ const TabBarButton = (
         onLongPress,
         isFocused,
         routeName,
-        color,
         label,
-        tabBarHideOnKeyboard,
     }: {
         onPress: (event: GestureResponderEvent) => void,
         onLongPress: (event: GestureResponderEvent) => void,
         isFocused: boolean,
         routeName: string,
-        color: string,
         label: string,
-        tabBarHideOnKeyboard: boolean,
     }) => {
+    const { theme } = useTheme();
+    const themeColor = theme.colors.border;
 
     const animatedIconStyle = useAnimatedStyle(() => {
         return {
-            transform: [{ scale: isFocused ? withSpring(1.25) : withSpring(1) }]
+            transform: [{ scale: isFocused ? withSpring(1.2) : withSpring(1) }]
         }
     }, [isFocused]);
 
@@ -37,11 +37,11 @@ const TabBarButton = (
             style={styles.tabBarItems}
         >
             <Animated.View style={animatedIconStyle}>
-                {BottomTabIcons[routeName]?.({ color: isFocused ? '#17c200d3' : '#9e9e9e', size: 32, isFocused })}
+                {BottomTabIcons[routeName]?.({ color: isFocused ? '#17c200d3' : themeColor, size: 32, isFocused })}
             </Animated.View>
             <Text style={{
-                color: isFocused ? '#17c200d3' : '#c9c9c9',
-                fontSize: isFocused ? 14 : 10
+                color: isFocused ? '#17c200d3' : themeColor,
+                fontSize: isFocused ? 12 : 10
             }}
             >
                 {label}
@@ -55,8 +55,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 2,
-        paddingBottom: 25
+        paddingBottom: 14,
     },
 });
 

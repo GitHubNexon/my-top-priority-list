@@ -8,7 +8,6 @@ import { Notes } from "../types/Notes";
 import React, {
     createContext,
     useCallback,
-    useContext,
     useEffect,
     useState,
 } from "react";
@@ -24,7 +23,7 @@ type NotesContextType = {
     syncNotesFromCloud: (cloudNotes: Notes[]) => void;
 };
 
-const NotesContext = createContext<NotesContextType>({
+export const NotesContext = createContext<NotesContextType>({
     getNotesToastMessage: () => { },
     noteToastMessage: null,
     notes: [],
@@ -35,9 +34,7 @@ const NotesContext = createContext<NotesContextType>({
     syncNotesFromCloud: () => { },
 });
 
-export const useNotes = () => useContext(NotesContext);
-
-export const NotesProvider = ({ children }: { children: React.ReactNode }) => {
+const NotesProvider = ({ children }: { children: React.ReactNode }) => {
     const [noteToastMessage, setToastMessage] = useState<string | null>(null);
     const [notes, setNotes] = useState<Notes[]>([]);
     const [isInitialized, setIsInitialized] = useState(false);
@@ -156,3 +153,5 @@ export const NotesProvider = ({ children }: { children: React.ReactNode }) => {
         </NotesContext.Provider>
     );
 };
+
+export default NotesProvider;

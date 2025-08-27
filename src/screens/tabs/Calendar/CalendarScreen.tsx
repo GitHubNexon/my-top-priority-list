@@ -1,12 +1,17 @@
+/* eslint-disable react-native/no-inline-styles */
 import WIP from '../../../assets/images/undraw_coming-soon_7lvi.svg';
-import AddNotesFAB from '../../../components/AddNotesFAB';
-import FinanceScreen from '../../../components/BottomSheetScreens/FinanceScreen';
-import HealthScreen from '../../../components/BottomSheetScreens/HealthScreen';
-import HobbyScreen from '../../../components/BottomSheetScreens/HobbyScreen';
-import OtherScreen from '../../../components/BottomSheetScreens/OtherScreen';
-import SpiritualScreen from '../../../components/BottomSheetScreens/SpiritualScreen';
-import WorkScreen from '../../../components/BottomSheetScreens/WorkScreen';
-import CustomBottomSheet from '../../../components/CustomBottomSheet';
+import {
+    AddNotesFAB,
+    CustomBottomSheet
+} from '../../../components/index';
+import {
+    WorkScreen,
+    HealthScreen,
+    SpiritualScreen,
+    FinanceScreen,
+    HobbyScreen,
+    OtherScreen
+} from '../../../components/BottomSheetScreens/index';
 import {
     FinanceHandleIcon,
     HealthHandleIcon,
@@ -18,12 +23,18 @@ import {
 import { BottomSheetRefType } from '../../../types/BottomSheet';
 import { Notes } from '../../../types/Notes';
 import { BottomSheetHandleProps } from '@gorhom/bottom-sheet';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useRef,
+    useState
+} from 'react';
 import {
-    KeyboardAvoidingView,
     StyleSheet,
     Text,
+    View,
 } from 'react-native';
+import { useTheme } from '../../../hooks';
 
 type HandlePressArgs = {
     screen?: string;
@@ -31,11 +42,14 @@ type HandlePressArgs = {
 };
 
 const CalendarScreen = () => {
+    const { theme } = useTheme();
+    const themeColor = theme.colors.background;
+
     const bottomSheetRef = useRef<BottomSheetRefType>(null);
     const [renderedView, setRenderedView] = useState<() => React.ReactNode>(() => () => null);
     const [renderedHandle, setRenderedHandle] = useState<((props: BottomSheetHandleProps) => React.ReactNode) | null>(null);
     const [pendingOpen, setPendingOpen] = useState(false);
-    
+
     const waitForRender = () => new Promise(resolve => requestAnimationFrame(resolve));
 
     /**
@@ -135,21 +149,9 @@ const CalendarScreen = () => {
 
     return (
         <>
-            <KeyboardAvoidingView
-                /**
-                 * Required this for
-                 * the KB avoiding view
-                 * to work
-                 */
-                behavior='height'
-                /**
-                 * Need exactly at 70
-                 * or it cause some bugs
-                 * flickering at the bottom screen
-                 */
-                keyboardVerticalOffset={0}
-                style={styles.container}
-            >
+            <View style={[styles.container, {
+                backgroundColor: themeColor,
+            }]}>
                 {renderedView && renderedHandle && (
                     <CustomBottomSheet
                         ref={bottomSheetRef}
@@ -166,7 +168,7 @@ const CalendarScreen = () => {
                 <Text style={styles.text}>
                     W.I.P
                 </Text>
-            </KeyboardAvoidingView>
+            </View>
         </>
     )
 };
@@ -174,7 +176,6 @@ const CalendarScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F1F1F1',
         alignItems: 'center',
     },
     text: {

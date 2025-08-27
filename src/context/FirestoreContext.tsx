@@ -14,10 +14,8 @@ import { UserCredentials } from "../types/UserCredentials";
 import {
     createContext,
     PropsWithChildren,
-    useContext
 } from "react";
-import { useAuth } from "../hooks/useAuths";
-import { useNotes } from "./NotesContext";
+import { useAuth, useNotes } from "../hooks";
 
 type FirestoreContextType = {
     getNotesFromFirestore: () => Promise<Notes[]>;
@@ -28,7 +26,7 @@ type FirestoreContextType = {
     syncAllData: (uid: string) => Promise<void>;
 };
 
-const FirestoreContext = createContext<FirestoreContextType>({
+export const FirestoreContext = createContext<FirestoreContextType>({
     updateUserCredentials: async () => { },
     getNotesFromFirestore: async () => [],
     uploadNoteInFirestore: async () => { },
@@ -37,9 +35,7 @@ const FirestoreContext = createContext<FirestoreContextType>({
     syncAllData: async () => { },
 });
 
-export const useFirestore = () => useContext(FirestoreContext);
-
-export const FirestoreProvider = ({ children }: PropsWithChildren) => {
+const FirestoreProvider = ({ children }: PropsWithChildren) => {
     const { uid } = useAuth();
     const { notes } = useNotes();
 
@@ -174,4 +170,6 @@ export const FirestoreProvider = ({ children }: PropsWithChildren) => {
             {children}
         </FirestoreContext.Provider>
     );
-}; 
+};
+
+export default FirestoreProvider;

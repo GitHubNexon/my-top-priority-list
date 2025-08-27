@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
-const FaQScreen: React.FC = () => {
+const FaQScreen = () => {
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.header}>Frequently Asked Questions</Text>
