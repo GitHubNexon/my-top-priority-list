@@ -1,6 +1,7 @@
 package com.mypriorities
 
 import com.mypriorities.navigation.AndroidNavigationPackage
+import com.mypriorities.alarm.AlarmConfigPackage
 import com.mypriorities.alarm.AlarmPackage
 import android.app.Application
 import com.facebook.react.PackageList
@@ -21,6 +22,7 @@ class MainApplication : Application(), ReactApplication {
               // Packages that cannot be autolinked yet can be added manually here, for example:
               // add(MyReactNativePackage())
               add(AndroidNavigationPackage())
+              add(AlarmConfigPackage())
               add(AlarmPackage())
             }
 
