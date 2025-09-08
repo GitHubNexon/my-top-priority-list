@@ -5,17 +5,16 @@ const FaQScreen = () => {
 
     const setAlarm = async () => {
         await AlarmService.scheduleAlarm({
-            timestamp: Date.now() + 5000, // 5 seconds from now
+            timestamp: Date.now() + 5000, // 5 sec later
             title: "My Custom Alarm",
             message: "This is a dynamic message!",
-            requestCodeStr: "custom_alarm_123",
-            recurrenceType: "ONCE"
+            recurrenceType: "ONCE",
         });
-        console.log(`Set Alarm`);
+        console.log("Alarm scheduled ✅");
     };
 
     const cancelAlarm = async () => {
-        console.log(`Cancel Alarm`);
+        console.log(`Alarm canceled ❌`);
         return
     };
 
