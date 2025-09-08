@@ -1,8 +1,8 @@
 import {
     CategoryLeftIcon,
     CategoryRightIcon,
-    WorkCategoryIcon,
-} from '../../constant/NotesIcons';
+    WorkCategoryIcons,
+} from '../../icons';
 import {
     useAuth,
     useFirestore,
@@ -133,13 +133,13 @@ const WorkScreen = ({ bottomSheetRef, notesProp }: WorkScreenProps) => {
                 updateNoteInFirestore(uid ?? '', id, noteData);
                 getNotesToastMessage("Note updated successfully.")
             } catch (error: unknown) {
-                let errorMMessage = "Failed to update note.";
+                let errorMessage = "Failed to update note.";
 
                 if (error instanceof Error) {
-                    errorMMessage = error.message;
+                    errorMessage = error.message;
                 };
-                getNotesToastMessage(errorMMessage);
-                throw new Error(errorMMessage);
+                getNotesToastMessage(errorMessage);
+                throw errorMessage;
             };
             bottomSheetRef?.current?.close();
         } else {
@@ -148,13 +148,13 @@ const WorkScreen = ({ bottomSheetRef, notesProp }: WorkScreenProps) => {
                 uploadNoteInFirestore(noteData);
                 getNotesToastMessage("Note saved successfully.")
             } catch (error: unknown) {
-                let errorMMessage = "Failed to save note.";
+                let errorMessage = "Failed to save note.";
 
                 if (error instanceof Error) {
-                    errorMMessage = error.message;
+                    errorMessage = error.message;
                 };
-                getNotesToastMessage(errorMMessage);
-                throw new Error(errorMMessage);
+                getNotesToastMessage(errorMessage);
+                throw errorMessage;
             };
             bottomSheetRef?.current?.close();
         };
@@ -188,7 +188,7 @@ const WorkScreen = ({ bottomSheetRef, notesProp }: WorkScreenProps) => {
                         const selectedItem = workTypeList.find(d => d.value === workTypeValue);
 
                         return selectedItem ? (
-                            <WorkCategoryIcon icon={selectedItem.icon} size={20} color="#2E6F40" />
+                            <WorkCategoryIcons icon={selectedItem.icon} size={20} color="#2E6F40" />
                         ) : (
                             <CategoryLeftIcon size={20} color="#2E6F40" />
                         );
@@ -198,7 +198,7 @@ const WorkScreen = ({ bottomSheetRef, notesProp }: WorkScreenProps) => {
                     )}
                     renderItem={(item) => (
                         <View style={styles.itemContainer}>
-                            <WorkCategoryIcon icon={item.icon} size={20} color={'#2E6F40'} />
+                            <WorkCategoryIcons icon={item.icon} size={20} color={'#2E6F40'} />
                             <Text style={styles.item}>{item.label}</Text>
                         </View>
                     )}
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
         width: 150,
         height: 50,
         marginTop: 30,
-        marginBottom: 10,
+        marginBottom: 30,
         borderRadius: 30,
         backgroundColor: '#CFFFDC',
         alignSelf: 'center',

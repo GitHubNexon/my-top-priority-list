@@ -1,8 +1,9 @@
+/* eslint-disable react-native/no-inline-styles */
 import {
     CategoryLeftIcon,
     CategoryRightIcon,
-    FinanceCategoryIcon,
-} from '../../constant/NotesIcons';
+    FinanceCategoryIcons
+} from '../../icons';
 import {
     useAuth,
     useFirestore,
@@ -19,7 +20,7 @@ import {
     Text,
     TextInput,
     View
-} from "react-native";
+} from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
@@ -115,7 +116,7 @@ const FinanceScreen = ({ bottomSheetRef, notesProp }: FinanceScreenProps) => {
         const selectedNoteType = noteTypeValue;
 
         if (!selectedFinanceType || !selectedNoteType) {
-            Alert.alert("Please fill in required fields.");
+            Alert.alert('Please fill in required fields.');
             return;
         };
 
@@ -144,30 +145,30 @@ const FinanceScreen = ({ bottomSheetRef, notesProp }: FinanceScreenProps) => {
             try {
                 updateNote(id, updatedFields);
                 updateNoteInFirestore(uid ?? '', id, noteData);
-                getNotesToastMessage("Note updated successfully.")
+                getNotesToastMessage('Note updated successfully.')
             } catch (error: unknown) {
-                let errorMMessage = "Failed to update note.";
+                let errorMessage = 'Failed to update note.';
 
                 if (error instanceof Error) {
-                    errorMMessage = error.message;
+                    errorMessage = error.message;
                 };
-                getNotesToastMessage(errorMMessage);
-                throw new Error(errorMMessage);
+                getNotesToastMessage(errorMessage);
+                throw errorMessage;
             };
             bottomSheetRef?.current?.close();
         } else {
             try {
                 addNote(noteData);
                 uploadNoteInFirestore(noteData);
-                getNotesToastMessage("Note saved successfully.")
+                getNotesToastMessage('Note saved successfully.')
             } catch (error: unknown) {
-                let errorMMessage = "Failed to save note.";
+                let errorMessage = 'Failed to save note.';
 
                 if (error instanceof Error) {
-                    errorMMessage = error.message;
+                    errorMessage = error.message;
                 };
-                getNotesToastMessage(errorMMessage);
-                throw new Error(errorMMessage);
+                getNotesToastMessage(errorMessage);
+                throw errorMessage;
             };
             bottomSheetRef?.current?.close();
         };
@@ -190,7 +191,7 @@ const FinanceScreen = ({ bottomSheetRef, notesProp }: FinanceScreenProps) => {
                     value={noteTitle}
                     onChangeText={setNoteTitle}
                     placeholderTextColor={'#4b4b4b88'}
-                    placeholder="Title"
+                    placeholder='Title'
                     style={styles.titleInput}
                 />
                 <View style={styles.financeTypeContainer}>
@@ -205,9 +206,9 @@ const FinanceScreen = ({ bottomSheetRef, notesProp }: FinanceScreenProps) => {
                                 const selectedItem = financeTypeList.find(d => d.value === financeTypeValue);
 
                                 return selectedItem ? (
-                                    <FinanceCategoryIcon icon={selectedItem.icon} size={20} color="#2E6F40" />
+                                    <FinanceCategoryIcons icon={selectedItem.icon} size={20} color='#2E6F40' />
                                 ) : (
-                                    <CategoryLeftIcon size={20} color="#2E6F40" />
+                                    <CategoryLeftIcon size={20} color='#2E6F40' />
                                 );
                             }}
                             renderRightIcon={() => (
@@ -215,7 +216,7 @@ const FinanceScreen = ({ bottomSheetRef, notesProp }: FinanceScreenProps) => {
                             )}
                             renderItem={(item) => (
                                 <View style={styles.itemContainer}>
-                                    <FinanceCategoryIcon icon={item.icon} size={20} color={'#2E6F40'} />
+                                    <FinanceCategoryIcons icon={item.icon} size={20} color={'#2E6F40'} />
                                     <Text style={styles.item}>{item.label}</Text>
                                 </View>
                             )}
@@ -227,9 +228,9 @@ const FinanceScreen = ({ bottomSheetRef, notesProp }: FinanceScreenProps) => {
                             }}
                             data={financeTypeList}
                             value={financeTypeValue}
-                            valueField="value"
+                            valueField='value'
                             itemTextStyle={{ textAlign: 'left' }}
-                            labelField="label"
+                            labelField='label'
                             selectedTextStyle={styles.selectedTextStyle}
                             activeColor='#CFFFDC'
                             onFocus={() => setIsFocus(true)}
@@ -254,16 +255,16 @@ const FinanceScreen = ({ bottomSheetRef, notesProp }: FinanceScreenProps) => {
                                 borderRadius: 20,
                             }}
                             renderLeftIcon={() => (
-                                <MaterialIcons name="event-repeat" size={20} color="#2E6F40" />
+                                <MaterialIcons name='event-repeat' size={20} color='#2E6F40' />
                             )}
                             renderRightIcon={() => (
                                 <CategoryRightIcon style={styles.icon} size={20} color={'#2E6F40'} />
                             )}
                             data={occurrenceList}
                             value={occurrenceTypeValue}
-                            valueField="value"
+                            valueField='value'
                             itemTextStyle={{ textAlign: 'left' }}
-                            labelField="label"
+                            labelField='label'
                             selectedTextStyle={styles.selectedTextStyle}
                             activeColor='#CFFFDC'
                             onFocus={() => setIsDropdownFocus(true)}
@@ -281,7 +282,7 @@ const FinanceScreen = ({ bottomSheetRef, notesProp }: FinanceScreenProps) => {
                     value={amount}
                     onChangeText={setAmount}
                     placeholderTextColor={'#4b4b4b88'}
-                    placeholder="0.00"
+                    placeholder='0.00'
                     style={styles.titleInput}
                 />
                 <Text style={styles.titleText}>Type of Note: </Text>
@@ -385,7 +386,7 @@ const styles = StyleSheet.create({
         width: 150,
         height: 50,
         marginTop: 30,
-        marginBottom: 10,
+        marginBottom: 30,
         borderRadius: 30,
         backgroundColor: '#CFFFDC',
         alignSelf: 'center',

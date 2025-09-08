@@ -1,4 +1,4 @@
-package com.mypriorities
+package com.mypriorities.navigation
 
 import android.content.Context
 import android.provider.Settings

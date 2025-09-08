@@ -5,10 +5,10 @@
   <item>
     <shape android:shape="oval">
       <solid android:color="@color/circle_bg_color" />
-      <size android:width="200dp" android:height="200dp"/>
+      <size android:width="200dp" android:height="200dp" />
     </shape>
   </item>
-  
+
   <item>
     <bitmap
       android:gravity="center"
@@ -17,5 +17,5 @@
       android:antialias="true"
     />
   </item>
-  
+
 </layer-list>

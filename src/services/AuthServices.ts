@@ -45,9 +45,10 @@ export class AuthServices {
 
       if (isErrorWithCode(error)) {
         errorMessage = getFirebaseSignInErrorMessage(error.code);
+        console.error(`Error: ${errorMessage}`);
         throw new Error(errorMessage);
       } else if (error instanceof Error) {
-        errorMessage = error.message;
+        console.error(`Undefined Error: ${error.message}`);
       }
       throw new Error(errorMessage);
     }
@@ -75,9 +76,10 @@ export class AuthServices {
 
       if (isErrorWithCode(error)) {
         errorMessage = getFirebaseSignUpErrorMessage(error.code);
+        console.error(`Error: ${errorMessage}`);
         throw new Error(errorMessage);
       } else if (error instanceof Error) {
-        errorMessage = error.message;
+        console.error(`Undefined Error: ${error.message}`);
       }
       throw new Error(errorMessage);
     }
@@ -108,28 +110,28 @@ export class AuthServices {
       await signOut(getAuth());
       await GoogleSignin.signOut();
     } catch (error: unknown) {
-      let message = "Sign out failed.";
+      let errorMessage = "Sign out failed.";
 
       if (error instanceof Error) {
-        message = error.message;
+        console.error(`Undefined Error: ${error.message}`);
       }
 
-      throw new Error(message);
+      throw new Error(errorMessage);
     }
   }
 
   // Password Reset
   static async resetPassword(email: string): Promise<void> {
     try {
-      console.log("Password reset email sent.");
       await sendPasswordResetEmail(getAuth(), email);
     } catch (error: unknown) {
       let errorMessage = "Failed to send reset email";
       if (isErrorWithCode(error)) {
         errorMessage = error.code;
+        console.error(`Error: ${errorMessage}`);
         throw new Error(errorMessage);
       } else if (error instanceof Error) {
-        errorMessage = error.message;
+        console.error(`Undefined Error: ${error.message}`);
       }
 
       throw new Error(errorMessage);
@@ -197,9 +199,10 @@ export class AuthServices {
 
       if (isErrorWithCode(error)) {
         errorMessage = getFirebaseGoogleSignInErrorMessage(error.code);
+        console.error(`Error: ${errorMessage}`);
         throw new Error(errorMessage);
       } else if (error instanceof Error) {
-        errorMessage = error.message;
+        console.error(`Undefined Error: ${error.message}`);
       }
       throw new Error(errorMessage);
     }

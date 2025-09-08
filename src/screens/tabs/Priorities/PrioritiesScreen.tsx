@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import WIP from '../../../assets/images/undraw_programming_65t2.svg';
 import {
   AddNotesFAB,
@@ -39,9 +40,9 @@ import React, {
 } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   StyleSheet,
-  useWindowDimensions,
   View
 } from 'react-native';
 
@@ -51,9 +52,9 @@ type HandlePressArgs = {
 };
 
 const PrioritiesScreen = () => {
-  const { width, height } = useWindowDimensions();
+  const { width, height } = Dimensions.get('window');
   const { theme } = useTheme();
-  const themeColor = theme.colors.background;
+  const themeColor = theme.myColors?.triadic;
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -72,12 +73,16 @@ const PrioritiesScreen = () => {
       setShowToast(true);
       setToastMessage(noteToastMessage);
     }
-    // Clear the message after showing it
+    /**
+     * Put Timer and Clear the message
+     * so the useEffect won't be trigger again
+     * across other screens or tabs
+     */
     const timer = setTimeout(() => {
       getNotesToastMessage(null);
       setShowToast(false);
       setToastMessage(null);
-    }, 2100);
+    }, 5000);
 
     return () => clearTimeout(timer);
   }, [noteToastMessage, getNotesToastMessage]);
@@ -215,8 +220,8 @@ const PrioritiesScreen = () => {
             size={'large'}
             color={'#2E6F40'}
             style={[styles.loading, {
-              right: (width / 2) - 18,
-              bottom: height / 2,
+              right: (width * .5) - 18,
+              bottom: height * .6,
             }]}
           />
         }
@@ -224,6 +229,9 @@ const PrioritiesScreen = () => {
           message={toastMessage ?? ''}
           visible={showToast}
           onHide={() => setShowToast(false)}
+          containerStyle={{
+            bottom: '90%',
+          }}
         />
         {renderedView && renderedHandle && (
           <CustomBottomSheet
@@ -281,7 +289,7 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   flatlist: {
-    paddingTop: 10,
+    paddingBottom: 10,
   },
   loading: {
     position: 'absolute',

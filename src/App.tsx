@@ -28,15 +28,9 @@ export default function App() {
 
     useEffect(() => {
         AuthServices.initializeGoogleSDK();
-    }, []);
+        const notifeePermission = async () => await notifee.requestPermission();
 
-    async function requestNotificationPermissions() {
-        await notifee.requestPermission();
-    };
-
-    // Call this when your app starts
-    useEffect(() => {
-        requestNotificationPermissions();
+        notifeePermission();
     }, []);
 
     useEffect(() => {

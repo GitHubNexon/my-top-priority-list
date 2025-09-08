@@ -4,15 +4,46 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { RootStackParamList, BottomTabStackParamList } from "../types/navigation";
+import type {
+  RootStackParamList,
+  BottomTabStackParamList,
+  NotesTabStackParamList,
+  ProfileTabStackParamList,
+  PrioritiesTabStackParamList,
+  CalendarTabStackParamList,
+  ChartTabStackParamList,
+} from '../types/navigation';
 
 export function useNavigationTyped() {
   return useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-};
+}
 
 export function useTabsNavigationTyped() {
   return useNavigation<NativeStackNavigationProp<BottomTabStackParamList>>();
-};
+}
+
+// Hooks for each nested stack
+export function useNotesNavigation() {
+  return useNavigation<NativeStackNavigationProp<NotesTabStackParamList>>();
+}
+
+export function useProfileNavigation() {
+  return useNavigation<NativeStackNavigationProp<ProfileTabStackParamList>>();
+}
+
+export function usePrioritiesNavigation() {
+  return useNavigation<
+    NativeStackNavigationProp<PrioritiesTabStackParamList>
+  >();
+}
+
+export function useCalendarNavigation() {
+  return useNavigation<NativeStackNavigationProp<CalendarTabStackParamList>>();
+}
+
+export function useChartNavigation() {
+  return useNavigation<NativeStackNavigationProp<ChartTabStackParamList>>();
+}
 
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 

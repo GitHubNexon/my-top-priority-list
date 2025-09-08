@@ -1,7 +1,7 @@
 import React from 'react';
 import {
+    Dimensions,
     StyleSheet,
-    useWindowDimensions,
     View,
     ViewStyle,
 } from 'react-native';
@@ -12,7 +12,7 @@ type BottomSheetWrapperProps = {
 };
 
 export const BottomSheetWrapper = ({ children, style }: BottomSheetWrapperProps) => {
-    const { width } = useWindowDimensions();
+    const { width } = Dimensions.get('window');
 
     return (
         <View style={[styles.bottomSheetContainer, style]}>

@@ -9,7 +9,7 @@ import { useTheme } from '../../../hooks';
 
 const ChartScreen = () => {
   const { theme } = useTheme();
-  const themeColor = theme.colors.background;
+  const themeColor = theme.myColors?.triadic;
 
   return (
     <View style={[styles.container, {

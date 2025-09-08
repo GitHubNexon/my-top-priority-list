@@ -8,57 +8,66 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Pressable,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View
 } from "react-native";
-import { ProfileTabStackParamList } from "../../../types/navigation";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useNavigation } from "@react-navigation/native";
-
-type ProfileNav = NativeStackNavigationProp<ProfileTabStackParamList>;
+import { useProfileNavigation } from "../../../hooks/useNavigation";
+import Toast from "../../../components/ToastMessage";
 
 const ProfileScreen = () => {
-  const { width, height } = useWindowDimensions();
+  const { width, height } = Dimensions.get('window');
   const { theme } = useTheme();
-  const themeColor = theme.colors.background;
+  const { uid, signOut } = useAuth();
+  const { getNotesFromFirestore, syncAllData } = useFirestore();
+  const { syncNotesFromCloud, clearNotes } = useNotes();
+  const navigation = useProfileNavigation();
 
   const [isSyncing, setIsSyncing] = useState(false);
-  const { syncNotesFromCloud, clearNotes } = useNotes();
-  const { uid, signOut } = useAuth();
-  const {
-    getNotesFromFirestore,
-    syncAllData,
-  } = useFirestore();
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const navigation = useNavigation<ProfileNav>();
+  const themeColor = theme.myColors?.triadic;
+  const primaryFontColor = theme.fontColors?.primary
 
   const syncMyData = async () => {
+    setIsSyncing(true);
     try {
-      setIsSyncing(true);
-
       // First sync local changes to Firestore
-      await syncAllData(uid ?? '');
+      if(!uid) {
+        setShowToast(true);
+        setToastMessage('Error: You need to sign in first.');
+        return;
+      }
+      await syncAllData(uid);
 
       // Then get the latest from Firestore
       const cloudNotes = await getNotesFromFirestore();
 
       // Finally update local storage with merged data
       syncNotesFromCloud(cloudNotes);
-    } catch (error) {
-      console.error("Sync error:", error);
-      // Consider showing an error to the user
+    } catch (error: unknown) {
+      let errorMessage = "Synching failed, check your internet connection.";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      setShowToast(true);
+      setToastMessage(errorMessage);
+
+      throw errorMessage
     } finally {
       setIsSyncing(false);
-    }
+    };
   };
 
 
   const handleSignOut = async () => {
+    setIsSyncing(true);
     try {
-      setIsSyncing(true);
       /**
        * Execute both operations sequentially
        * 1. Clear notes first
@@ -89,12 +98,19 @@ const ProfileScreen = () => {
           size={'large'}
           color={'#2E6F40'}
           style={[styles.loading, {
-            right: (width / 2) - 18,
-            bottom: height / 2,
+            right: (width * .5) - 18,
+            bottom: height * .6,
           }]}
         />
       }
-      <Text style={styles.text}>My Profile</Text>
+      <Toast
+        message={toastMessage ?? ''}
+        visible={showToast}
+        onHide={() => setShowToast(false)}
+      />
+      <Text style={[styles.text, {
+        color: primaryFontColor,
+      }]}>My Profile</Text>
 
       <Pressable
         onPress={faqHandle}

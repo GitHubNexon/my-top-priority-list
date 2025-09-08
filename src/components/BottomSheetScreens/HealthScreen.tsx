@@ -1,8 +1,9 @@
+/* eslint-disable react-native/no-inline-styles */
 import {
     CategoryLeftIcon,
     CategoryRightIcon,
-    HealthCategoryIcon,
-} from '../../constant/NotesIcons';
+    HealthCategoryIcons
+} from '../../icons';
 import {
     useAuth,
     useFirestore,
@@ -131,13 +132,13 @@ const HealthScreen = ({ bottomSheetRef, notesProp }: HealthScreenProps) => {
                 updateNoteInFirestore(uid ?? '', id, noteData);
                 getNotesToastMessage("Note updated successfully.")
             } catch (error: unknown) {
-                let errorMMessage = "Failed to update note.";
+                let errorMessage = "Failed to update note.";
 
                 if (error instanceof Error) {
-                    errorMMessage = error.message;
+                    errorMessage = error.message;
                 };
-                getNotesToastMessage(errorMMessage);
-                throw new Error(errorMMessage);
+                getNotesToastMessage(errorMessage);
+                throw errorMessage;
             };
             bottomSheetRef?.current?.close();
         } else {
@@ -146,13 +147,13 @@ const HealthScreen = ({ bottomSheetRef, notesProp }: HealthScreenProps) => {
                 uploadNoteInFirestore(noteData);
                 getNotesToastMessage("Note saved successfully.")
             } catch (error: unknown) {
-                let errorMMessage = "Failed to save note.";
+                let errorMessage = "Failed to save note.";
 
                 if (error instanceof Error) {
-                    errorMMessage = error.message;
+                    errorMessage = error.message;
                 };
-                getNotesToastMessage(errorMMessage);
-                throw new Error(errorMMessage);
+                getNotesToastMessage(errorMessage);
+                throw errorMessage;
             };
             bottomSheetRef?.current?.close();
         };
@@ -186,7 +187,7 @@ const HealthScreen = ({ bottomSheetRef, notesProp }: HealthScreenProps) => {
                         const selectedItem = healthTypeList.find(d => d.value === healthTypeValue);
 
                         return selectedItem ? (
-                            <HealthCategoryIcon icon={selectedItem.icon} size={20} color="#2E6F40" />
+                            <HealthCategoryIcons icon={selectedItem.icon} size={20} color="#2E6F40" />
                         ) : (
                             <CategoryLeftIcon size={20} color="#2E6F40" />
                         );
@@ -196,7 +197,7 @@ const HealthScreen = ({ bottomSheetRef, notesProp }: HealthScreenProps) => {
                     )}
                     renderItem={(item) => (
                         <View style={styles.itemContainer}>
-                            <HealthCategoryIcon icon={item.icon} size={20} color={'#2E6F40'} />
+                            <HealthCategoryIcons icon={item.icon} size={20} color={'#2E6F40'} />
                             <Text style={styles.item}>{item.label}</Text>
                         </View>
                     )}
@@ -312,7 +313,7 @@ const styles = StyleSheet.create({
         width: 150,
         height: 50,
         marginTop: 30,
-        marginBottom: 10,
+        marginBottom: 30,
         borderRadius: 30,
         backgroundColor: '#CFFFDC',
         alignSelf: 'center',

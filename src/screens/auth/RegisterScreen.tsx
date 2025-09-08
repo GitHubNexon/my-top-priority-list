@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import LoginBG from '../../assets/images/loginBg.png';
 import Toast from '../../components/ToastMessage';
 import { useAuth } from '../../hooks';
@@ -5,27 +6,30 @@ import { useNavigationTyped } from '../../hooks/useNavigation';
 import { UserCredentials } from '../../types/UserCredentials';
 import Entypo from '@react-native-vector-icons/entypo';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
   ImageBackground,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
-  useWindowDimensions,
   View
 } from 'react-native';
+import RNDateTimePicker from '@react-native-community/datetimepicker';
+import { formatDate } from '../../utils/DateFormatter';
 
 const RegisterScreen = () => {
-  const { width, height } = useWindowDimensions();
+  const { width, height } = Dimensions.get('window');
   type EntypoIconName = React.ComponentProps<typeof Entypo>['name'];
 
   const navigation = useNavigationTyped();
 
   const [eyeIcon, setEyeIcon] = useState<EntypoIconName>('eye-with-line');
   const [textEntry, setTextEntry] = useState(true);
+  const [isErrorMessage, setIsErrorMessage] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [isLoading, setIsloading] = useState(false)
@@ -64,16 +68,6 @@ const RegisterScreen = () => {
     }
   };
 
-  const customFormattedDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
-    const month = date.toLocaleDateString('en-US', { month: 'short' });
-    const day = date.toLocaleDateString('en-US', { day: '2-digit' });
-    const year = date.getFullYear();
-
-    return `${weekday} ${month} ${day}, ${year}`;
-  };
-
   const pressedIcon = () => {
     if (eyeIcon === 'eye') {
       setEyeIcon('eye-with-line')
@@ -94,6 +88,7 @@ const RegisterScreen = () => {
       setToastMessage('Check your email or spam for email verification.');
       return result;
     } catch (error: unknown) {
+      setIsErrorMessage(true)
       let errorMessage = "Sign up failed. Please try again.";
 
       if (error instanceof Error) {
@@ -104,7 +99,7 @@ const RegisterScreen = () => {
       setToastMessage(errorMessage);
       console.error(`Error: ${errorMessage}`);
 
-      throw new Error(errorMessage);
+      throw errorMessage;
     } finally {
       setIsloading(false);
     }
@@ -121,15 +116,22 @@ const RegisterScreen = () => {
           size={'large'}
           color={'#2E6F40'}
           style={[styles.loading, {
-            right: (width / 2) - 18,
-            bottom: height / 2,
+            right: (width * .5) - 18,
+            bottom: height * .5,
           }]}
         />
       }
       <Toast
         message={toastMessage}
+        duration={isErrorMessage ? 5000 : 10000}
         visible={showToast}
-        onHide={() => setShowToast(false)}
+        onHide={() => {
+          setShowToast(false);
+          setIsErrorMessage(false);
+        }}
+        containerStyle={{
+          bottom: '90%',
+        }}
       />
       <View style={styles.container}>
         <Text style={styles.titleText}>Sign Up</Text>
@@ -160,7 +162,7 @@ const RegisterScreen = () => {
             fontSize: 18,
             paddingLeft: 10
           }}>
-            {credentials.BirthDate ? customFormattedDate(credentials.BirthDate) : 'Birth Date'}
+            {credentials.BirthDate ? formatDate(credentials.BirthDate) : 'Birth Date'}
           </Text>
         </Pressable>
         <View style={styles.passTextInputContainer}>
@@ -210,7 +212,8 @@ const RegisterScreen = () => {
         </View>
       </View>
       {showCalendar && (
-        <DateTimePicker
+        <RNDateTimePicker
+          design='material'
           value={new Date()}
           mode='date'
           display='calendar'

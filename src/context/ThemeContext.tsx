@@ -5,14 +5,14 @@ import React, {
 } from 'react';
 import { useColorScheme } from 'react-native';
 import {
+    CustomTheme,
     ThemeFamily,
     ThemeMode,
     Themes,
-    ThemeType
 } from '../theme';
 
 interface ThemeContextType {
-    theme: ThemeType;
+    theme: CustomTheme;
     family: ThemeFamily;
     mode: ThemeMode | 'system';
     setFamily: (family: ThemeFamily) => void;

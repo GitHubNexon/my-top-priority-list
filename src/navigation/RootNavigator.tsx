@@ -11,12 +11,16 @@ const RootNavigator = () => {
     const { isLoggedIn, isReady } = useAuth();
 
     if (!isReady) {
-        // Show splash/loading screen
         return null;
     }
 
     return (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator
+            screenOptions={{
+                headerShown: false,
+                freezeOnBlur: false,
+            }}
+        >
             {isLoggedIn ? (
                 <Stack.Screen name="Main" component={BottomTabNavigator} />
             ) : (

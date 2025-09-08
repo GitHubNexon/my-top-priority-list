@@ -1,4 +1,5 @@
-import { NotesCategoryIcon, PlusIcon } from '../constant/NotesIcons';
+/* eslint-disable react-native/no-inline-styles */
+import { NotesCategoryIcons, PlusIcon } from '../icons';
 import React from 'react';
 import {
     Pressable,
@@ -166,7 +167,7 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
                         </View>
                         <View style={styles.iconPosition}>
                             <View style={styles.iconContainer}>
-                                <NotesCategoryIcon icon={'work'} size={24} color="#CFFFDC" />
+                                <NotesCategoryIcons icon={'work'} size={24} color="#CFFFDC" />
                             </View>
                         </View>
                     </View>
@@ -182,7 +183,7 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
                         </View>
                         <View style={styles.iconPosition}>
                             <View style={styles.iconContainer}>
-                                <NotesCategoryIcon icon={'health'} size={24} color="#CFFFDC" />
+                                <NotesCategoryIcons icon={'health'} size={24} color="#CFFFDC" />
                             </View>
                         </View>
                     </View>
@@ -198,7 +199,7 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
                         </View>
                         <View style={styles.iconPosition}>
                             <View style={styles.iconContainer}>
-                                <NotesCategoryIcon icon={'spiritual'} size={24} color="#CFFFDC" />
+                                <NotesCategoryIcons icon={'spiritual'} size={24} color="#CFFFDC" />
                             </View>
                         </View>
                     </View>
@@ -214,7 +215,7 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
                         </View>
                         <View style={styles.iconPosition}>
                             <View style={styles.iconContainer}>
-                                <NotesCategoryIcon icon={'finance'} size={24} color="#CFFFDC" />
+                                <NotesCategoryIcons icon={'finance'} size={24} color="#CFFFDC" />
                             </View>
                         </View>
                     </View>
@@ -230,7 +231,7 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
                         </View>
                         <View style={styles.iconPosition}>
                             <View style={styles.iconContainer}>
-                                <NotesCategoryIcon icon={'hobby'} size={24} color="#CFFFDC" />
+                                <NotesCategoryIcons icon={'hobby'} size={24} color="#CFFFDC" />
                             </View>
                         </View>
                     </View>
@@ -246,7 +247,7 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
                         </View>
                         <View style={styles.iconPosition}>
                             <View style={styles.iconContainer}>
-                                <NotesCategoryIcon icon={'other'} size={24} color="#CFFFDC" />
+                                <NotesCategoryIcons icon={'other'} size={24} color="#CFFFDC" />
                             </View>
                         </View>
                     </View>
@@ -254,7 +255,7 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
             </Animated.View>
             <Pressable style={styles.contentContainer} onPress={() => handlePress()}>
                 <Animated.View style={[plusIcon]}>
-                    <PlusIcon size={55} color="#2E6F40" />
+                    <PlusIcon size={55} color="#68BA7F" />
                 </Animated.View>
             </Pressable>
         </>
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
         width: 100,
         flexDirection: 'row',
         justifyContent: 'center',
-        backgroundColor: '#CFFFDC',
+        backgroundColor: '#68BA7F',
         borderRadius: 40,
     },
     iconPosition: {
@@ -299,6 +300,7 @@ const styles = StyleSheet.create({
     },
     textMenu: {
         fontSize: 14,
+        color: '#000000'
     },
 });
 

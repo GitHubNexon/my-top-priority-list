@@ -1,16 +1,17 @@
 import {
-  FinanceCategoryIcon,
-  HealthCategoryIcon,
-  HobbyCategoryIcon,
-  NotesCategoryIcon,
-  NotesTypeIcon,
-  SpiritualCategoryIcon,
-  WorkCategoryIcon,
-} from '../constant/NotesIcons';
+  FinanceCategoryIcons,
+  HealthCategoryIcons,
+  HobbyCategoryIcons,
+  NotesCategoryIcons,
+  NotesTypeIcons,
+  SpiritualCategoryIcons,
+  WorkCategoryIcons,
+} from '../icons';
 import {
   useAuth,
   useFirestore,
   useNotes,
+  useTheme,
 } from '../hooks';
 import { Notes } from '../types/Notes';
 import {
@@ -25,7 +26,6 @@ import {
   Dimensions,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -34,7 +34,9 @@ import Animated, {
   useSharedValue,
   withTiming
 } from 'react-native-reanimated';
-import { runOnJS } from 'react-native-worklets';
+import { scheduleOnRN } from 'react-native-worklets';
+import Fontisto from '@react-native-vector-icons/fontisto';
+import { isTruncated, truncatedText } from '../utils/truncatedText';
 
 type Props = {
   note: Notes;
@@ -42,49 +44,51 @@ type Props = {
 };
 
 const NoteItemCardView = ({ note, onPress }: Props) => {
+  const { width } = Dimensions.get('window');
+  const { theme } = useTheme();
   const { getNotesToastMessage, deleteNote } = useNotes();
   const { deleteNoteFromFirestore } = useFirestore();
   const { uid } = useAuth();
 
-  const { width } = useWindowDimensions();
-
-  const isLargeDisplay = width > 425;
-
-  const { width: SCREEN_WIDTH } = Dimensions.get('window');
   const LIST_ITEM_HEIGHT = 110;
-  const TRANSLATE_X_THRESHOLD = - SCREEN_WIDTH * 0.35;
+  const TRANSLATE_X_THRESHOLD = - width * 0.25;
 
   const translateX = useSharedValue(0);
   const itemHeight = useSharedValue(LIST_ITEM_HEIGHT);
   const marginVertical = useSharedValue(5);
   const padding = useSharedValue(10);
 
-  const handleDeleteNote = async (note: Notes) => {
-    deleteNote(note);
+  const primaryColor = theme.myColors?.primary;
+  const secondaryColor = theme.myColors?.triadic;
+  const complementaryColor = theme.myColors?.complementary;
+  const analogousColor = theme.myColors?.analogous;
+  const primaryFontColor = theme.fontColors?.primary;
+  const secondaryFontColor = theme.fontColors?.secondary;
+  const truncatedDescription = truncatedText(note.Description ?? '', 100);
+
+  const handleDeleteNote = async (currentNote: Notes) => {
+    deleteNote(currentNote);
     try {
       await deleteNoteFromFirestore(uid ?? '', note.id);
-      getNotesToastMessage("Note deleted successfully.");
+      getNotesToastMessage('Note deleted successfully.');
     } catch (error: unknown) {
-      let errorMessage = "Failed to delete note.";
+      let errorMessage = 'Failed to delete note.';
 
       if (error instanceof Error) {
         errorMessage = error.message;
       }
 
       getNotesToastMessage(errorMessage);
-      throw new Error(errorMessage);
+      throw errorMessage;
     }
+
   };
 
   const doubleTapGesture = Gesture.Tap()
     .maxDuration(250)
     .numberOfTaps(2)
     .onStart(() => {
-      /**
-       * ⚠️⚠️REMEMBER ⚠️⚠️⚠️
-       * always put a fucking runOnJS
-       */
-      runOnJS(onPress)(note);
+      scheduleOnRN(onPress, note);
     });
 
   const panGesture = Gesture.Pan()
@@ -98,16 +102,11 @@ const NoteItemCardView = ({ note, onPress }: Props) => {
       const shouldBeDismissed = translateX.value < TRANSLATE_X_THRESHOLD;
 
       if (shouldBeDismissed) {
-        translateX.value = withTiming(-SCREEN_WIDTH);
+        translateX.value = withTiming(-width);
         itemHeight.value = withTiming(0, { duration: 300 });
         marginVertical.value = withTiming(0, { duration: 300 });
         padding.value = withTiming(0, { duration: 300 }, () => {
-          console.log(`Deleted Note ID: ${note.id}`)
-          /**
-           * ⚠️⚠️REMEMBER ⚠️⚠️⚠️
-           * always put a fucking runOnJS
-           */
-          runOnJS(handleDeleteNote)(note);
+          scheduleOnRN(handleDeleteNote, note);
         });
       } else {
         translateX.value = withTiming(0);
@@ -135,8 +134,11 @@ const NoteItemCardView = ({ note, onPress }: Props) => {
 
   return (
     <>
-      <Animated.View style={[styles.deleteIconContainer, deleteIconAnimationStyle,]}>
-        <MaterialIcons name="delete-forever" size={80} color="#ff0000" />
+      <Animated.View style={[styles.deleteIconContainer, deleteIconAnimationStyle, {
+        right: width * .065,
+        top: width * .06,
+      }]}>
+        <MaterialIcons name='delete-forever' size={80} color='#E43636' />
       </Animated.View>
       <GestureDetector
         gesture={Gesture.Exclusive(panGesture, doubleTapGesture)}
@@ -145,131 +147,197 @@ const NoteItemCardView = ({ note, onPress }: Props) => {
           styles.cardContainer,
           animatedStyle,
           cardContainerAnimationStyle,
-          isLargeDisplay && styles.isLargeDisplayCardContainer
+          {
+            backgroundColor: primaryColor,
+            width: width - 30,
+            height: width * .27
+          }
         ]}>
-          <View style={styles.iconContainer}>
-            <NotesCategoryIcon icon={note.NotesCategory} size={70} color="#2E6F40" enableFill />
-          </View>
-          <View style={styles.noteContainer}>
-            <View style={[
-              styles.noteTitle,
-              isLargeDisplay && styles.isLargeDisplayNoteTitle
-            ]}>
-              <View style={styles.iconTitleContainer}>
-                {!!note.TypeOfNotesCategory?.icon &&
-                  (() => {
+          <View style={styles.content}>
+            <View style={[styles.notesCategoryIconContainer, {
+              backgroundColor: secondaryColor,
+              width: width * .225,
+              height: width * .225,
+            }]}>
+              <NotesCategoryIcons
+                icon={note.NotesCategory}
+                size={60}
+                color={analogousColor}
+                enableFill
+              />
+            </View>
+            <View style={[styles.notesContentContainer, {
+              width: width * .22,
+              height: width * .22,
+            }]}>
+              <View style={[styles.notesTitleContainer, {
+                height: width * .06,
+                width: width * .5
+              }]}>
+                <View style={[styles.iconTitleContainer, {
+                  width: width * .06,
+                  height: width * .06
+                }]}>
+                  {(() => {
                     switch (note.NotesCategory) {
                       case 'work':
                         return (
-                          <WorkCategoryIcon
-                            icon={note.TypeOfNotesCategory.icon}
+                          <WorkCategoryIcons
+                            icon={note.TypeOfNotesCategory?.icon}
                             size={16}
-                            color="#2E6F40"
+                            color={complementaryColor}
                             enableFill
                           />
                         );
                       case 'health':
                         return (
-                          <HealthCategoryIcon
-                            icon={note.TypeOfNotesCategory.icon}
+                          <HealthCategoryIcons
+                            icon={note.TypeOfNotesCategory?.icon}
                             size={16}
-                            color="#2E6F40"
+                            color={complementaryColor}
                             enableFill
                           />
                         );
                       case 'spiritual':
                         return (
-                          <SpiritualCategoryIcon
-                            icon={note.TypeOfNotesCategory.icon}
+                          <SpiritualCategoryIcons
+                            icon={note.TypeOfNotesCategory?.icon}
                             size={16}
-                            color="#2E6F40"
+                            color={complementaryColor}
                             enableFill
                           />
                         );
                       case 'finance':
                         return (
-                          <FinanceCategoryIcon
-                            icon={note.TypeOfNotesCategory.icon}
+                          <FinanceCategoryIcons
+                            icon={note.TypeOfNotesCategory?.icon}
                             size={16}
-                            color="#2E6F40"
+                            color={complementaryColor}
                             enableFill
                           />
                         );
                       case 'hobby':
                         return (
-                          <HobbyCategoryIcon
-                            icon={note.TypeOfNotesCategory.icon}
+                          <HobbyCategoryIcons
+                            icon={note.TypeOfNotesCategory?.icon}
                             size={16}
-                            color="#2E6F40"
+                            color={complementaryColor}
                             enableFill
                           />
                         );
                       default:
-                        return null;
+                        return (
+                          <MaterialDesignIcons
+                            name='dots-horizontal-circle'
+                            size={14}
+                            color={complementaryColor}
+                          />
+                        );
                     }
-                  })()
-                }
-              </View>
-              <Text numberOfLines={1} style={styles.title}>{note.Title}</Text>
-            </View>
-            <View style={[
-              styles.line,
-              isLargeDisplay && styles.isLargeDisplayLine
-            ]} />
-            {!!note.Description && (
-              <View style={[
-                styles.descriptionContainer,
-                isLargeDisplay && styles.isLargeDisplayDescriptionContainer
-              ]}>
-                <Text style={styles.description}>{note.Description}</Text>
-              </View>
-            )}
-            <View style={[
-              styles.dateContainer,
-              isLargeDisplay && styles.isLargeDisplayDateContainer
-            ]}>
-              {!!note.Occurrence && (
-                <>
-                  <MaterialIcons name="event-repeat" size={18} color="#253D2C" />
-                  <Text style={styles.date}>{note.Occurrence}</Text>
-                </>
-              )}
-              {!!note.Date && (
-                <>
-                  <Ionicons name="calendar" size={18} color="#253D2C" />
-                  <Text style={styles.date}>{formatDate(note.Date)}</Text>
-                </>
-              )}
-              {!!note.Time && (
-                <>
-                  <MaterialDesignIcons name="clock" size={18} color="#253D2C" />
-                  <Text style={styles.date}>{formatTime(note.Time)}</Text>
-                </>
-              )}
-              {!!note.Days?.length && (
-                <View style={styles.daysContainer}>
-                  {formatDays(note.Days).map(day => (
-                    <View key={day} style={styles.daysContent}>
-                      <Text style={styles.dayText}>{day}</Text>
-                    </View>
-                  ))}
+                  })()}
                 </View>
-              )}
+                <Text
+                  numberOfLines={1}
+                  style={[styles.title, {
+                    color: primaryFontColor,
+                  }]}>{note.Title}</Text>
+              </View>
+              <View style={[
+                styles.descriptionContainer, {
+                  width: width * .488,
+                  height: width * .11,
+                  marginLeft: width * .0125
+                }]}>
+                {!!note.Description && (
+                  <Text style={[styles.description, {
+                    color: primaryFontColor,
+                  }]}>{truncatedDescription}
+                    <Text style={[styles.seeMore, {
+                      color: secondaryFontColor,
+                    }]}>
+                      {isTruncated(truncatedDescription) === true
+                        ? ' See more' : ''
+                      }
+                    </Text>
+                  </Text>
+                )}
+              </View>
+              <View style={[
+                styles.footerContainer, {
+                  width: width * .488,
+                  height: width * .052,
+                  marginLeft: width * .0125
+                }]}>
+                {!!note.Occurrence && (
+                  <>
+                    <MaterialIcons
+                      name='event-repeat'
+                      size={14}
+                      color={complementaryColor}
+                    />
+                    <Text style={[styles.date, {
+                      color: primaryFontColor,
+                    }]}>{note.Occurrence}</Text>
+                  </>
+                )}
+                {!!note.Date && (
+                  <>
+                    <Ionicons name='calendar' size={14} color={complementaryColor} />
+                    <Text style={[styles.date, {
+                      color: primaryFontColor,
+                    }]}>{formatDate(note.Date)}</Text>
+                  </>
+                )}
+                {!!note.Time && (
+                  <>
+                    <MaterialDesignIcons
+                      name='clock'
+                      size={14}
+                      color={complementaryColor}
+                    />
+                    <Text style={[styles.date, {
+                      color: primaryFontColor,
+                    }]}>{formatTime(note.Time)}</Text>
+                  </>
+                )}
+                {!!note.Days?.length && (
+                  <View style={styles.daysContainer}>
+                    {formatDays(note.Days).map(day => (
+                      <View key={day} style={[styles.daysContent, {
+                        backgroundColor: secondaryColor,
+                      }]}>
+                        <Text style={[styles.dayText, {
+                          color: primaryFontColor,
+                        }]}>{day}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
             </View>
-            <View style={[
-              styles.noteTypeContainer,
-              isLargeDisplay && styles.isLargeDisplayNoteTypeContainer
-            ]}>
+            <View style={{ marginRight: width * .02 }}>
+              <Fontisto
+                name='angle-right'
+                color={secondaryColor}
+                size={40}
+              />
+            </View>
+            <View style={[styles.noteTypeContainer, {
+              backgroundColor: analogousColor,
+              width: width * .12,
+              height: width * .045,
+            }]}>
               {note.TypeOfNote
-                ? (<NotesTypeIcon
+                ? (<NotesTypeIcons
                   icon={note.TypeOfNote?.icon}
-                  size={22} color="#A8E6A2"
+                  size={14}
+                  color={complementaryColor}
                   enableFill
                 />)
                 : (<MaterialIcons
-                  name="info"
-                  size={24}
-                  color="#CFFFDC"
+                  name='info'
+                  size={14}
+                  color={complementaryColor}
                 />)
               }
             </View>
@@ -282,106 +350,73 @@ const NoteItemCardView = ({ note, onPress }: Props) => {
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#68BA7F',
+    borderRadius: 24,
     marginHorizontal: 15,
-    width: 360,
-    borderRadius: 30,
-    flexDirection: 'row',
+    justifyContent: 'center',
     overflow: 'hidden',
   },
-  isLargeDisplayCardContainer: {
-    width: 460,
-  },
-  iconContainer: {
-    backgroundColor: '#CFFFDC',
-    height: 90,
-    width: 90,
-    borderRadius: 20,
+  content: {
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  noteContainer: {
-    flexDirection: 'column',
-    marginLeft: 10,
+  notesCategoryIconContainer: {
+    borderRadius: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  noteTitle: {
+  notesContentContainer: {
+    flex: 1,
+    flexDirection: 'column',
+    marginLeft: 4,
+  },
+  notesTitleContainer: {
+    justifyContent: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row',
-    width: 240,
-    height: 30,
     overflow: 'hidden',
   },
-  isLargeDisplayNoteTitle: {
-    width: 340,
-  },
   iconTitleContainer: {
-    width: 25,
-    height: 25,
-    borderRadius: 9,
-    backgroundColor: '#CFFFDC',
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontSize: 18,
-    marginLeft: 5,
-  },
-  line: {
-    height: 2,
-    width: 240,
-    backgroundColor: '#cfffdc6a',
-  },
-  isLargeDisplayLine: {
-    width: 340,
+    fontSize: 16,
+    marginLeft: 1,
   },
   descriptionContainer: {
-    width: 240,
-    height: 35,
-    marginBottom: 5,
     overflow: 'hidden'
   },
-  isLargeDisplayDescriptionContainer: {
-    width: 340,
-  },
   description: {
-    fontSize: 14,
+    fontSize: 12,
     textAlign: 'justify',
-    fontFamily: 'MyFont',
   },
-  dateContainer: {
+  seeMore: {
+    fontSize: 12,
+  },
+  footerContainer: {
     flexDirection: 'row',
-    width: 230,
-    height: 24,
-    position: 'absolute',
-    top: 67,
     alignItems: 'center',
     overflow: 'hidden',
-  },
-  isLargeDisplayDateContainer: {
-    width: 330,
   },
   date: {
     marginTop: 2,
     marginLeft: 3,
-    marginRight: 10,
+    marginRight: 5,
     fontSize: 12,
   },
   noteTypeContainer: {
     position: 'absolute',
-    width: 60,
-    height: 25,
     justifyContent: 'center',
     alignItems: 'center',
     borderBottomLeftRadius: 30,
-    backgroundColor: '#2E6F40',
-    left: 192,
-    bottom: 75,
-  },
-  isLargeDisplayNoteTypeContainer: {
-    left: 292,
+    left: '89%',
+    bottom: '90%',
   },
   daysContainer: {
     flexDirection: 'row',
-    gap: 5,
+    gap: 3,
   },
   daysContent: {
     height: 19,
@@ -389,7 +424,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 80,
-    backgroundColor: '#CFFFDC'
   },
   dayText: {
     fontSize: 8,
@@ -397,8 +431,6 @@ const styles = StyleSheet.create({
   deleteIconContainer: {
     flex: 1,
     position: 'absolute',
-    right: 40,
-    top: 20,
     zIndex: -1,
   }
 });

@@ -1,8 +1,8 @@
 import {
     CategoryLeftIcon,
     CategoryRightIcon,
-    NotesTypeIcon,
-} from "../constant/NotesIcons";
+    NotesTypeIcons
+} from "../icons";
 import { NoteType } from "../types/Notes";
 import { useState } from "react";
 import {
@@ -55,7 +55,7 @@ const DropdownTypeofNotes = ({ value, onChangeItem }: Props) => {
                 const selectedItem = noteTypeList.find(d => d.value === value?.value);
 
                 return selectedItem ? (
-                    <NotesTypeIcon icon={selectedItem.icon} size={20} color="#2E6F40" />
+                    <NotesTypeIcons icon={selectedItem.icon} size={20} color="#2E6F40" />
                 ) : (
                     <CategoryLeftIcon size={20} color="#2E6F40" />
                 );
@@ -65,7 +65,7 @@ const DropdownTypeofNotes = ({ value, onChangeItem }: Props) => {
             )}
             renderItem={(item) => (
                 <View style={styles.itemContainer}>
-                    <NotesTypeIcon icon={item.icon} size={20} color={'#2E6F40'} />
+                    <NotesTypeIcons icon={item.icon} size={20} color={'#2E6F40'} />
                     <Text style={styles.item}>{item.label}</Text>
                 </View>
             )}

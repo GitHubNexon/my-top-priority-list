@@ -1,3 +1,5 @@
+import CustomHeader from '../../components/CustomHeader';
+import { useTheme } from '../../hooks';
 import NoteDetailsScreen from '../../screens/tabs/NotesDetailScreen';
 import PrioritiesScreen from '../../screens/tabs/Priorities/PrioritiesScreen';
 import { PrioritiesTabStackParamList } from '../../types/navigation';
@@ -7,23 +9,40 @@ import React from 'react';
 const Stack = createNativeStackNavigator<PrioritiesTabStackParamList>();
 
 const PrioritiesTabStack = () => {
+    const { theme } = useTheme();
+
     return (
         <Stack.Navigator
             screenOptions={{
-                headerShown: false,
-                //headerStyle: { backgroundColor: '#fff' },
-                //headerTitleAlign: "center",
-                animation: "none",
-                //headerLargeTitle: false,
+                headerShown: true,
+                header: CustomHeader,
+                headerStyle: {
+                    backgroundColor: theme.colors.primary,
+                },
+                headerTitleAlign: 'center',
+                animation: 'slide_from_right',
+                headerLargeTitle: false,
+                headerTintColor: theme.colors.text,
+                headerTitleStyle: {
+                    fontSize: 24
+                },
             }}
         >
             <Stack.Screen
-                name="PrioritiesScreen"
+                name='PrioritiesScreen'
                 component={PrioritiesScreen}
+                options={{
+                    title: 'Priorities',
+                    freezeOnBlur: false,
+                }}
             />
             <Stack.Screen
-                name="NoteDetailsScreen"
+                name='NoteDetailsScreen'
                 component={NoteDetailsScreen}
+                options={{
+                    title: 'Details',
+                    freezeOnBlur: true, // pause screens when blurred
+                }}
             />
         </Stack.Navigator>
     );

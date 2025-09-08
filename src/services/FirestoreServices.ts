@@ -7,6 +7,7 @@ import {
   FirebaseFirestoreTypes,
   getDocs,
   getFirestore,
+  initializeFirestore,
   setDoc,
 } from '@react-native-firebase/firestore';
 import { isErrorWithCode } from '@react-native-google-signin/google-signin';
@@ -15,6 +16,8 @@ const cache = new Map<string, FirebaseFirestoreTypes.CollectionReference>();
 type data = FirebaseFirestoreTypes.DocumentData | undefined;
 
 export class FireStoreServices {
+  
+
   // Returns a memoizable reference to the user's notes collection
   static getUserNotesCollectionRef(uid: string | null) {
     if (!uid) return null;
@@ -41,11 +44,11 @@ export class FireStoreServices {
       let errorMessage = 'Failed to fetch notes.';
       if (isErrorWithCode(error)) {
         errorMessage = getFirestoreErrorMessage(error.code);
+        console.error(`Error: ${errorMessage}`);
         throw new Error(errorMessage);
       } else if (error instanceof Error) {
-        errorMessage = getFirestoreErrorMessage(error.message);
+        console.error(`Unknown Error: ${error}`);
       }
-
       throw new Error(errorMessage);
     }
   }
@@ -63,11 +66,11 @@ export class FireStoreServices {
       let errorMessage = 'Failed to upload user notes.';
       if (isErrorWithCode(error)) {
         errorMessage = getFirestoreErrorMessage(error.code);
+        console.error(`Error: ${errorMessage}`);
         throw new Error(errorMessage);
       } else if (error instanceof Error) {
-        errorMessage = getFirestoreErrorMessage(error.message);
+        console.error(`Unknown Error: ${error}`);
       }
-
       throw new Error(errorMessage);
     }
   }
@@ -89,11 +92,11 @@ export class FireStoreServices {
       let errorMessage = 'Failed to update notes.';
       if (isErrorWithCode(error)) {
         errorMessage = getFirestoreErrorMessage(error.code);
+        console.error(`Error: ${errorMessage}`);
         throw new Error(errorMessage);
       } else if (error instanceof Error) {
-        errorMessage = getFirestoreErrorMessage(error.message);
+        console.error(`Unknown Error: ${error}`);
       }
-
       throw new Error(errorMessage);
     }
   }
@@ -111,11 +114,11 @@ export class FireStoreServices {
       let errorMessage = 'Failed to delete notes.';
       if (isErrorWithCode(error)) {
         errorMessage = getFirestoreErrorMessage(error.code);
+        console.error(`Error: ${errorMessage}`);
         throw new Error(errorMessage);
       } else if (error instanceof Error) {
-        errorMessage = getFirestoreErrorMessage(error.message);
+        console.error(`Unknown Error: ${error}`);
       }
-
       throw new Error(errorMessage);
     }
   }
@@ -149,11 +152,11 @@ export class FireStoreServices {
       let errorMessage = 'Failed to upload user credentials.';
       if (isErrorWithCode(error)) {
         errorMessage = getFirestoreErrorMessage(error.code);
+        console.error(`Error: ${errorMessage}`);
         throw new Error(errorMessage);
       } else if (error instanceof Error) {
-        errorMessage = getFirestoreErrorMessage(error.message);
+        console.error(`Unknown Error: ${error}`);
       }
-
       throw new Error(errorMessage);
     }
   }

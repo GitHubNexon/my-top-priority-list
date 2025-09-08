@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
 import WIP from '../../../assets/images/undraw_coming-soon_7lvi.svg';
 import {
     AddNotesFAB,
@@ -43,7 +42,7 @@ type HandlePressArgs = {
 
 const CalendarScreen = () => {
     const { theme } = useTheme();
-    const themeColor = theme.colors.background;
+    const themeColor = theme.myColors?.triadic;
 
     const bottomSheetRef = useRef<BottomSheetRefType>(null);
     const [renderedView, setRenderedView] = useState<() => React.ReactNode>(() => () => null);

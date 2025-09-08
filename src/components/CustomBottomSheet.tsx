@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 /**
  * Portal components to fixed overlay issue
  * like absolute position, customized bottom tab bar
@@ -19,11 +20,11 @@ import React, {
     useRef,
 } from 'react';
 import {
+    Dimensions,
     Keyboard,
     KeyboardAvoidingView,
     StyleSheet,
-    TouchableWithoutFeedback,
-    useWindowDimensions
+    TouchableWithoutFeedback
 } from "react-native";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -34,7 +35,7 @@ type Props = {
 };
 
 const CustomBottomSheet = ({ view, handleIcon, ref }: Props) => {
-    const { width } = useWindowDimensions();
+    const { width } = Dimensions.get('window');
 
     /**
      * Added safeareContext
@@ -100,7 +101,7 @@ const CustomBottomSheet = ({ view, handleIcon, ref }: Props) => {
                              * the KB avoiding view
                              * to work
                              */
-                            behavior='height'
+                            behavior='padding'
                             /**
                              * Need exactly at 70
                              * or it cause some bugs

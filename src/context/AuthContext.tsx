@@ -1,6 +1,8 @@
 import {
     ENCRYPTED_AUTH_STATES_KEY,
-    ENCRYPTED_AUTH_STATES_PASSWORD_KEY
+    ENCRYPTED_AUTH_STATES_PASSWORD_KEY,
+    MMKV_AUTH_STATES_ID,
+    MMKV_AUTH_STATES_KEY
 } from '../constant/keys';
 import { AuthServices } from '../services/AuthServices';
 import { FireStoreServices } from '../services/FirestoreServices';
@@ -57,12 +59,19 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
     const storeAuthState = async (newState: AuthStateType) => {
         try {
             await SecureStorage.saveSecureItem<AuthStateType>(
+                MMKV_AUTH_STATES_ID,
+                MMKV_AUTH_STATES_KEY,
                 ENCRYPTED_AUTH_STATES_KEY,
                 newState,
                 ENCRYPTED_AUTH_STATES_PASSWORD_KEY
             );
-        } catch (error) {
-            console.log('Error saving auth state', error);
+        } catch (error: unknown) {
+            let errorMessage = 'Error saving auth state';
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+            console.error(`Error: ${errorMessage}`);
+            throw errorMessage;
         }
     };
 
@@ -77,7 +86,8 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
                 errorMessage = error.message;
             }
 
-            throw new Error(errorMessage);
+            console.error(`Error: ${errorMessage}`);
+            throw errorMessage;
         }
     };
 
@@ -86,6 +96,8 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
         const getAuthStateFromStorage = async () => {
             try {
                 const value = await SecureStorage.getSecureItem<AuthStateType>(
+                    MMKV_AUTH_STATES_ID,
+                    MMKV_AUTH_STATES_KEY,
                     ENCRYPTED_AUTH_STATES_KEY,
                     ENCRYPTED_AUTH_STATES_PASSWORD_KEY
                 );
@@ -101,7 +113,8 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
                     errorMessage = error.message;
                 }
 
-                throw new Error(errorMessage);
+                console.error(`Error: ${errorMessage}`);
+                throw errorMessage;
             }
             setIsReady(true);
         };
@@ -135,8 +148,13 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
                         credentials
                     );
                 }
-            } catch (error) {
-                console.error('Verification check failed:', error);
+            } catch (error: unknown) {
+                let errorMessage = 'Verification check failed:';
+                if (error instanceof Error) {
+                    errorMessage = error.message;
+                }
+                console.error(`Error: ${errorMessage}`);
+                throw error;
             }
         };
 
@@ -175,9 +193,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
             const userUid = result.user.uid;
             await applyAuthState(userUid);
         } catch (error: unknown) {
-            if (error instanceof Error) {
-                throw new Error(error.message)
-            }
+            throw error;
         };
     };
 
@@ -197,9 +213,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
             setCurrentUser(result);
             setIsEmailVerified(result.user.emailVerified);
         } catch (error: unknown) {
-            if (error instanceof Error) {
-                throw new Error(error.message)
-            }
+            throw error;
         };
     };
 
@@ -222,10 +236,8 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
             await storeAuthState({ isLoggedIn: false, uid: null });
             setIsLoggedIn(false);
         } catch (error: unknown) {
-            if (error instanceof Error) {
-                throw new Error(error.message);
-            }
-        }
+            throw error;
+        };
     };
 
     // Sign In with Facebook
@@ -235,10 +247,8 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
             const userUid = result.user.uid
             await applyAuthState(userUid);
         } catch (error: unknown) {
-            if (error instanceof Error) {
-                console.error('Sign in error:', error.message);
-            }
-        }
+            throw error;
+        };
     };
 
     // Sign In with Google
@@ -262,9 +272,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
             };
             await applyAuthState(userID);
         } catch (error: unknown) {
-            if (error instanceof Error) {
-                throw new Error(error.message)
-            }
+            throw error;
         };
     };
 

@@ -1,14 +1,16 @@
-import Ionicons from "@react-native-vector-icons/ionicons";
+/* eslint-disable react-native/no-inline-styles */
+import Ionicons from '@react-native-vector-icons/ionicons';
 import { MaterialDesignIcons } from '@react-native-vector-icons/material-design-icons';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { useEffect, useState } from "react";
+import RNDateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useEffect, useState } from 'react';
 import {
+  Dimensions,
   Pressable,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View
-} from "react-native";
+} from 'react-native';
+import { formatDate } from '../utils/DateFormatter';
 
 type Props = {
   value?: { date: string; time: string; days: string[] };
@@ -16,37 +18,38 @@ type Props = {
 };
 
 const CustomDateTimePicker = ({ value, onChange }: Props) => {
+  const { width } = Dimensions.get('window');
+
   const [showClock, setShowClock] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [selectedDays, setSelectedDays] = useState<string[]>(value?.days || []);
 
-  const { width } = useWindowDimensions();
 
   const isLargeDisplay = width > 425;
 
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     setShowCalendar(false);
-    if (event.type === "set" && selectedDate) {
+    if (event.type === 'set' && selectedDate) {
       const iso = selectedDate.toISOString();
       setDate(iso);
       setSelectedDays([]); //Clear days when setting date
       emitChange({ date: iso, days: [] });
     }
-    if (event.type === "dismissed") {
+    if (event.type === 'dismissed') {
       setDate('')
     }
   };
 
   const handleTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     setShowClock(false);
-    if (event.type === "set" && selectedTime) {
+    if (event.type === 'set' && selectedTime) {
       const iso = selectedTime.toISOString();
       setTime(iso);
       emitChange({ time: iso });
     }
-    if (event.type === "dismissed") {
+    if (event.type === 'dismissed') {
       setTime('')
     }
   };
@@ -62,16 +65,6 @@ const CustomDateTimePicker = ({ value, onChange }: Props) => {
   };
 
   const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  const customFormattedDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
-    const month = date.toLocaleDateString('en-US', { month: 'short' });
-    const day = date.toLocaleDateString('en-US', { day: '2-digit' });
-    const year = date.getFullYear();
-
-    return `${weekday} ${month} ${day}, ${year}`;
-  };
 
   useEffect(() => {
     // Sync internal state when parent value changes
@@ -102,9 +95,9 @@ const CustomDateTimePicker = ({ value, onChange }: Props) => {
               onPress={() => setShowClock(true)}
               style={styles.dateTimePickerButton}
             >
-              <MaterialDesignIcons name="clock-time-four-outline" size={24} color="#2E6F40" />
+              <MaterialDesignIcons name='clock-time-four-outline' size={24} color='#2E6F40' />
               <Text style={{ color: 'black', fontSize: 14, marginLeft: 10, }}>
-                {time ? new Date(time).toLocaleTimeString() : "Clock"}
+                {time ? new Date(time).toLocaleTimeString() : 'Clock'}
               </Text>
             </Pressable>
           </View>
@@ -116,9 +109,9 @@ const CustomDateTimePicker = ({ value, onChange }: Props) => {
               onPress={() => setShowCalendar(true)}
               style={styles.dateTimePickerButton}
             >
-              <Ionicons name="calendar-outline" size={24} color="#2E6F40" />
+              <Ionicons name='calendar-outline' size={24} color='#2E6F40' />
               <Text style={{ color: 'black', fontSize: 14, marginLeft: 10 }}>
-                {date ? customFormattedDate(date) : 'Calendar'}
+                {date ? formatDate(date) : 'Calendar'}
               </Text>
             </Pressable>
           </View>
@@ -147,7 +140,8 @@ const CustomDateTimePicker = ({ value, onChange }: Props) => {
         </View>
       </View>
       {showCalendar && (
-        <DateTimePicker
+        <RNDateTimePicker
+          design='material'
           value={date ? new Date(date) : new Date()}
           mode='date'
           display='calendar'
@@ -155,7 +149,8 @@ const CustomDateTimePicker = ({ value, onChange }: Props) => {
         />
       )}
       {showClock && (
-        <DateTimePicker
+        <RNDateTimePicker
+          design='material'
           value={date ? new Date(date) : new Date()}
           mode='time'
           display='clock'

@@ -44,7 +44,7 @@ type HandlePressArgs = {
 
 const NotesScreen = () => {
     const { theme } = useTheme();
-    const themeColor = theme.colors.background;
+    const themeColor = theme.myColors?.triadic;
 
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -65,7 +65,7 @@ const NotesScreen = () => {
             getNotesToastMessage(null);
             setShowToast(false);
             setToastMessage(null);
-        }, 2100);
+        }, 5000);
 
         return () => clearTimeout(timer);
     }, [noteToastMessage, getNotesToastMessage]);
@@ -173,43 +173,45 @@ const NotesScreen = () => {
     }, [openWith]);
 
     return (
-        <View style={[styles.container, {
-            backgroundColor: themeColor,
-        }]}>
-            <Toast
-                message={toastMessage ?? ''}
-                visible={showToast}
-                onHide={() => setShowToast(false)}
-            />
-            {renderedView && renderedHandle && (
-                <CustomBottomSheet
-                    ref={bottomSheetRef}
-                    view={renderedView}
-                    handleIcon={renderedHandle}
+        <>
+            <View style={[styles.container, {
+                backgroundColor: themeColor,
+            }]}>
+                <Toast
+                    message={toastMessage ?? ''}
+                    visible={showToast}
+                    onHide={() => setShowToast(false)}
                 />
-            )}
-            <AddNotesFAB onPress={(screen) => handlePress({ screen })} />
-            <BgImage
-                width='100%'
-                height='100%'
-                style={styles.backgroundImage}
-            />
-            <FlatList
-                data={notes}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <NoteItemCardView
-                        note={item}
-                        onPress={(note) => handlePress({ note })}
+                {renderedView && renderedHandle && (
+                    <CustomBottomSheet
+                        ref={bottomSheetRef}
+                        view={renderedView}
+                        handleIcon={renderedHandle}
                     />
                 )}
-                extraData={notes}
-                removeClippedSubviews={false}//Helps with animation glitches
-                initialNumToRender={10}
-                maxToRenderPerBatch={5}
-                style={styles.flatlist}
-            />
-        </View>
+                <AddNotesFAB onPress={(screen) => handlePress({ screen })} />
+                <BgImage
+                    width='100%'
+                    height='100%'
+                    style={styles.backgroundImage}
+                />
+                <FlatList
+                    data={notes}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                        <NoteItemCardView
+                            note={item}
+                            onPress={(note) => handlePress({ note })}
+                        />
+                    )}
+                    extraData={notes}
+                    removeClippedSubviews={false}//Helps with animation glitches
+                    initialNumToRender={10}
+                    maxToRenderPerBatch={5}
+                    style={styles.flatlist}
+                />
+            </View>
+        </>
     )
 };
 
@@ -230,7 +232,7 @@ const styles = StyleSheet.create({
         bottom: 0,
     },
     flatlist: {
-        paddingTop: 10,
+        paddingBottom: 10,
     },
 });
 

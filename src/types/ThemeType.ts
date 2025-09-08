@@ -13,10 +13,14 @@ export type ThemeType = Theme & {
 };
 
 export interface CustomTheme extends Theme {
-  myColors: {
-    success: string;
-    warning: string;
-    danger: string;
-    muted: string;
+  myColors?: {
+    primary: string;
+    triadic: string;
+    analogous: string;
+    complementary: string;
+  };
+  fontColors?: {
+    primary: string;
+    secondary: string;
   };
 }

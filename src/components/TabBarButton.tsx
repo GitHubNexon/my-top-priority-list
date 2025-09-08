@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import BottomTabIcons from '../constant/BottomTabIcons';
+import { BottomTabIcons } from '../icons';
 import { GestureResponderEvent, Pressable, StyleSheet, Text } from 'react-native';
 import Animated, {
     useAnimatedStyle,
@@ -22,7 +22,8 @@ const TabBarButton = (
         label: string,
     }) => {
     const { theme } = useTheme();
-    const themeColor = theme.colors.border;
+    const primaryFontColor = theme.fontColors?.primary;
+    const secondaryFontColor = theme.fontColors?.secondary;
 
     const animatedIconStyle = useAnimatedStyle(() => {
         return {
@@ -37,10 +38,10 @@ const TabBarButton = (
             style={styles.tabBarItems}
         >
             <Animated.View style={animatedIconStyle}>
-                {BottomTabIcons[routeName]?.({ color: isFocused ? '#17c200d3' : themeColor, size: 32, isFocused })}
+                {BottomTabIcons[routeName]?.({ color: isFocused ? '#68BA7F' : secondaryFontColor, size: 32, isFocused })}
             </Animated.View>
             <Text style={{
-                color: isFocused ? '#17c200d3' : themeColor,
+                color: isFocused ? primaryFontColor : secondaryFontColor,
                 fontSize: isFocused ? 12 : 10
             }}
             >

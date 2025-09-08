@@ -7,28 +7,37 @@ import {
   PrioritiesTabStack,
   ProfileTabStack,
 } from './tabs/index';
-import { useTheme } from '../hooks';
 import ThemedTabBar from '../components/TabBar';
 
 const BottomTabNavigator = () => {
-  const { theme } = useTheme();
   const Tab = createBottomTabNavigator<BottomTabStackParamList>();
 
   return (
-    <Tab.Navigator tabBar={ThemedTabBar}
-      backBehavior='history'
-      initialRouteName='Priorities'
+    <Tab.Navigator
+      tabBar={ThemedTabBar}
+      /**
+         * @detachInactiveScreens
+         * Should set to TRUE
+         * so it don’t take GPU/CPU resources,
+         * but their React state is still kept in memory
+         * 
+         * @lazy
+         * Should set to TRUE
+         * faster startup and
+         * will only mounted the first time you visit them
+         * 
+         * @freezeOnBlur
+         * Should set to FALSE
+         * for background UPDATES
+         * and useEffect
+         */
+      detachInactiveScreens={true}
+      backBehavior="history"
+      initialRouteName="Priorities"
       screenOptions={{
-        headerShown: true,
-        headerStyle: {
-          backgroundColor: theme.colors.primary,
-          height: 100,
-        },
-        headerTintColor: theme.colors.text,
-        headerTitleAlign: 'center',
-        animation: 'none',
         lazy: true,
-        freezeOnBlur: true,
+        headerShown: false,
+        freezeOnBlur: false,
       }}
     >
       <Tab.Screen

@@ -1,7 +1,24 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { AlarmService } from '../../../services/AlarmServices';
 
 const FaQScreen = () => {
+
+    const setAlarm = async () => {
+        await AlarmService.scheduleAlarm({
+            timestamp: Date.now() + 5000, // 5 seconds from now
+            title: "My Custom Alarm",
+            message: "This is a dynamic message!",
+            requestCodeStr: "custom_alarm_123",
+            recurrenceType: "ONCE"
+        });
+        console.log(`Set Alarm`);
+    };
+
+    const cancelAlarm = async () => {
+        console.log(`Cancel Alarm`);
+        return
+    };
+
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.header}>Frequently Asked Questions</Text>
@@ -26,6 +43,12 @@ const FaQScreen = () => {
                     A: Go to App Settings and toggle the Dark Mode switch.
                 </Text>
             </View>
+            <Pressable onPress={setAlarm} style={styles.saveButton}>
+                <Text style={styles.buttonText}>Set Alarm</Text>
+            </Pressable>
+            <Pressable onPress={cancelAlarm} style={styles.saveButton}>
+                <Text style={styles.buttonText}>Cancel Alarm</Text>
+            </Pressable>
         </ScrollView>
     );
 };
@@ -51,6 +74,20 @@ const styles = StyleSheet.create({
     answer: {
         fontSize: 16,
         color: '#555',
+    },
+    saveButton: {
+        width: 150,
+        height: 50,
+        marginTop: 30,
+        marginBottom: 30,
+        borderRadius: 30,
+        backgroundColor: '#CFFFDC',
+        alignSelf: 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    buttonText: {
+        fontSize: 20,
     },
 });
 

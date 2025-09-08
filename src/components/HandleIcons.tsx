@@ -1,4 +1,4 @@
-import { NotesCategoryIcon } from "../constant/NotesIcons";
+import { NotesCategoryIcons } from "../icons";
 import { BottomSheetDefaultHandleProps } from "@gorhom/bottom-sheet/lib/typescript/components/bottomSheetHandle/types";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -11,7 +11,7 @@ export const DefaultHandleIcon = ({ style }: BottomSheetDefaultHandleProps) => {
 export const WorkHandleIcon = ({ style }: BottomSheetDefaultHandleProps) => {
     return (
         <View style={[styles.handleContainer, style]}>
-            <NotesCategoryIcon icon={'work'} size={30} color="#68BA7F" />
+            <NotesCategoryIcons icon={'work'} size={30} color="#68BA7F" />
             <Text style={styles.titleText}>
                 Work
             </Text>
@@ -22,7 +22,7 @@ export const WorkHandleIcon = ({ style }: BottomSheetDefaultHandleProps) => {
 export const HealthHandleIcon = ({ style }: BottomSheetDefaultHandleProps) => {
     return (
         <View style={[styles.handleContainer, style]}>
-            <NotesCategoryIcon icon={'health'} size={30} color="#68BA7F" />
+            <NotesCategoryIcons icon={'health'} size={30} color="#68BA7F" />
             <Text style={styles.titleText}>
                 Health
             </Text>
@@ -33,7 +33,7 @@ export const HealthHandleIcon = ({ style }: BottomSheetDefaultHandleProps) => {
 export const SpiritualHandleIcon = ({ style }: BottomSheetDefaultHandleProps) => {
     return (
         <View style={[styles.handleContainer, style]}>
-            <NotesCategoryIcon icon={'spiritual'} size={30} color="#68BA7F" />
+            <NotesCategoryIcons icon={'spiritual'} size={30} color="#68BA7F" />
             <Text style={styles.titleText}>
                 Spiritual
             </Text>
@@ -44,7 +44,7 @@ export const SpiritualHandleIcon = ({ style }: BottomSheetDefaultHandleProps) =>
 export const FinanceHandleIcon = ({ style }: BottomSheetDefaultHandleProps) => {
     return (
         <View style={[styles.handleContainer, style]}>
-            <NotesCategoryIcon icon={'finance'} size={30} color="#68BA7F" />
+            <NotesCategoryIcons icon={'finance'} size={30} color="#68BA7F" />
             <Text style={styles.titleText}>
                 Finance
             </Text>
@@ -55,7 +55,7 @@ export const FinanceHandleIcon = ({ style }: BottomSheetDefaultHandleProps) => {
 export const HobbyHandleIcon = ({ style }: BottomSheetDefaultHandleProps) => {
     return (
         <View style={[styles.handleContainer, style]}>
-            <NotesCategoryIcon icon={'hobby'} size={30} color="#68BA7F" />
+            <NotesCategoryIcons icon={'hobby'} size={30} color="#68BA7F" />
             <Text style={styles.titleText}>
                 Hobby
             </Text>
@@ -66,7 +66,7 @@ export const HobbyHandleIcon = ({ style }: BottomSheetDefaultHandleProps) => {
 export const OtherHandleIcon = ({ style }: BottomSheetDefaultHandleProps) => {
     return (
         <View style={[styles.handleContainer, style]}>
-            <NotesCategoryIcon icon={'other'} size={30} color="#68BA7F" />
+            <NotesCategoryIcons icon={'other'} size={30} color="#68BA7F" />
             <Text style={styles.titleText}>
                 Other
             </Text>

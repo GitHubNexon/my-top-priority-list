@@ -6,7 +6,6 @@ import {
     ViewStyle,
     TextStyle,
     StyleProp,
-    useWindowDimensions,
 } from 'react-native';
 
 interface ToastProps {
@@ -18,16 +17,14 @@ interface ToastProps {
     textStyle?: StyleProp<TextStyle>;
 }
 
-const Toast: React.FC<ToastProps> = ({
+const Toast = ({
     message,
     visible,
-    duration = 2000,
+    duration = 5000,
     onHide,
     containerStyle,
     textStyle,
-}) => {
-    const { height } = useWindowDimensions();
-
+}: ToastProps) => {
     const opacity = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -57,11 +54,8 @@ const Toast: React.FC<ToastProps> = ({
     return (
         <Animated.View style={[
             styles.toastContainer,
-            containerStyle,
             { opacity },
-            {
-                bottom: height - 35,
-            }
+            containerStyle,
         ]}>
             <Text style={[styles.toastText, textStyle]}>{message}</Text>
         </Animated.View>
@@ -72,15 +66,16 @@ const styles = StyleSheet.create({
     toastContainer: {
         position: 'absolute',
         alignSelf: 'center',
-        backgroundColor: '#333',
         paddingVertical: 10,
         paddingHorizontal: 20,
         margin: 10,
         borderRadius: 100,
+        backgroundColor: '#CFFFDC',
+        elevation: 10,
         zIndex: 1000,
     },
     toastText: {
-        color: 'white',
+        color: 'black',
         fontSize: 14,
     },
 });

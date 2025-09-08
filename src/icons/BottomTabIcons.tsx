@@ -1,11 +1,6 @@
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { JSX } from 'react';
-
-type IconProps = {
-    color: string;
-    size: number;
-    isFocused?: boolean;
-};
+import { IconProps } from '../types/IconProps';
 
 const BottomTabIcons: Record<string, (props: IconProps) => JSX.Element> = {
     Profile: (props) => {

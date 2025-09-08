@@ -1,6 +1,8 @@
 import {
     ENCRYPTED_NOTES_KEY,
-    ENCRYPTED_NOTES_PASSWORD_KEY
+    ENCRYPTED_NOTES_PASSWORD_KEY,
+    MMKV_NOTES_ID,
+    MMKV_NOTES_KEY
 } from "../constant/keys";
 import { NotificationService } from "../services/NotificationServices";
 import { SecureStorage } from "../storage/SecureStorage";
@@ -39,17 +41,12 @@ const NotesProvider = ({ children }: { children: React.ReactNode }) => {
     const [notes, setNotes] = useState<Notes[]>([]);
     const [isInitialized, setIsInitialized] = useState(false);
 
-    const verifyCleanup = async () => {
-        const keys = await SecureStorage.verifyCleanUp();
-        console.log(`Verification: ${keys?.length === 0
-            ? '✅ Keys have been cleared.'
-            : '❌ Keys are not completely cleared.'}`);
-    };
-
     // Debounced persistence
     const persistNotes = useCallback(async (notesToSave: Notes[]) => {
         try {
             await SecureStorage.saveSecureItem<Notes[]>(
+                MMKV_NOTES_ID,
+                MMKV_NOTES_KEY,
                 ENCRYPTED_NOTES_KEY,
                 notesToSave,
                 ENCRYPTED_NOTES_PASSWORD_KEY
@@ -69,6 +66,8 @@ const NotesProvider = ({ children }: { children: React.ReactNode }) => {
         const loadNotes = async () => {
             try {
                 const decrypted = await SecureStorage.getSecureItem<Notes[]>(
+                    MMKV_NOTES_ID,
+                    MMKV_NOTES_KEY,
                     ENCRYPTED_NOTES_KEY,
                     ENCRYPTED_NOTES_PASSWORD_KEY
                 ) ?? [];
@@ -128,7 +127,6 @@ const NotesProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             await NotificationService.cancelAllNotifications();
             setNotes([]);
-            await verifyCleanup();
         } catch (error) {
             console.error("Failed to clear notes:", error);
         }

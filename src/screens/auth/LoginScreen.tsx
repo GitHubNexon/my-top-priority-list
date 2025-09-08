@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import LoginBG from '../../assets/images/loginBg.png';
 import Toast from '../../components/ToastMessage';
 import { useAuth } from '../../hooks';
@@ -7,17 +8,17 @@ import { FontAwesome } from '@react-native-vector-icons/fontawesome';
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   ImageBackground,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
-  useWindowDimensions,
   View
 } from 'react-native';
 
 const LoginScreen = () => {
-  const { width, height } = useWindowDimensions();
+  const { width, height } = Dimensions.get('window');
   type EntypoIconName = React.ComponentProps<typeof Entypo>['name'];
 
   const navigation = useNavigationTyped();
@@ -54,9 +55,8 @@ const LoginScreen = () => {
 
       setShowToast(true);
       setToastMessage(errorMessage);
-      console.error(`Error: ${errorMessage}`);
 
-      throw new Error(errorMessage);
+      throw errorMessage
     } finally {
       setIsLoading(false);
     };
@@ -71,13 +71,9 @@ const LoginScreen = () => {
       if (error instanceof Error) {
         errorMessage = error.message;
       }
-
-      setShowToast(true);
-      setToastMessage(errorMessage);
-      console.error(`Error: ${errorMessage}`);
-
-      throw new Error(errorMessage);
-    };
+      
+      throw errorMessage;
+    }
   };
 
   const handleRegisterScreen = () => {
@@ -91,8 +87,8 @@ const LoginScreen = () => {
           size={'large'}
           color={'#2E6F40'}
           style={[styles.loading, {
-            right: (width / 2) - 18,
-            bottom: height / 2,
+            right: (width * 5) - 18,
+            bottom: height * .5,
           }]}
         />
       }
@@ -100,6 +96,9 @@ const LoginScreen = () => {
         message={toastMessage}
         visible={showToast}
         onHide={() => setShowToast(false)}
+        containerStyle={{
+          bottom: '90%',
+        }}
       />
       <View style={styles.container}>
         <Text style={styles.titleText}>Log In</Text>

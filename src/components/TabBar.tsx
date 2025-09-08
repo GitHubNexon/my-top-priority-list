@@ -8,14 +8,14 @@ const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
   const { theme } = useTheme();
   const { navigationType } = useNavBarType();
 
-  const navBarPadding = navigationType === 'gesture' ? 8
-    : navigationType === '2-button' ? 14
+  const navBarPadding = navigationType === 'gesture' ? 10
+    : navigationType === '2-button' ? 15
       : navigationType === '3-button' ? 30 : 8
 
   return (
     <View
       style={[styles.tabBar, {
-        backgroundColor: theme.colors.primary,
+        backgroundColor: theme.myColors?.primary,
         paddingBottom: navBarPadding,
       }]}
     >
@@ -76,8 +76,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const ThemedTabBar = (props: BottomTabBarProps) => {
-  return <TabBar {...props} />;
-};
+const ThemedTabBar = (props: BottomTabBarProps) => <TabBar {...props} />;
 
 export default ThemedTabBar;

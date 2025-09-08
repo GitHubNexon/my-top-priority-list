@@ -1,21 +1,23 @@
-import {
-    ENCRYPTED_FAILED_NOTES_ID_KEY,
-    ENCRYPTED_FAILED_NOTES_ID_PASSWORD_KEY
-} from "../constant/keys";
-import { FireStoreServices } from "../services/FirestoreServices";
-import { SyncLocalNotes } from "../services/SyncLocalNotes";
-import { SecureStorage } from "../storage/SecureStorage";
+import { FireStoreServices } from '../services/FirestoreServices';
+import { SyncLocalNotes } from '../services/SyncLocalNotes';
+import { SecureStorage } from '../storage/SecureStorage';
 import {
     Notes,
     successfulSync,
     SyncFailedNotesId
-} from "../types/Notes";
-import { UserCredentials } from "../types/UserCredentials";
+} from '../types/Notes';
+import { UserCredentials } from '../types/UserCredentials';
 import {
     createContext,
     PropsWithChildren,
-} from "react";
-import { useAuth, useNotes } from "../hooks";
+} from 'react';
+import { useAuth, useNotes } from '../hooks';
+import {
+    ENCRYPTED_FAILED_NOTES_KEY,
+    ENCRYPTED_FAILED_NOTES_PASSWORD_KEY,
+    MMKV_FAILED_NOTES_ID,
+    MMKV_FAILED_NOTES_KEY
+} from '../constant/keys';
 
 type FirestoreContextType = {
     getNotesFromFirestore: () => Promise<Notes[]>;
@@ -41,14 +43,21 @@ const FirestoreProvider = ({ children }: PropsWithChildren) => {
 
     const saveFailedNote = async (type: keyof SyncFailedNotesId, id: string) => {
         try {
-            const syncFailedNotesId = await SecureStorage.getSecureItem<SyncFailedNotesId>(
-                ENCRYPTED_FAILED_NOTES_ID_KEY,
-                ENCRYPTED_FAILED_NOTES_ID_PASSWORD_KEY
-            );
+            const syncFailedNotesId =
+                await SyncLocalNotes.getSyncFailedNotesId();
 
             if (!syncFailedNotesId) return;
 
-            if (type === "deletedNotesId") {
+            /**
+             * Filtering to save failed CRUD operation
+             * of notes ID
+             * If @deletedNotesId has the same ID on
+             * @updatedNotesId and @uploadedNotesId
+             * it will filter it's array to prevent
+             * multiple operation when it's synching into
+             * firestore
+             */
+            if (type === 'deletedNotesId') {
                 syncFailedNotesId.updatedNotesId =
                     syncFailedNotesId.updatedNotesId.filter((noteId) => noteId !== id);
                 syncFailedNotesId.uploadedNotesId =
@@ -60,12 +69,16 @@ const FirestoreProvider = ({ children }: PropsWithChildren) => {
             }
 
             await SecureStorage.saveSecureItem<SyncFailedNotesId>(
-                ENCRYPTED_FAILED_NOTES_ID_KEY,
+                MMKV_FAILED_NOTES_ID,
+                MMKV_FAILED_NOTES_KEY,
+                ENCRYPTED_FAILED_NOTES_KEY,
                 syncFailedNotesId,
-                ENCRYPTED_FAILED_NOTES_ID_PASSWORD_KEY
+                ENCRYPTED_FAILED_NOTES_PASSWORD_KEY,
             );
-        } catch (e) {
-            console.error("Failed to save failed note id:", e);
+        } catch (error: unknown) {
+            console.error(`Failed to save failed note id: ${id}\nError: ${error}`);
+
+            throw error;
         }
     };
 
@@ -75,8 +88,9 @@ const FirestoreProvider = ({ children }: PropsWithChildren) => {
             return await FireStoreServices.getNotes(uid);
         } catch (error: unknown) {
             if (error instanceof Error) {
-                throw new Error(error.message);
+                throw error;
             };
+
             return [];
         };
     };
@@ -86,10 +100,8 @@ const FirestoreProvider = ({ children }: PropsWithChildren) => {
             if (!uid) return;
             await FireStoreServices.uploadNotes(uid, note);
         } catch (error: unknown) {
-            if (error instanceof Error) {
-                await saveFailedNote('uploadedNotesId', note.id);
-                throw new Error(error.message);
-            };
+            await saveFailedNote('uploadedNotesId', note.id);
+            throw error;
         };
     };
 
@@ -102,10 +114,8 @@ const FirestoreProvider = ({ children }: PropsWithChildren) => {
             if (!userID) return;
             await FireStoreServices.updateNotes(userID, id, data);
         } catch (error: unknown) {
-            if (error instanceof Error) {
-                await saveFailedNote('updatedNotesId', id);
-                throw new Error(error.message);
-            };
+            await saveFailedNote('updatedNotesId', id);
+            throw error;
         };
     };
 
@@ -114,10 +124,8 @@ const FirestoreProvider = ({ children }: PropsWithChildren) => {
             if (!userID) return;
             await FireStoreServices.deleteNotes(userID, id);
         } catch (error: unknown) {
-            if (error instanceof Error) {
-                await saveFailedNote('deletedNotesId', id);
-                throw new Error(error.message);
-            }
+            await saveFailedNote('deletedNotesId', id);
+            throw error;
         };
     };
 
@@ -129,13 +137,14 @@ const FirestoreProvider = ({ children }: PropsWithChildren) => {
             await SyncLocalNotes.syncFailedUpdatedNotes(userID, notes);
             successfulSync.length = 0; // clear the arrays
         } catch (error: unknown) {
-            let errorMessage = "Error syncing local data.";
+            let errorMessage = 'Error syncing local notes.';
 
             if (error instanceof Error) {
                 errorMessage = error.message;
             }
 
-            throw new Error(errorMessage);
+            console.error(`Error: ${errorMessage}`);
+            throw errorMessage;
         }
     };
 
@@ -151,9 +160,9 @@ const FirestoreProvider = ({ children }: PropsWithChildren) => {
             );
         } catch (error: unknown) {
             if (error instanceof Error) {
-                throw new Error(error.message);
-            };
-        };
+                throw error;
+            }
+        }
     };
 
     return (
