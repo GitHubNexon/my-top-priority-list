@@ -24,6 +24,6 @@ class SnoozeReceiver : BroadcastReceiver() {
             RecurrenceHelper.TYPE_ONCE,
             ""
         )
-        AlarmNotificationHelper.cancelNotification(context, requestCode)
+        AlarmNotificationHelper.cancelAlarmNotification(context)
     }
 }

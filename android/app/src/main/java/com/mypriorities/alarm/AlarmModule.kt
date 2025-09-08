@@ -100,7 +100,7 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
         try {
             val requestCode = generateRequestCode(requestCodeStr)
             AlarmScheduler.cancelAlarm(reactContext, requestCode)
-            AlarmNotificationHelper.cancelNotification(reactContext, requestCode)
+            AlarmNotificationHelper.cancelAlarmNotification(reactContext)
             promise.resolve(true)
         } catch (e: Exception) {
             promise.reject("E_CANCEL_ALARM", e)

@@ -1,5 +1,6 @@
 package com.mypriorities.alarm
 
+import android.util.Log
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
@@ -56,6 +57,23 @@ object AlarmScheduler {
             triggerAtMillis,
             pi
         )
+    }
+
+    fun scheduleSnooze(context: Context, minutes: Int) {
+        val snoozeTime = System.currentTimeMillis() + minutes * 60 * 1000
+
+        val intent = Intent(context, AlarmReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            2001,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeTime, pendingIntent)
+
+        Log.d("AlarmScheduler", "Snooze set for $minutes minutes later")
     }
 
     fun cancelAlarm(context: Context, requestCode: Int) {

@@ -12,7 +12,7 @@ class StopAlarmReceiver : BroadcastReceiver() {
         context.stopService(Intent(context, AlarmSoundService::class.java))
 
         // Cancel the notification
-        AlarmNotificationHelper.cancelNotification(context, requestCode)
+        AlarmNotificationHelper.cancelAlarmNotification(context)
 
         // Cancel the alarm
         AlarmScheduler.cancelAlarm(context, requestCode)

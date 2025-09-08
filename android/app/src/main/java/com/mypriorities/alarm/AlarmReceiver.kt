@@ -6,66 +6,43 @@ import android.content.Intent
 import android.util.Log
 
 class AlarmReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent?) {
-        val title = intent?.getStringExtra("title") ?: "Alarm"
-        val message = intent?.getStringExtra("message") ?: "Alarm!"
-        val requestCode = intent?.getIntExtra("requestCode", 1001) ?: 1001
-        val recurrenceType = intent?.getStringExtra("recurrenceType") ?: "ONCE"
-        val recurrencePattern = intent?.getStringExtra("recurrencePattern") ?: ""
 
-        Log.d("AlarmReceiver", "Alarm triggered: $title - $message")
+    override fun onReceive(context: Context, intent: Intent) {
+        val action = intent.action
+        Log.d("AlarmReceiver", "Received action: $action")
 
-        // Show actionable notification + full-screen intent (sound is now handled by notification)
-        AlarmNotificationHelper.showNotification(context, title, message, requestCode)
+        when (action) {
+            "STOP_ALARM" -> {
+                // Stop alarm sound
+                context.stopService(Intent(context, AlarmSoundService::class.java))
+                // Cancel notification
+                AlarmNotificationHelper.cancelAlarmNotification(context)
+            }
 
-        // Start the service to keep the app alive (but no sound playing)
-        context.startService(Intent(context, AlarmSoundService::class.java).apply {
-            putExtra("requestCode", requestCode)
-            putExtra("title", title)
-            putExtra("message", message)
-        })
+            "SNOOZE_ALARM" -> {
+                // Stop alarm sound first
+                context.stopService(Intent(context, AlarmSoundService::class.java))
+                AlarmNotificationHelper.cancelAlarmNotification(context)
 
-        // Reschedule if it's a recurring alarm
-        if (RecurrenceHelper.shouldReschedule(recurrenceType) && intent != null) {
-            rescheduleRecurringAlarm(context, intent)
-        }
-    }
+                // Example: reschedule alarm in 5 mins (customize if you store snoozeMinutes in prefs)
+                val snoozeMinutes = intent.getIntExtra("snoozeMinutes", 5)
+                AlarmScheduler.scheduleSnooze(context, snoozeMinutes)
+            }
 
-    private fun rescheduleRecurringAlarm(context: Context, intent: Intent) {
-        try {
-            val requestCode = intent.getIntExtra("requestCode", 1001)
-            val title = intent.getStringExtra("title") ?: "Alarm"
-            val message = intent.getStringExtra("message") ?: "Alarm!"
-            val recurrenceType = intent.getStringExtra("recurrenceType") ?: "ONCE"
-            val recurrencePattern = intent.getStringExtra("recurrencePattern") ?: ""
-            
-            val patternMap = RecurrenceHelper.parseRecurrencePattern(recurrencePattern)
-            val daysOfWeek = (patternMap["daysOfWeek"] as? Array<*>)?.filterIsInstance<Int>() ?: emptyList()
-            val dayOfMonth = (patternMap["dayOfMonth"] as? Int) ?: 0
-            val interval = (patternMap["interval"] as? Int) ?: 1
-            
-            val nextTriggerTime = RecurrenceHelper.calculateNextTriggerTime(
-                System.currentTimeMillis(),
-                recurrenceType,
-                recurrencePattern,
-                daysOfWeek,
-                dayOfMonth,
-                interval,
-                System.currentTimeMillis()
-            )
-            
-            AlarmScheduler.scheduleRecurringAlarm(
-                context,
-                nextTriggerTime,
-                requestCode,
-                title,
-                message,
-                recurrenceType,
-                recurrencePattern
-            )
-            
-        } catch (e: Exception) {
-            Log.e("AlarmReceiver", "Error rescheduling recurring alarm", e)
+            else -> {
+                // Normal alarm trigger from AlarmManager
+                Log.d("AlarmReceiver", "Alarm triggered!")
+
+                // Start playing alarm sound
+                context.startForegroundService(Intent(context, AlarmSoundService::class.java))
+
+                // Show alarm notification
+                AlarmNotificationHelper.showAlarmNotification(
+                    context,
+                    "Alarm",
+                    "Wake up! ⏰"
+                )
+            }
         }
     }
 }
