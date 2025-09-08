@@ -1,8 +1,16 @@
 import { NativeModules } from 'react-native';
 
-const { AlarmModule } = NativeModules;
+const { AlarmModule, AlarmConfig } = NativeModules;
 
-interface AlarmConfig {
+type RecurrenceType =
+  | 'ONCE'
+  | 'DAILY'
+  | 'WEEKLY'
+  | 'MONTHLY'
+  | 'YEARLY'
+  | 'CUSTOM';
+
+interface AlarmScheduleConfig {
   timestamp: number;
   title?: string;
   message: string;
@@ -13,105 +21,37 @@ interface AlarmConfig {
   interval?: number;
 }
 
-interface AlarmConfigOptions {
-  sound?: string;
-  vibrate?: boolean;
-  snoozeMinutes?: number;
-  smallIcon?: string;
-  bigIcon?: string;
-}
-
-type RecurrenceType =
-  | 'ONCE'
-  | 'DAILY'
-  | 'WEEKLY'
-  | 'MONTHLY'
-  | 'YEARLY'
-  | 'CUSTOM';
-
-interface AlarmModuleInterface {
-  // Configuration methods
-  alarmConfig: (
-    sound: string | null,
-    vibrate: boolean | null,
-    snoozeMinutes: number | null,
-    smallIcon: string | null,
-    bigIcon: string | null,
-  ) => Promise<boolean>;
-
-  getAlarmConfig: () => Promise<{
-    sound_uri: string;
-    vibrate: boolean;
-    snooze_minutes: number;
-    small_icon: string;
-    big_icon: string;
-  }>;
-
-  getRingtone: (uri: string) => Promise<{
-    title: string;
-    uri: string;
-  }>;
-
-  getAllRingtones: () => Promise<
-    Array<{
-      title: string;
-      uri: string;
-    }>
-  >;
-
-  // Alarm scheduling methods
-  scheduleAlarm: (
-    timestamp: number,
-    title: string,
-    message: string,
-    requestCodeStr: string,
-    recurrenceType: string,
-    recurrencePattern: string,
-  ) => Promise<string>;
-
-  scheduleRecurringAlarm: (
-    timestamp: number,
-    title: string,
-    message: string,
-    requestCodeStr: string,
-    recurrenceType: string,
-    daysOfWeek: number[],
-    dayOfMonth: number,
-    interval: number,
-  ) => Promise<string>;
-
-  cancelAlarm: (requestCodeStr: string) => Promise<boolean>;
-  cancelAllAlarms: () => Promise<boolean>;
-}
-
 export class AlarmService {
-  private static alarmModule: AlarmModuleInterface = AlarmModule;
-
-  // Configuration methods
-  static async configureAlarm(options: AlarmConfigOptions): Promise<boolean> {
-    return await AlarmModule.alarmConfig(
-      options.sound || null,
-      options.vibrate || null,
-      options.snoozeMinutes || null,
-      options.smallIcon || null,
-      options.bigIcon || null,
-    );
+  // ========================
+  // 🔹 Config Methods
+  // ========================
+  static async setSnoozeMinutes(minutes: number) {
+    return await AlarmConfig.setSnoozeMinutes(minutes);
   }
 
-  static async getConfiguration() {
-    return await AlarmModule.getAlarmConfig();
+  static async getSnoozeMinutes(): Promise<number> {
+    return await AlarmConfig.getSnoozeMinutes();
   }
 
-  static async getRingtone(uri: string) {
-    return await AlarmModule.getRingtone(uri);
+  static async setSoundUri(uri: string | null) {
+    return await AlarmConfig.setSoundUri(uri);
   }
 
-  static async getAllRingtones() {
-    return await AlarmModule.getAllRingtones();
+  static async getSoundUri(): Promise<string | null> {
+    return await AlarmConfig.getSoundUri();
   }
 
-  // Alarm scheduling
-  static async scheduleAlarm(alarmConfig: AlarmConfig): Promise<string> {
+  static async getConfig(): Promise<{
+    snoozeMinutes: number;
+    soundUri: string | null;
+  }> {
+    return await AlarmConfig.getConfig();
+  }
+
+  // ========================
+  // 🔹 Scheduling
+  // ========================
+  static async scheduleAlarm(cfg: AlarmScheduleConfig): Promise<string> {
     const {
       timestamp,
       title = 'Alarm',
@@ -121,7 +61,7 @@ export class AlarmService {
       daysOfWeek = [],
       dayOfMonth = 0,
       interval = 1,
-    } = alarmConfig;
+    } = cfg;
 
     if (recurrenceType === 'ONCE') {
       return await AlarmModule.scheduleAlarm(
@@ -154,7 +94,9 @@ export class AlarmService {
     return await AlarmModule.cancelAllAlarms();
   }
 
-  // Helper methods for common patterns
+  // ========================
+  // 🔹 Recurrence Helpers
+  // ========================
   static async scheduleDailyAlarm(
     time: string,
     title: string,
@@ -245,6 +187,24 @@ export class AlarmService {
     });
   }
 
+  static async scheduleSpecificDateAlarm(
+    date: Date,
+    title: string,
+    message: string,
+    requestCodeStr: string = `date_${date.getTime()}`,
+  ): Promise<string> {
+    return this.scheduleAlarm({
+      timestamp: date.getTime(),
+      title,
+      message,
+      requestCodeStr,
+      recurrenceType: 'ONCE',
+    });
+  }
+
+  // ========================
+  // 🔹 Utils
+  // ========================
   static getTimestampFromTime(timeString: string): number {
     const [hours, minutes] = timeString.split(':').map(Number);
     const now = new Date();
@@ -265,21 +225,6 @@ export class AlarmService {
     return alarmTime.getTime();
   }
 
-  static async scheduleSpecificDateAlarm(
-    date: Date,
-    title: string,
-    message: string,
-    requestCodeStr: string = `date_${date.getTime()}`,
-  ): Promise<string> {
-    return this.scheduleAlarm({
-      timestamp: date.getTime(),
-      title,
-      message,
-      requestCodeStr,
-      recurrenceType: 'ONCE',
-    });
-  }
-
   static get DayOfWeek() {
     return {
       SUNDAY: 0,
@@ -292,7 +237,6 @@ export class AlarmService {
     } as const;
   }
 
-  // Helper to generate unique request codes
   static generateRequestCode(prefix: string = 'alarm'): string {
     return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
