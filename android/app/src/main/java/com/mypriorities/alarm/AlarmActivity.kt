@@ -31,7 +31,14 @@ class AlarmActivity : AppCompatActivity() {
         }
 
         // Ensure alarm sound is playing (if activity is opened manually)
-        startForegroundService(Intent(this, AlarmSoundService::class.java))
+        if (!AlarmSoundService.isPlaying) {
+            val soundIntent = Intent(this, AlarmSoundService::class.java).apply {
+                putExtra("title", title)
+                putExtra("message", message)
+                putExtra("requestCode", requestCode)
+            }
+            startForegroundService(soundIntent)
+        }
 
         // --- Stop button ---
         findViewById<View>(R.id.stopButton).setOnClickListener {
