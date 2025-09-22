@@ -1,12 +1,14 @@
 package com.mypriorities.alarm
 
-import android.util.Log
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.util.Log
 
 object AlarmScheduler {
+    
     fun scheduleAlarm(
         context: Context,
         triggerAtMillis: Long,
@@ -52,28 +54,48 @@ object AlarmScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        am.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            triggerAtMillis,
-            pi
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            am.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerAtMillis,
+                pi
+            )
+        } else {
+            am.setExact(
+                AlarmManager.RTC_WAKEUP,
+                triggerAtMillis,
+                pi
+            )
+        }
+        
+        Log.d("AlarmScheduler", "Alarm scheduled for requestCode: $requestCode at $triggerAtMillis")
     }
 
-    fun scheduleSnooze(context: Context, minutes: Int) {
-        val snoozeTime = System.currentTimeMillis() + minutes * 60 * 1000
+    fun scheduleSnooze(context: Context, minutes: Int, requestCode: Int, title: String, message: String) {
+        val snoozeTime = System.currentTimeMillis() + minutes * 60 * 1000L
 
-        val intent = Intent(context, AlarmReceiver::class.java)
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            putExtra("requestCode", requestCode)
+            putExtra("title", "$title (Snoozed)")
+            putExtra("message", message)
+            putExtra("recurrenceType", RecurrenceHelper.TYPE_ONCE)
+        }
+        
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            2001,
+            generateSnoozeRequestCode(requestCode),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeTime, pendingIntent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeTime, pendingIntent)
+        } else {
+            am.setExact(AlarmManager.RTC_WAKEUP, snoozeTime, pendingIntent)
+        }
 
-        Log.d("AlarmScheduler", "Snooze set for $minutes minutes later")
+        Log.d("AlarmScheduler", "Snooze set for $minutes minutes later (requestCode: $requestCode)")
     }
 
     fun cancelAlarm(context: Context, requestCode: Int) {
@@ -87,5 +109,10 @@ object AlarmScheduler {
         )
         am.cancel(pi)
         pi.cancel()
+        Log.d("AlarmScheduler", "Alarm cancelled for requestCode: $requestCode")
+    }
+    
+    private fun generateSnoozeRequestCode(originalRequestCode: Int): Int {
+        return (originalRequestCode.toString() + "snooze").hashCode() and 0x7FFFFFFF
     }
 }
