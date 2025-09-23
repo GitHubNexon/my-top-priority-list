@@ -39,8 +39,9 @@
       android:launchMode="singleInstance"
       android:theme="@style/AppTheme.TransparentAlarm">
       <intent-filter>
-        <action android:name="com.mypriorities.ALARM" />
+        <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.ALARM_CLOCK" />
       </intent-filter>
     </activity>
     <receiver
