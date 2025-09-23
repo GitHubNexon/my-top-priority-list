@@ -3,29 +3,24 @@ package com.mypriorities.alarm
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.PowerManager
-import android.util.Log
+import android.os.Build
 
 class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        Log.d("AlarmReceiver", "Received action: $action")
 
         when (action) {
             "STOP_ALARM" -> {
-                Log.d("AlarmReceiver", "Stopping alarm")
                 stopAlarm(context)
             }
 
             "SNOOZE_ALARM" -> {
-                Log.d("AlarmReceiver", "Snoozing alarm")
                 snoozeAlarm(context, intent)
             }
 
             else -> {
                 // Normal alarm trigger from AlarmManager
-                Log.d("AlarmReceiver", "Alarm triggered!")
                 triggerAlarm(context, intent)
             }
         }
@@ -36,27 +31,28 @@ class AlarmReceiver : BroadcastReceiver() {
         val message = intent.getStringExtra("message") ?: "Wake up!"
         val requestCode = intent.getIntExtra("requestCode", -1)
 
-        // Start alarm sound service
+        // Start the sound service; service will create and post the single notification (startForeground).
         val soundIntent = Intent(context, AlarmSoundService::class.java).apply {
             putExtra("title", title)
             putExtra("message", message)
             putExtra("requestCode", requestCode)
+            // If you want to pass a custom uri: putExtra("soundUri", uri)
         }
-        context.startForegroundService(soundIntent)
 
-        // Show fullscreen activity if screen is off/locked
-        if (isScreenOffOrLocked(context)) {
-            showFullscreenActivity(context, title, message, requestCode)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(soundIntent)
         } else {
-            // Show notification if screen is on
-            AlarmNotificationHelper.showAlarmNotification(context, title, message, requestCode)
+            context.startService(soundIntent)
         }
+
+        // NOTE: The service will decide whether to attach a full-screen intent (when screen is off/locked)
+        // so the receiver no longer posts a second notification or starts the Activity itself.
     }
 
     private fun stopAlarm(context: Context) {
-        // Stop alarm sound
+        // Stop alarm sound (service will clean up)
         context.stopService(Intent(context, AlarmSoundService::class.java))
-        // Cancel notification
+        // Cancel the notification
         AlarmNotificationHelper.cancelAlarmNotification(context)
     }
 
@@ -71,20 +67,5 @@ class AlarmReceiver : BroadcastReceiver() {
 
         // Schedule snooze
         AlarmScheduler.scheduleSnooze(context, snoozeMinutes, requestCode, title, message)
-    }
-
-    private fun isScreenOffOrLocked(context: Context): Boolean {
-        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-        return !powerManager.isInteractive
-    }
-
-    private fun showFullscreenActivity(context: Context, title: String, message: String, requestCode: Int) {
-        val activityIntent = Intent(context, AlarmActivity::class.java).apply {
-            putExtra("title", title)
-            putExtra("message", message)
-            putExtra("requestCode", requestCode)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        }
-        context.startActivity(activityIntent)
     }
 }
