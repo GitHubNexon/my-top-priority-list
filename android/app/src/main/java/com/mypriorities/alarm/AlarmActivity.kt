@@ -26,24 +26,41 @@ class AlarmActivity : AppCompatActivity() {
 
         updateUI(title, message)
 
-        if (!AlarmSoundService.isPlaying) {
-            startForegroundService(Intent(this, AlarmSoundService::class.java))
+        // Stop any existing service and start a new one that knows the activity is active
+        stopService(Intent(this, AlarmSoundService::class.java))
+
+        val soundIntent = Intent(this, AlarmSoundService::class.java).apply {
+            putExtra("title", title)
+            putExtra("message", message)
+            putExtra("requestCode", requestCode)
+            putExtra("activityActive", true) // Add this flag
+        }
+    
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(soundIntent)
+        } else {
+            startService(soundIntent)
         }
 
-        // Ensure alarm sound is playing (if activity is opened manually)
+        // Start the service once (if not already playing)
         if (!AlarmSoundService.isPlaying) {
             val soundIntent = Intent(this, AlarmSoundService::class.java).apply {
                 putExtra("title", title)
                 putExtra("message", message)
                 putExtra("requestCode", requestCode)
             }
-            startForegroundService(soundIntent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(soundIntent)
+            } else {
+                startService(soundIntent)
+            }
         }
 
         // --- Stop button ---
         findViewById<View>(R.id.stopButton).setOnClickListener {
-            val stopIntent = Intent(this, AlarmReceiver::class.java).apply {
+            val stopIntent = Intent(this, StopAlarmReceiver::class.java).apply {
                 action = "STOP_ALARM"
+                putExtra("requestCode", requestCode)
             }
             sendBroadcast(stopIntent)
             finishAndRemoveTask()
@@ -51,8 +68,11 @@ class AlarmActivity : AppCompatActivity() {
 
         // --- Snooze button ---
         findViewById<View>(R.id.snoozeButton).setOnClickListener {
-            val snoozeIntent = Intent(this, AlarmReceiver::class.java).apply {
+            val snoozeIntent = Intent(this, SnoozeReceiver::class.java).apply {
                 action = "SNOOZE_ALARM"
+                putExtra("requestCode", requestCode)
+                putExtra("title", title)
+                putExtra("message", message)
             }
             sendBroadcast(snoozeIntent)
             finishAndRemoveTask()
