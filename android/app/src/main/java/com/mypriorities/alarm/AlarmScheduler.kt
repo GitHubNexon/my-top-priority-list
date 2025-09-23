@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.util.Log
 
 object AlarmScheduler {
     
@@ -67,8 +66,6 @@ object AlarmScheduler {
                 pi
             )
         }
-        
-        Log.d("AlarmScheduler", "Alarm scheduled for requestCode: $requestCode at $triggerAtMillis")
     }
 
     fun scheduleSnooze(context: Context, minutes: Int, requestCode: Int, title: String, message: String) {
@@ -94,8 +91,6 @@ object AlarmScheduler {
         } else {
             am.setExact(AlarmManager.RTC_WAKEUP, snoozeTime, pendingIntent)
         }
-
-        Log.d("AlarmScheduler", "Snooze set for $minutes minutes later (requestCode: $requestCode)")
     }
 
     fun cancelAlarm(context: Context, requestCode: Int) {
@@ -109,7 +104,6 @@ object AlarmScheduler {
         )
         am.cancel(pi)
         pi.cancel()
-        Log.d("AlarmScheduler", "Alarm cancelled for requestCode: $requestCode")
     }
     
     private fun generateSnoozeRequestCode(originalRequestCode: Int): Int {

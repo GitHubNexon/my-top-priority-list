@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.media.RingtoneManager
 import android.net.Uri
-import android.util.Log
 import com.facebook.react.bridge.*
 import org.json.JSONObject
 

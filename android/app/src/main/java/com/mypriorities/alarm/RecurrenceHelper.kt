@@ -1,6 +1,5 @@
 package com.mypriorities.alarm
 
-import android.util.Log
 import org.json.JSONObject
 import java.util.Calendar
 
