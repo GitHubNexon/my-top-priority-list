@@ -1,5 +1,6 @@
 package com.mypriorities.alarm
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -14,22 +15,65 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 
 object AlarmNotificationHelper {
-    private const val CHANNEL_ID = "alarm_channel"
-    private const val PREFS_NAME = "AlarmConfig"
-    private const val NOTIFICATION_ID = 1001
+    const val CHANNEL_ID = "alarm_channel"
+    const val PREFS_NAME = "AlarmConfig"
+    const val NOTIFICATION_ID = 1001
 
-    fun showAlarmNotification(context: Context, title: String, message: String, requestCode: Int) {
+    /**
+     * Ensure notification channel exists. Safe to call repeatedly.
+     */
+    fun ensureNotificationChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val soundUri = getSoundUri(context, prefs)
+
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Alarms",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Alarms and reminders"
+                enableVibration(prefs.getBoolean("vibrate", true))
+                setSound(
+                    soundUri,
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                setBypassDnd(true)
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+            }
+            nm.createNotificationChannel(channel)
+        }
+    }
+
+    /**
+     * Build a Notification object for the alarm. The service should call startForeground(...)
+     * with this notification so only one notification exists.
+     *
+     * @param includeSound if true the notification itself will set sound/vibration (useful for
+     *                     cases where you want the notification to play sound). If false the
+     *                     service is assumed to be playing audio.
+     * @param showFullScreen whether to setFullScreenIntent (used when screen is off/locked).
+     */
+    fun buildAlarmNotification(
+        context: Context,
+        title: String,
+        message: String,
+        requestCode: Int,
+        includeSound: Boolean = false,
+        showFullScreen: Boolean = false
+    ): Notification {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        ensureNotificationChannel(context)
 
-        createNotificationChannel(context, nm, prefs)
-
-        val snoozeMinutes = prefs.getInt("snooze_minutes", 5)
-
-        // Snooze action
-        val snoozeIntent = Intent(context, AlarmReceiver::class.java).apply {
+        // Snooze action -> uses dedicated SnoozeReceiver
+        val snoozeIntent = Intent(context, SnoozeReceiver::class.java).apply {
             action = "SNOOZE_ALARM"
-            putExtra("snoozeMinutes", snoozeMinutes)
+            putExtra("snoozeMinutes", prefs.getInt("snooze_minutes", 5))
             putExtra("requestCode", requestCode)
             putExtra("title", title)
             putExtra("message", message)
@@ -41,8 +85,8 @@ object AlarmNotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Stop action
-        val stopIntent = Intent(context, AlarmReceiver::class.java).apply {
+        // Stop action -> uses dedicated StopAlarmReceiver
+        val stopIntent = Intent(context, StopAlarmReceiver::class.java).apply {
             action = "STOP_ALARM"
             putExtra("requestCode", requestCode)
         }
@@ -67,8 +111,8 @@ object AlarmNotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Delete intent (when swiped away) - STOP the alarm
-        val deleteIntent = Intent(context, AlarmReceiver::class.java).apply {
+        // Delete intent (when swiped away) - use StopReceiver to ensure sound stops
+        val deleteIntent = Intent(context, StopAlarmReceiver::class.java).apply {
             action = "STOP_ALARM"
             putExtra("requestCode", requestCode)
         }
@@ -79,64 +123,51 @@ object AlarmNotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setLargeIcon(BitmapFactory.decodeResource(context.resources, android.R.drawable.ic_lock_idle_alarm))
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setAutoCancel(false) // Don't auto-cancel when clicked
-            .setOngoing(true)     // Make it ongoing to prevent swipe
-            .setDeleteIntent(deletePI) // Stop alarm when swiped away
+            .setAutoCancel(false)
+            .setOngoing(true)
             .setFullScreenIntent(fullScreenPI, true)
-            .addAction(android.R.drawable.ic_media_pause, "Snooze ($snoozeMinutes min)", snoozePI)
+            .setDeleteIntent(deletePI)
+            .addAction(android.R.drawable.ic_media_pause, "Snooze (${prefs.getInt("snooze_minutes", 5)} min)", snoozePI)
             .addAction(android.R.drawable.ic_delete, "Stop", stopPI)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
-        // Only set sound/vibration if not already playing through service
-        if (!AlarmSoundService.isPlaying) {
+        // Fullscreen intent only if requested
+        builder.setFullScreenIntent(fullScreenPI, showFullScreen)
+
+        // Set sound/vibrate only if requested (service may handle audio)
+        if (includeSound) {
             val soundUri = getSoundUri(context, prefs)
-            notificationBuilder.setSound(soundUri)
-            
+            builder.setSound(soundUri)
             if (prefs.getBoolean("vibrate", true)) {
-                notificationBuilder.setVibrate(longArrayOf(0, 1000, 500, 1000))
+                builder.setVibrate(longArrayOf(0, 1000, 500, 1000))
             }
+        } else {
+            // Ensure the notification itself is silent so service controls audio
+            builder.setSilent(true)
         }
 
-        nm.notify(NOTIFICATION_ID, notificationBuilder.build())
+        return builder.build()
+    }
+
+    /**
+     * Convenience: notify using built notification (not needed if service will startForeground with the notification).
+     */
+    fun showAlarmNotification(context: Context, title: String, message: String, requestCode: Int) {
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notification = buildAlarmNotification(context, title, message, requestCode, includeSound = true, showFullScreen = false)
+        nm.notify(NOTIFICATION_ID, notification)
     }
 
     fun cancelAlarmNotification(context: Context) {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.cancel(NOTIFICATION_ID)
-    }
-
-    private fun createNotificationChannel(context: Context, nm: NotificationManager, prefs: SharedPreferences) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Alarm Notifications",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Alarm and reminder notifications"
-                enableVibration(prefs.getBoolean("vibrate", true))
-                
-                val soundUri = getSoundUri(context, prefs)
-                setSound(
-                    soundUri,
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
-                
-                setBypassDnd(true)
-                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
-                importance = NotificationManager.IMPORTANCE_HIGH
-            }
-            nm.createNotificationChannel(channel)
-        }
     }
 
     private fun getSoundUri(context: Context, prefs: SharedPreferences): Uri {
