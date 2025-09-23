@@ -100,6 +100,14 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
             val requestCode = generateRequestCode(requestCodeStr)
             AlarmScheduler.cancelAlarm(reactContext, requestCode)
             AlarmNotificationHelper.cancelAlarmNotification(reactContext)
+
+            // Also attempt to stop the foreground service if running
+            try {
+                reactContext.stopService(Intent(reactContext, AlarmSoundService::class.java))
+            } catch (e: Exception) {
+                // ignore if not running
+            }
+
             promise.resolve(true)
         } catch (e: Exception) {
             promise.reject("E_CANCEL_ALARM", e)
