@@ -30,13 +30,15 @@ class AlarmReceiver : BroadcastReceiver() {
         val title = intent.getStringExtra("title") ?: "Alarm"
         val message = intent.getStringExtra("message") ?: "Wake up!"
         val requestCode = intent.getIntExtra("requestCode", -1)
+        val recurrenceType = intent.getStringExtra("recurrenceType") ?: RecurrenceHelper.TYPE_ONCE
+        val recurrencePattern = intent.getStringExtra("recurrencePattern") ?: ""
+        val originalTriggerTime = intent.getLongExtra("originalTriggerTime", System.currentTimeMillis())
 
-        // Start the sound service; service will create and post the single notification (startForeground).
+        // Start the sound service
         val soundIntent = Intent(context, AlarmSoundService::class.java).apply {
             putExtra("title", title)
             putExtra("message", message)
             putExtra("requestCode", requestCode)
-            // If you want to pass a custom uri: putExtra("soundUri", uri)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -45,8 +47,47 @@ class AlarmReceiver : BroadcastReceiver() {
             context.startService(soundIntent)
         }
 
-        // NOTE: The service will decide whether to attach a full-screen intent (when screen is off/locked)
-        // so the receiver no longer posts a second notification or starts the Activity itself.
+        // Reschedule if it's a recurring alarm (except for snoozed alarms)
+        if (recurrenceType != RecurrenceHelper.TYPE_ONCE && !title.contains("(Snoozed)")) {
+            rescheduleNextAlarm(context, originalTriggerTime, requestCode, title, message, recurrenceType, recurrencePattern)
+        }
+    }
+
+    private fun rescheduleNextAlarm(
+        context: Context,
+        originalTriggerTime: Long,
+        requestCode: Int,
+        title: String,
+        message: String,
+        recurrenceType: String,
+        recurrencePattern: String
+    ) {
+        val patternMap = RecurrenceHelper.parseRecurrencePattern(recurrencePattern)
+        val daysOfWeek = (patternMap["daysOfWeek"] as? Array<*>)?.filterIsInstance<Int>()?.toList() ?: emptyList()
+        val dayOfMonth = patternMap["dayOfMonth"] as? Int ?: 0
+        val interval = patternMap["interval"] as? Int ?: 1
+
+        val nextTriggerTime = RecurrenceHelper.calculateNextTriggerTime(
+            originalTriggerTime,
+            recurrenceType,
+            recurrencePattern,
+            daysOfWeek,
+            dayOfMonth,
+            interval,
+            originalTriggerTime
+        )
+
+        if (nextTriggerTime > System.currentTimeMillis()) {
+            AlarmScheduler.scheduleRecurringAlarm(
+                context,
+                nextTriggerTime,
+                requestCode,
+                title,
+                message,
+                recurrenceType,
+                recurrencePattern
+            )
+        }
     }
 
     private fun stopAlarm(context: Context) {
@@ -65,7 +106,7 @@ class AlarmReceiver : BroadcastReceiver() {
         // Stop current alarm
         stopAlarm(context)
 
-        // Schedule snooze
+        // Schedule snooze as a one-time alarm
         AlarmScheduler.scheduleSnooze(context, snoozeMinutes, requestCode, title, message)
     }
 }
