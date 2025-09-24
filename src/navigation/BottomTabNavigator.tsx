@@ -33,7 +33,6 @@ const BottomTabNavigator = () => {
          */
       detachInactiveScreens={true}
       backBehavior="history"
-      initialRouteName="Priorities"
       screenOptions={{
         lazy: true,
         headerShown: false,
@@ -41,16 +40,12 @@ const BottomTabNavigator = () => {
       }}
     >
       <Tab.Screen
-        name='Profile'
-        component={ProfileTabStack}
+        name='Priorities'
+        component={PrioritiesTabStack}
       />
       <Tab.Screen
         name='Notes'
         component={NotesTabStack}
-      />
-      <Tab.Screen
-        name='Priorities'
-        component={PrioritiesTabStack}
       />
       <Tab.Screen
         name='Calendar'
@@ -59,6 +54,10 @@ const BottomTabNavigator = () => {
       <Tab.Screen
         name='Chart'
         component={ChartTabStack}
+      />
+      <Tab.Screen
+        name='Profile'
+        component={ProfileTabStack}
       />
     </Tab.Navigator>
   );

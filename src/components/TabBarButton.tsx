@@ -27,7 +27,7 @@ const TabBarButton = (
 
     const animatedIconStyle = useAnimatedStyle(() => {
         return {
-            transform: [{ scale: isFocused ? withSpring(1.2) : withSpring(1) }]
+            transform: [{ scale: isFocused ? withSpring(1.1) : withSpring(1) }]
         }
     }, [isFocused]);
 
@@ -56,6 +56,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        gap: 4,
         paddingBottom: 14,
     },
 });
