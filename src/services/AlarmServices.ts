@@ -1,79 +1,41 @@
 import { NativeModules } from 'react-native';
+import { AlarmNativeModule, AlarmScheduleConfig, } from '../types/Alarm';
 
-const { AlarmModule, AlarmConfig } = NativeModules;
-
-type RecurrenceType =
-  | 'ONCE'
-  | 'DAILY'
-  | 'WEEKLY'
-  | 'MONTHLY'
-  | 'YEARLY'
-  | 'CUSTOM';
-
-interface AlarmScheduleConfig {
-  timestamp: number;
-  title?: string;
-  message: string;
-  requestCodeStr?: string;
-  recurrenceType?: RecurrenceType;
-  daysOfWeek?: number[];
-  dayOfMonth?: number;
-  interval?: number;
-}
+const { AlarmModule } = NativeModules;
 
 export class AlarmService {
-  // ========================
-  // 🔹 Config Methods
-  // ========================
-  static async setSnoozeMinutes(minutes: number) {
-    return await AlarmConfig.setSnoozeMinutes(minutes);
+  private readonly nativeModule: AlarmNativeModule;
+
+  constructor() {
+    this.nativeModule = AlarmModule as AlarmNativeModule;
   }
 
-  static async getSnoozeMinutes(): Promise<number> {
-    return await AlarmConfig.getSnoozeMinutes();
-  }
-
-  static async setSoundUri(uri: string | null) {
-    return await AlarmConfig.setSoundUri(uri);
-  }
-
-  static async getSoundUri(): Promise<string | null> {
-    return await AlarmConfig.getSoundUri();
-  }
-
-  static async getConfig(): Promise<{
-    snoozeMinutes: number;
-    soundUri: string | null;
-  }> {
-    return await AlarmConfig.getConfig();
-  }
-
-  // ========================
-  // 🔹 Scheduling
-  // ========================
-  static async scheduleAlarm(cfg: AlarmScheduleConfig): Promise<string> {
+  // ALARM SCHEDULING METHODS
+  async scheduleAlarm(config: AlarmScheduleConfig): Promise<string> {
     const {
       timestamp,
       title = 'Alarm',
       message,
-      requestCodeStr = `alarm_${Date.now()}`,
+      requestCodeStr = this.generateRequestCode(),
       recurrenceType = 'ONCE',
       daysOfWeek = [],
       dayOfMonth = 0,
       interval = 1,
-    } = cfg;
+    } = config;
+
+    this.validateScheduleConfig(config);
 
     if (recurrenceType === 'ONCE') {
-      return await AlarmModule.scheduleAlarm(
+      return this.nativeModule.scheduleAlarm(
         timestamp,
         title,
         message,
         requestCodeStr,
         recurrenceType,
-        '',
+        JSON.stringify({}), // Empty pattern for once
       );
     } else {
-      return await AlarmModule.scheduleRecurringAlarm(
+      return this.nativeModule.scheduleRecurringAlarm(
         timestamp,
         title,
         message,
@@ -86,127 +48,147 @@ export class AlarmService {
     }
   }
 
-  static async cancelAlarm(requestCodeStr: string): Promise<boolean> {
-    return await AlarmModule.cancelAlarm(requestCodeStr);
+  async cancelAlarm(requestCodeStr: string): Promise<boolean> {
+    if (!requestCodeStr || requestCodeStr.trim().length === 0) {
+      throw new Error('Request code cannot be empty');
+    }
+    return this.nativeModule.cancelAlarm(requestCodeStr);
   }
 
-  static async cancelAllAlarms(): Promise<boolean> {
-    return await AlarmModule.cancelAllAlarms();
+  async cancelAllAlarms(): Promise<boolean> {
+    return this.nativeModule.cancelAllAlarms();
   }
 
-  // ========================
-  // 🔹 Recurrence Helpers
-  // ========================
-  static async scheduleDailyAlarm(
+  // CONVENIENCE METHODS
+  async scheduleDailyAlarm(
     time: string,
-    title: string,
     message: string,
-    requestCodeStr: string = `daily_${time}_${Date.now()}`,
+    title: string = 'Daily Alarm',
+    requestCodeStr?: string,
   ): Promise<string> {
     const timestamp = this.getTimestampFromTime(time);
     return this.scheduleAlarm({
       timestamp,
       title,
       message,
-      requestCodeStr,
+      requestCodeStr: requestCodeStr || `daily_${time}_${Date.now()}`,
       recurrenceType: 'DAILY',
       interval: 1,
     });
   }
 
-  static async scheduleWeeklyAlarm(
+  async scheduleWeeklyAlarm(
     time: string,
-    title: string,
     message: string,
     daysOfWeek: number[],
-    requestCodeStr: string = `weekly_${time}_${Date.now()}`,
+    title: string = 'Weekly Alarm',
+    requestCodeStr?: string,
   ): Promise<string> {
     const timestamp = this.getTimestampFromTime(time);
     return this.scheduleAlarm({
       timestamp,
       title,
       message,
-      requestCodeStr,
+      requestCodeStr: requestCodeStr || `weekly_${time}_${Date.now()}`,
       recurrenceType: 'WEEKLY',
       daysOfWeek,
       interval: 1,
     });
   }
 
-  static async scheduleMonthlyAlarm(
+  async scheduleMonthlyAlarm(
     time: string,
-    title: string,
     message: string,
     dayOfMonth: number,
-    requestCodeStr: string = `monthly_${time}_${Date.now()}`,
+    title: string = 'Monthly Alarm',
+    requestCodeStr?: string,
   ): Promise<string> {
     const timestamp = this.getTimestampFromTime(time);
     return this.scheduleAlarm({
       timestamp,
       title,
       message,
-      requestCodeStr,
+      requestCodeStr: requestCodeStr || `monthly_${time}_${Date.now()}`,
       recurrenceType: 'MONTHLY',
       dayOfMonth,
       interval: 1,
     });
   }
 
-  static async scheduleYearlyAlarm(
+  async scheduleCustomIntervalAlarm(
     time: string,
-    title: string,
-    message: string,
-    requestCodeStr: string = `yearly_${time}_${Date.now()}`,
-  ): Promise<string> {
-    const timestamp = this.getTimestampFromTime(time);
-    return this.scheduleAlarm({
-      timestamp,
-      title,
-      message,
-      requestCodeStr,
-      recurrenceType: 'YEARLY',
-      interval: 1,
-    });
-  }
-
-  static async scheduleCustomIntervalAlarm(
-    time: string,
-    title: string,
     message: string,
     intervalDays: number,
-    requestCodeStr: string = `custom_${intervalDays}_${Date.now()}`,
+    title: string = 'Custom Alarm',
+    requestCodeStr?: string,
   ): Promise<string> {
     const timestamp = this.getTimestampFromTime(time);
     return this.scheduleAlarm({
       timestamp,
       title,
       message,
-      requestCodeStr,
+      requestCodeStr: requestCodeStr || `custom_${intervalDays}_${Date.now()}`,
       recurrenceType: 'CUSTOM',
       interval: intervalDays,
     });
   }
 
-  static async scheduleSpecificDateAlarm(
+  async scheduleSpecificDateAlarm(
     date: Date,
-    title: string,
     message: string,
-    requestCodeStr: string = `date_${date.getTime()}`,
+    title: string = 'Alarm',
+    requestCodeStr?: string,
   ): Promise<string> {
     return this.scheduleAlarm({
       timestamp: date.getTime(),
       title,
       message,
-      requestCodeStr,
+      requestCodeStr: requestCodeStr || `date_${date.getTime()}`,
       recurrenceType: 'ONCE',
     });
   }
 
-  // ========================
-  // 🔹 Utils
-  // ========================
-  static getTimestampFromTime(timeString: string): number {
+  // UTILITY METHODS
+  private validateScheduleConfig(config: AlarmScheduleConfig): void {
+    if (config.timestamp <= Date.now()) {
+      throw new Error('Alarm timestamp must be in the future');
+    }
+
+    if (!config.message || config.message.trim().length === 0) {
+      throw new Error('Alarm message cannot be empty');
+    }
+
+    if (
+      config.recurrenceType === 'WEEKLY' &&
+      (!config.daysOfWeek || config.daysOfWeek.length === 0)
+    ) {
+      throw new Error('Weekly alarms require at least one day of the week');
+    }
+
+    if (config.recurrenceType === 'MONTHLY' && (config.dayOfMonth || 0) < 1) {
+      throw new Error('Monthly alarms require a valid day of month (1-31)');
+    }
+
+    if (config.recurrenceType === 'CUSTOM' && (config.interval || 0) < 1) {
+      throw new Error('Custom interval must be at least 1 day');
+    }
+  }
+
+  // Add to AlarmServices.ts class
+  public getTimestampFromTime(timeString: string): number {
     const [hours, minutes] = timeString.split(':').map(Number);
+
+    if (
+      isNaN(hours) ||
+      isNaN(minutes) ||
+      hours < 0 ||
+      hours > 23 ||
+      minutes < 0 ||
+      minutes > 59
+    ) {
+      throw new Error('Invalid time format. Use HH:MM (24-hour format)');
+    }
+
     const now = new Date();
     const alarmTime = new Date(
       now.getFullYear(),
@@ -225,19 +207,19 @@ export class AlarmService {
     return alarmTime.getTime();
   }
 
-  static get DayOfWeek() {
-    return {
-      SUNDAY: 0,
-      MONDAY: 1,
-      TUESDAY: 2,
-      WEDNESDAY: 3,
-      THURSDAY: 4,
-      FRIDAY: 5,
-      SATURDAY: 6,
-    } as const;
-  }
-
-  static generateRequestCode(prefix: string = 'alarm'): string {
+  // Make generateRequestCode public
+  public generateRequestCode(prefix: string = 'alarm'): string {
     return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
+
+  // Day of week constants
+  static readonly DayOfWeek = {
+    SUNDAY: 0,
+    MONDAY: 1,
+    TUESDAY: 2,
+    WEDNESDAY: 3,
+    THURSDAY: 4,
+    FRIDAY: 5,
+    SATURDAY: 6,
+  } as const;
 }
