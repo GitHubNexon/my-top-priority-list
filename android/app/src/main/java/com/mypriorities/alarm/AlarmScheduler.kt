@@ -46,6 +46,7 @@ object AlarmScheduler {
             putExtra("message", message)
             putExtra("recurrenceType", recurrenceType)
             putExtra("recurrencePattern", recurrencePattern)
+            putExtra("originalTriggerTime", triggerAtMillis)
         }
 
         val pi = PendingIntent.getBroadcast(
@@ -55,18 +56,50 @@ object AlarmScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            am.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerAtMillis,
-                pi
-            )
-        } else {
-            am.setExact(
-                AlarmManager.RTC_WAKEUP,
-                triggerAtMillis,
-                pi
-            )
+        when (recurrenceType) {
+            RecurrenceHelper.TYPE_DAILY -> {
+                // For exact daily recurrence
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi)
+                } else {
+                    am.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi)
+                }
+            }
+            RecurrenceHelper.TYPE_WEEKLY -> {
+                // For exact weekly recurrence
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi)
+                } else {
+                    am.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi)
+                }
+            }
+            RecurrenceHelper.TYPE_MONTHLY -> {
+                // For exact monthly recurrence
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi)
+                } else {
+                    am.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi)
+                }
+            }
+            RecurrenceHelper.TYPE_CUSTOM -> {
+                // Handle custom intervals
+                val pattern = RecurrenceHelper.parseRecurrencePattern(recurrencePattern)
+                val interval = pattern["interval"] as? Int ?: 1
+                if (interval > 0) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi)
+                    } else {
+                        am.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi)
+                    }
+                }
+            }
+            else -> { // TYPE_ONCE or unknown
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi)
+                } else {
+                    am.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi)
+                }
+            }
         }
     }
 
@@ -78,6 +111,7 @@ object AlarmScheduler {
             putExtra("title", "$title (Snoozed)")
             putExtra("message", message)
             putExtra("recurrenceType", RecurrenceHelper.TYPE_ONCE)
+            putExtra("originalTriggerTime", snoozeTime)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(
