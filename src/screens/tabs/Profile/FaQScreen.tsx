@@ -1,22 +1,6 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { AlarmService } from '../../../services/AlarmServices';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
 const FaQScreen = () => {
-
-    const setAlarm = async () => {
-        await AlarmService.scheduleAlarm({
-            timestamp: Date.now() + 5000, // 5 sec later
-            title: "My Custom Alarm",
-            message: "This is a dynamic message!",
-            recurrenceType: "ONCE",
-        });
-        console.log("Alarm scheduled ✅");
-    };
-
-    const cancelAlarm = async () => {
-        console.log(`Alarm canceled ❌`);
-        return
-    };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
@@ -42,12 +26,6 @@ const FaQScreen = () => {
                     A: Go to App Settings and toggle the Dark Mode switch.
                 </Text>
             </View>
-            <Pressable onPress={setAlarm} style={styles.saveButton}>
-                <Text style={styles.buttonText}>Set Alarm</Text>
-            </Pressable>
-            <Pressable onPress={cancelAlarm} style={styles.saveButton}>
-                <Text style={styles.buttonText}>Cancel Alarm</Text>
-            </Pressable>
         </ScrollView>
     );
 };
