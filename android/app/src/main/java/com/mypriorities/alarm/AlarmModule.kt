@@ -30,6 +30,12 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
         promise: Promise
     ) {
         try {
+            // Validate recurrence pattern
+            if (!RecurrenceHelper.validateRecurrencePattern(recurrenceType, recurrencePattern)) {
+                promise.reject("E_INVALID_PATTERN", "Invalid recurrence pattern for type: $recurrenceType")
+                return
+            }
+
             val requestCode = generateRequestCode(requestCodeStr)
             val finalTitle = title.ifEmpty { "Alarm" }
 
@@ -77,6 +83,12 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
                 put("dayOfMonth", dayOfMonth)
                 put("interval", interval)
             }.toString()
+
+            // Validate recurrence pattern
+            if (!RecurrenceHelper.validateRecurrencePattern(recurrenceType, pattern)) {
+                promise.reject("E_INVALID_PATTERN", "Invalid recurrence pattern for type: $recurrenceType")
+                return
+            }
 
             AlarmScheduler.scheduleRecurringAlarm(
                 reactContext,
