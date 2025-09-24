@@ -23,6 +23,7 @@ object RecurrenceHelper {
     ): Long {
         val calendar = Calendar.getInstance().apply {
             timeInMillis = currentTime
+            add(Calendar.MINUTE, 1) // Ensure next trigger is at least 1 minute in future
         }
         
         return when (recurrenceType) {
@@ -33,18 +34,29 @@ object RecurrenceHelper {
             
             TYPE_WEEKLY -> {
                 if (daysOfWeek.isNotEmpty()) {
-                    val currentDay = calendar.get(Calendar.DAY_OF_WEEK) - 1
-                    val sortedDays = daysOfWeek.sorted()
+                    // Find next occurrence based on specific days of week
+                    val currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) - 1 // Convert to 0-6 (Sun=0)
                     
-                    val nextDay = sortedDays.find { it > currentDay } ?: sortedDays.first()
-                    val daysToAdd = if (nextDay > currentDay) {
-                        nextDay - currentDay
+                    // Sort days and find the next one
+                    val sortedDays = daysOfWeek.sorted()
+                    var nextDay = sortedDays.find { it > currentDayOfWeek }
+                    
+                    if (nextDay == null) {
+                        // If no day found in current week, take first day of next week
+                        nextDay = sortedDays.first()
+                        calendar.add(Calendar.WEEK_OF_YEAR, 1)
+                    }
+                    
+                    // Set to the next day
+                    val daysToAdd = if (nextDay > currentDayOfWeek) {
+                        nextDay - currentDayOfWeek
                     } else {
-                        7 - currentDay + nextDay
+                        7 - currentDayOfWeek + nextDay
                     }
                     
                     calendar.add(Calendar.DAY_OF_YEAR, daysToAdd)
                 } else {
+                    // Weekly with interval
                     calendar.add(Calendar.WEEK_OF_YEAR, interval)
                 }
                 calendar.timeInMillis
@@ -52,11 +64,20 @@ object RecurrenceHelper {
             
             TYPE_MONTHLY -> {
                 if (dayOfMonth > 0) {
+                    // Specific day of month
                     calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
                     if (calendar.timeInMillis <= currentTime) {
                         calendar.add(Calendar.MONTH, 1)
+                        // Handle cases where day doesn't exist in next month
+                        val maxDaysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
+                        if (dayOfMonth > maxDaysInMonth) {
+                            calendar.set(Calendar.DAY_OF_MONTH, maxDaysInMonth)
+                        } else {
+                            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                        }
                     }
                 } else {
+                    // Monthly with interval (same day of month)
                     calendar.add(Calendar.MONTH, interval)
                 }
                 calendar.timeInMillis
@@ -72,7 +93,7 @@ object RecurrenceHelper {
                 calendar.timeInMillis
             }
             
-            else -> currentTime // TYPE_ONCE or unknown
+            else -> 0L // TYPE_ONCE - no rescheduling
         }
     }
     
@@ -83,11 +104,49 @@ object RecurrenceHelper {
     fun parseRecurrencePattern(pattern: String): Map<String, Any> {
         return try {
             val json = JSONObject(pattern)
-            json.keys().asSequence().associate { key ->
-                key to json.get(key)
+            val result = mutableMapOf<String, Any>()
+            
+            if (json.has("daysOfWeek")) {
+                val daysArray = json.getJSONArray("daysOfWeek")
+                val daysList = mutableListOf<Int>()
+                for (i in 0 until daysArray.length()) {
+                    daysList.add(daysArray.getInt(i))
+                }
+                result["daysOfWeek"] = daysList.toTypedArray()
             }
+            
+            if (json.has("dayOfMonth")) {
+                result["dayOfMonth"] = json.getInt("dayOfMonth")
+            }
+            
+            if (json.has("interval")) {
+                result["interval"] = json.getInt("interval")
+            }
+            
+            result
         } catch (e: Exception) {
             emptyMap()
+        }
+    }
+    
+    fun validateRecurrencePattern(recurrenceType: String, pattern: String): Boolean {
+        return when (recurrenceType) {
+            TYPE_WEEKLY -> {
+                val patternMap = parseRecurrencePattern(pattern)
+                val daysOfWeek = (patternMap["daysOfWeek"] as? Array<*>)?.filterIsInstance<Int>() ?: emptyList()
+                daysOfWeek.isNotEmpty() && daysOfWeek.all { it in 0..6 }
+            }
+            TYPE_MONTHLY -> {
+                val patternMap = parseRecurrencePattern(pattern)
+                val dayOfMonth = patternMap["dayOfMonth"] as? Int ?: 0
+                dayOfMonth in 1..31
+            }
+            TYPE_CUSTOM -> {
+                val patternMap = parseRecurrencePattern(pattern)
+                val interval = patternMap["interval"] as? Int ?: 0
+                interval > 0
+            }
+            else -> true
         }
     }
 }
