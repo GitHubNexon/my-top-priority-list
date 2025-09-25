@@ -3,6 +3,8 @@ import WIP from '../../../assets/images/undraw_analytics_6mru.svg';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  FlatList,
+  Modal,
   ScrollView,
   StyleSheet,
   Switch,
@@ -13,6 +15,7 @@ import {
 } from 'react-native';
 import { useAlarm, useAlarmConfig, useAlarmManager, useAlarmSettings, useTheme } from '../../../hooks';
 import { AlarmConfigServices } from '../../../services/AlarmConfigServices';
+import { Ringtone } from '../../../types/AlarmConfig';
 
 const ChartScreen = () => {
   const alarmConfigService = new AlarmConfigServices();
@@ -31,10 +34,18 @@ const ChartScreen = () => {
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [alarmMessage, setAlarmMessage] = useState('Wake up! This is a test alarm');
   const [alarmTitle, setAlarmTitle] = useState('Test Alarm');
+  const [showRingtonePicker, setShowRingtonePicker] = useState(false);
+  const [availableRingtones, setAvailableRingtones] = useState<Ringtone[]>([]);
+  const [selectedRingtone, setSelectedRingtone] = useState<Ringtone | null>(null);
 
   // Load settings on component mount
   useEffect(() => {
     alarmSettings.loadSettings();
+  }, []);
+
+  // Load available ringtones when component mounts
+  useEffect(() => {
+    alarmSettings.loadAvailableRingtones();
   }, []);
 
   // Update local state when settings load
@@ -46,6 +57,38 @@ const ChartScreen = () => {
   }, [alarmSettings.settings]);
 
   // ===== SETTINGS FUNCTIONS =====
+
+  // Function to load available ringtones
+  const loadAvailableRingtones = async () => {
+    try {
+      const ringtones = await alarmConfig.getAvailableAlarmSounds();
+      setAvailableRingtones(ringtones);
+    } catch (error) {
+      console.error('Failed to load ringtones:', error);
+    }
+  };
+
+  // Function to open ringtone picker
+  const handleOpenRingtonePicker = async () => {
+    try {
+      await loadAvailableRingtones();
+      setShowRingtonePicker(true);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load ringtones');
+    }
+  };
+
+  // Function to select a ringtone
+  const handleSelectRingtone = async (ringtone: Ringtone) => {
+    try {
+      setSelectedRingtone(ringtone);
+      await alarmSettings.updateAlarmSound(ringtone.uri);
+      setShowRingtonePicker(false);
+      Alert.alert('Success', `Alarm sound set to: ${ringtone.title}`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to set ringtone');
+    }
+  };
 
   const handleSaveSnoozeMinutes = async () => {
     try {
@@ -83,15 +126,17 @@ const ChartScreen = () => {
     }
   };
 
+  // Function to reset to default sound
   const handleResetToDefaultSound = async () => {
     try {
       await alarmConfig.resetToDefaultSound();
       await alarmSettings.updateAlarmSound(null);
+      setSelectedRingtone(null);
       Alert.alert('Success', 'Reset to default alarm sound');
     } catch (error) {
       Alert.alert('Error', 'Failed to reset sound');
     }
-  };
+  };  
 
   // ===== ALARM SCHEDULING FUNCTIONS =====
 
@@ -116,15 +161,28 @@ const ChartScreen = () => {
     }
   };
 
-  const getCurrentVibrationMode = async () => {
-    try {
-      const mode = alarmConfigService.getCurrentVibrationStatus();
-      console.log(`Vibrate: ${(await mode).hasVibrator} - ${(await mode).vibrateSetting}`);
-    } catch (error: unknown) {
-      if(error instanceof Error) {
-        Alert.alert('Error', `Failed to schedule alarm: ${error.message}`)
-      }
-    }
+  const getCurrentVibrationMode = () => {
+    // try {
+    //   const mode = alarmConfigService.getCurrentVibrationStatus();
+    //   const ringtones = alarmConfigService.getAllRingtones();
+    //   console.log(`Vibrate: ${(await mode).hasVibrator} - ${(await mode).vibrateSetting} - ${(await mode).willVibrate}`);
+    //   console.log(`Ringtones: ${ringtones} `);
+    // } catch (error: unknown) {
+    //   if(error instanceof Error) {
+    //     Alert.alert('Error', `Failed to schedule alarm: ${error.message}`)
+    //   }
+    // }
+    alarmConfigService.getAllRingtones()
+      .then(ringtones => {
+        console.log('Ringtones:', ringtones);
+        // ringtones is an array of objects: [{title: string, uri: string}, ...]
+        ringtones.forEach((ringtone, index) => {
+          console.log(`${index + 1}. ${ringtone.title}: ${ringtone.uri}`);
+        });
+      })
+      .catch(error => {
+        console.error('Error getting ringtones:', error);
+      });
   };
 
   const scheduleDailyAlarm = async () => {
@@ -182,6 +240,98 @@ const ChartScreen = () => {
         }}>
           Alarm System Demo
         </Text>
+
+        <Text style={{
+          fontSize: 20,
+          fontWeight: 'bold',
+          marginBottom: 10,
+          color: primaryFontColor,
+        }}>
+          🔔 Sound Settings
+        </Text>
+
+        <View style={{ marginBottom: 15 }}>
+          <Text style={{ color: primaryFontColor }}>
+            Current Sound: {selectedRingtone?.title || 'Default Alarm Sound'}
+          </Text>
+
+          <View style={{ flexDirection: 'row', marginTop: 5, flexWrap: 'wrap' }}>
+            <TouchableOpacity
+              onPress={handleOpenRingtonePicker}
+              style={styles.buttons}
+            >
+              <Text style={[styles.textButtons, { color: primaryFontColor }]}>
+                Change Ringtone
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleTestSound}
+              style={styles.buttons}
+            >
+              <Text style={[styles.textButtons, { color: primaryFontColor }]}>
+                Test Sound
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleResetToDefaultSound}
+              style={styles.buttons}
+            >
+              <Text style={[styles.textButtons, { color: primaryFontColor }]}>
+                Reset to Default
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <Modal
+          visible={showRingtonePicker}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowRingtonePicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: themeColor }]}>
+              <Text style={[styles.modalTitle, { color: primaryFontColor }]}>
+                Select Ringtone
+              </Text>
+
+              <FlatList
+                data={availableRingtones}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.ringtoneItem,
+                      selectedRingtone?.uri === item.uri && styles.selectedRingtone
+                    ]}
+                    onPress={() => handleSelectRingtone(item)}
+                  >
+                    <Text style={{ color: primaryFontColor }}>
+                      {item.title}
+                    </Text>
+                    {selectedRingtone?.uri === item.uri && (
+                      <Text style={styles.selectedText}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+                ListEmptyComponent={
+                  <Text style={{ color: primaryFontColor, textAlign: 'center', padding: 20 }}>
+                    No ringtones available
+                  </Text>
+                }
+              />
+
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowRingtonePicker(false)}
+              >
+                <Text style={styles.closeButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         {/* Settings Section */}
         <Text style={{
@@ -431,7 +581,57 @@ const styles = StyleSheet.create({
   },
   textButtons: {
     fontSize: 16
-  }
+  },
+  closeButton: {
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: '#d66767',
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  modalContent: {
+    width: '80%',
+    maxHeight: '70%',
+    borderRadius: 10,
+    padding: 20,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+
+  ringtoneItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  selectedRingtone: {
+    backgroundColor: 'rgba(54, 146, 79, 0.2)',
+  },
+
+  selectedText: {
+    color: '#36924f',
+    fontWeight: 'bold',
+  },
 });
 
 export default ChartScreen;

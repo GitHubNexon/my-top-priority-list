@@ -31,6 +31,7 @@ class AlarmSoundService : Service() {
     private var vibrator: Vibrator? = null
     private var shouldVibrate = true
     private val vibrationPattern = longArrayOf(0, 1000, 500, 1000) // Wait, vibrate, pause, vibrate
+    private var shouldHandleVibration = false // Default to false, let activity handle it
 
     private val configReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -74,10 +75,16 @@ class AlarmSoundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         isActivityActive = intent?.getBooleanExtra("activityActive", false) ?: false
-        
+        shouldHandleVibration = intent?.getBooleanExtra("shouldHandleVibration", true) ?: true
+
         // Get preferences
         val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
         shouldVibrate = prefs.getBoolean("vibrate", true)
+
+        if (!isActivityActive && shouldHandleVibration) {
+            // Start vibration only if activity is not handling it
+            startVibration()
+        }
 
         // Only start full-screen activity if no activity is active and screen is off
         if (!isActivityActive) {
@@ -161,8 +168,10 @@ class AlarmSoundService : Service() {
             AlarmNotificationHelper.getDefaultAlarmUri()
         }
 
-        playAlarmSound(soundUri)
-        startVibration()
+        // Only play sound if activity is not active (to avoid duplication)
+        if (!isActivityActive) {
+            playAlarmSound(soundUri)
+        }
 
         return START_STICKY
     }
@@ -194,7 +203,13 @@ class AlarmSoundService : Service() {
     }
 
     private fun startVibration() {
-        if (!shouldVibrate || vibrator == null) return
+        if (!shouldVibrate || vibrator == null || !shouldHandleVibration) return
+
+        val hasVibrator = vibrator?.hasVibrator() ?: false
+        if (!hasVibrator) return
+
+        // Use the same fixed pattern as activity
+        val vibrationPattern = longArrayOf(0, 1000, 500)
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

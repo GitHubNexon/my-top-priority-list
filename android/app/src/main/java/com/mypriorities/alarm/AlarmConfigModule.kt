@@ -254,9 +254,11 @@ class AlarmConfigModule(reactContext: ReactApplicationContext)
             try {
                 val prefs = reactApplicationContext.getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
                 val vibrateSetting = prefs.getBoolean("vibrate", true)
+                val hasVibrator = hasVibrator()
                 val status = Arguments.createMap().apply {
                     putBoolean("vibrateSetting", vibrateSetting)
                     putBoolean("hasVibrator", hasVibrator())
+                    putBoolean("willVibrate", vibrateSetting && hasVibrator)
                 }
                 promise.resolve(status)
             } catch (e: Exception) {

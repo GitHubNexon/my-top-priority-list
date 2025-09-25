@@ -242,6 +242,7 @@ const useAlarmConfig = () => {
   const getCurrentVibrationStatus = useCallback(async (): Promise<{
     vibrateSetting: boolean;
     hasVibrator: boolean;
+    willVibrate: boolean
   }> => {
     setIsLoading(true);
     setError(null);

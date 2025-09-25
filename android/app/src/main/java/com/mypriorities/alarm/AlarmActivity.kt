@@ -22,6 +22,7 @@ import java.util.Locale
 class AlarmActivity : AppCompatActivity() {
     private var vibrator: Vibrator? = null
     private var shouldVibrate = true
+    private var hasVibrator = false
 
     private val configReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -33,7 +34,7 @@ class AlarmActivity : AppCompatActivity() {
 
                     // Restart vibration if needed
                     stopVibration()
-                    if (shouldVibrate) {
+                    if (shouldVibrate && hasVibrator) {
                         startVibration()
                     }
                 }
@@ -66,7 +67,8 @@ class AlarmActivity : AppCompatActivity() {
             putExtra("title", title)
             putExtra("message", message)
             putExtra("requestCode", requestCode)
-            putExtra("activityActive", true) // Add this flag
+            putExtra("activityActive", true)
+            putExtra("shouldHandleVibration", false)
         }
     
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -120,19 +122,24 @@ class AlarmActivity : AppCompatActivity() {
             @Suppress("DEPRECATION")
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
+
+        // Check if device has vibrator
+        hasVibrator = vibrator?.hasVibrator() ?: false
         
         // Check vibration preference
         val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
         shouldVibrate = prefs.getBoolean("vibrate", true)
         
         // Start vibration when activity starts
-        startVibration()
+        if (shouldVibrate && hasVibrator) {
+            startVibration()
+        }
     }
 
     private fun startVibration() {
-        if (!shouldVibrate || vibrator == null) return
+        if (!shouldVibrate || vibrator == null || !hasVibrator) return
         
-        val vibrationPattern = longArrayOf(0, 1000, 500, 1000) // Wait, vibrate, pause, vibrate
+        val vibrationPattern = longArrayOf(0, 1000, 500) // Wait 0ms, vibrate 1000ms, pause 500ms
         
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

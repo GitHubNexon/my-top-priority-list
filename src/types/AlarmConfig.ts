@@ -16,6 +16,7 @@ export interface AlarmConfigNativeModule {
   getCurrentVibrationStatus(): Promise<{
     vibrateSetting: boolean;
     hasVibrator: boolean;
+    willVibrate: boolean
   }>;
 }
 

@@ -20,7 +20,8 @@ const useAlarmSettings = () => {
     setAlarmSound,
     setVibration,
     setSnoozeMinutes,
-    getCurrentVibrationStatus
+    getCurrentVibrationStatus,
+    getAvailableAlarmSounds
   } = useAlarmConfig();
 
   const loadSettings = useCallback(async () => {
@@ -57,6 +58,23 @@ const useAlarmSettings = () => {
     [setAlarmSound, loadSettings],
   );
 
+  const loadAvailableRingtones = useCallback(async (): Promise<Ringtone[]> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const ringtones = await getAvailableAlarmSounds();
+      setSettings(prev =>
+        prev ? { ...prev, availableSounds: ringtones } : null,
+      );
+      return ringtones;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load ringtones');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getAvailableAlarmSounds]);
+
   const updateVibration = useCallback(
     async (enabled: boolean) => {
       try {
@@ -90,6 +108,7 @@ const useAlarmSettings = () => {
     loadSettings,
     updateAlarmSound,
     updateVibration,
+    loadAvailableRingtones,
     updateSnoozeMinutes,
   };
 };

@@ -136,6 +136,7 @@ export class AlarmConfigServices {
   async getCurrentVibrationStatus(): Promise<{
     vibrateSetting: boolean;
     hasVibrator: boolean;
+    willVibrate: boolean;
   }> {
     return this.nativeModule.getCurrentVibrationStatus();
   }

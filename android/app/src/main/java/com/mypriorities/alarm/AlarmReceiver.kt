@@ -39,6 +39,7 @@ class AlarmReceiver : BroadcastReceiver() {
             putExtra("title", title)
             putExtra("message", message)
             putExtra("requestCode", requestCode)
+            putExtra("shouldHandleVibration", true) // Service should handle vibration initially
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
