@@ -1,9 +1,14 @@
 package com.mypriorities.alarm
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.media.RingtoneManager
 import android.net.Uri
+import android.os.Build
+import android.app.NotificationManager
+import android.os.Vibrator
+import android.os.VibratorManager
 import com.facebook.react.bridge.*
 
 class AlarmConfigModule(reactContext: ReactApplicationContext)
@@ -108,9 +113,10 @@ class AlarmConfigModule(reactContext: ReactApplicationContext)
             
                 val ringtonesList = Arguments.createArray()
                 cursor?.let {
-                    while (it.moveToNext()) {
+                    for (i in 0 until it.count) {
+                        it.moveToPosition(i)
                         val title = it.getString(RingtoneManager.TITLE_COLUMN_INDEX)
-                        val uri = ringtoneManager.getRingtoneUri(it.position)
+                        val uri = ringtoneManager.getRingtoneUri(i)
                     
                         val ringtoneInfo = Arguments.createMap().apply {
                             putString("title", title)
@@ -126,12 +132,26 @@ class AlarmConfigModule(reactContext: ReactApplicationContext)
                 cursor?.close()
             }
         }
-    
-        // --- Vibrate ---
+
         @ReactMethod
         fun setVibrate(enabled: Boolean, promise: Promise) {
             try {
                 prefs.edit().putBoolean(PREFS_VIBRATE, enabled).apply()
+                
+                // Broadcast the change to running services/activities
+                val intent = Intent("ALARM_CONFIG_CHANGED").apply {
+                    putExtra("vibrate", enabled)
+                }
+                reactApplicationContext.sendBroadcast(intent)
+                
+                // Recreate notification channel with updated vibration setting
+                val context = reactApplicationContext
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    nm.deleteNotificationChannel(AlarmNotificationHelper.CHANNEL_ID)
+                    AlarmNotificationHelper.ensureNotificationChannel(context)
+                }
+                
                 promise.resolve(true)
             } catch (e: Exception) {
                 promise.reject("SET_ERROR", e)
@@ -225,6 +245,37 @@ class AlarmConfigModule(reactContext: ReactApplicationContext)
                 promise.resolve(true)
             } catch (e: Exception) {
                 promise.reject("CLEAR_ERROR", e)
+            }
+        }
+
+        // --- Debugging Helper ---
+        @ReactMethod
+        fun getCurrentVibrationStatus(promise: Promise) {
+            try {
+                val prefs = reactApplicationContext.getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
+                val vibrateSetting = prefs.getBoolean("vibrate", true)
+                val status = Arguments.createMap().apply {
+                    putBoolean("vibrateSetting", vibrateSetting)
+                    putBoolean("hasVibrator", hasVibrator())
+                }
+                promise.resolve(status)
+            } catch (e: Exception) {
+                promise.reject("GET_STATUS_ERROR", e)
+            }
+        }
+
+        private fun hasVibrator(): Boolean {
+            return try {
+                val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val vibratorManager = reactApplicationContext.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                    vibratorManager.defaultVibrator
+                } else {
+                    @Suppress("DEPRECATION")
+                    reactApplicationContext.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                }
+                vibrator.hasVibrator()
+            } catch (e: Exception) {
+                false
             }
         }
 }

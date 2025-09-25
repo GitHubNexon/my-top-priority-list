@@ -123,8 +123,17 @@ object AlarmNotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // Use configured icons instead of hardcoded ones
+        val smallIconName = prefs.getString("small_icon", "ic_alarm")
+        val bigIconName = prefs.getString("big_icon", "ic_alarm_big")
+        
+        val smallIconResId = context.resources.getIdentifier(smallIconName, "drawable", context.packageName)
+        val bigIconResId = context.resources.getIdentifier(bigIconName, "drawable", context.packageName)
+
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setSmallIcon(
+                if (smallIconResId != 0) smallIconResId 
+                else android.R.drawable.ic_lock_idle_alarm) // Use configured icon
             .setLargeIcon(BitmapFactory.decodeResource(context.resources, android.R.drawable.ic_lock_idle_alarm))
             .setContentTitle(title)
             .setContentText(message)
@@ -141,12 +150,16 @@ object AlarmNotificationHelper {
         // Fullscreen intent only if requested
         builder.setFullScreenIntent(fullScreenPI, showFullScreen)
 
+        if (bigIconResId != 0) {
+            builder.setLargeIcon(BitmapFactory.decodeResource(context.resources, bigIconResId))
+        }
+
         // Set sound/vibrate only if requested (service may handle audio)
         if (includeSound) {
             val soundUri = getSoundUri(context, prefs)
             builder.setSound(soundUri)
             if (prefs.getBoolean("vibrate", true)) {
-                builder.setVibrate(longArrayOf(0, 1000, 500, 1000))
+                builder.setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000)) // More pronounced pattern
             }
         } else {
             // Ensure the notification itself is silent so service controls audio

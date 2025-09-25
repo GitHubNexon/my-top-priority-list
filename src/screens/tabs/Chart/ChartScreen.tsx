@@ -12,8 +12,10 @@ import {
   View
 } from 'react-native';
 import { useAlarm, useAlarmConfig, useAlarmManager, useAlarmSettings, useTheme } from '../../../hooks';
+import { AlarmConfigServices } from '../../../services/AlarmConfigServices';
 
 const ChartScreen = () => {
+  const alarmConfigService = new AlarmConfigServices();
   const { theme } = useTheme();
   const themeColor = theme.myColors?.triadic;
   const primaryFontColor = theme.fontColors?.primary
@@ -107,6 +109,17 @@ const ChartScreen = () => {
         `Alarm will trigger in 5 seconds\nRequest Code: ${requestCode}`
       );
       console.log('Alarm scheduled ✅ with code:', requestCode);
+    } catch (error: unknown) {
+      if(error instanceof Error) {
+        Alert.alert('Error', `Failed to schedule alarm: ${error.message}`)
+      }
+    }
+  };
+
+  const getCurrentVibrationMode = async () => {
+    try {
+      const mode = alarmConfigService.getCurrentVibrationStatus();
+      console.log(`Vibrate: ${(await mode).hasVibrator} - ${(await mode).vibrateSetting}`);
     } catch (error: unknown) {
       if(error instanceof Error) {
         Alert.alert('Error', `Failed to schedule alarm: ${error.message}`)
@@ -296,6 +309,18 @@ const ChartScreen = () => {
             <Text style={[styles.textButtons, {
               color: primaryFontColor,
             }]}>Set Alarm</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ marginBottom: 10 }}>
+          <TouchableOpacity
+            onPress={getCurrentVibrationMode}
+            disabled={alarmManager.isLoading}
+            style={styles.buttons}
+          >
+            <Text style={[styles.textButtons, {
+              color: primaryFontColor,
+            }]}>Vibration Mode</Text>
           </TouchableOpacity>
         </View>
 

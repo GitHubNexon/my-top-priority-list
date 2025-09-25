@@ -1,16 +1,22 @@
 package com.mypriorities.alarm
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.app.KeyguardManager
 import android.app.Notification
 import android.app.Service
-import android.content.Context
-import android.content.Intent
+import android.content.SharedPreferences
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 
 class AlarmSoundService : Service() {
@@ -22,15 +28,57 @@ class AlarmSoundService : Service() {
     }
 
     private var mediaPlayer: MediaPlayer? = null
+    private var vibrator: Vibrator? = null
+    private var shouldVibrate = true
+    private val vibrationPattern = longArrayOf(0, 1000, 500, 1000) // Wait, vibrate, pause, vibrate
+
+    private val configReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                "ALARM_CONFIG_CHANGED" -> {
+                    // Update vibration setting
+                    val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
+                    shouldVibrate = prefs.getBoolean("vibrate", true)
+                    
+                    // Restart vibration if needed
+                    if (isPlaying) {
+                        stopVibration()
+                        if (shouldVibrate) {
+                            startVibration()
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
         AlarmNotificationHelper.ensureNotificationChannel(this)
+        initializeVibrator()
+        
+        // Register for config changes
+        val filter = IntentFilter("ALARM_CONFIG_CHANGED")
+        registerReceiver(configReceiver, filter)
+    }
+
+    private fun initializeVibrator() {
+        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vibratorManager.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         isActivityActive = intent?.getBooleanExtra("activityActive", false) ?: false
-    
+        
+        // Get preferences
+        val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
+        shouldVibrate = prefs.getBoolean("vibrate", true)
+
         // Only start full-screen activity if no activity is active and screen is off
         if (!isActivityActive) {
             val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -41,7 +89,7 @@ class AlarmSoundService : Service() {
                 val title = intent?.getStringExtra("title") ?: "Alarm"
                 val message = intent?.getStringExtra("message") ?: "Wake up!"
                 val requestCode = intent?.getIntExtra("requestCode", -1) ?: -1
-                
+
                 val fullScreenIntent = Intent(this, AlarmActivity::class.java).apply {
                     putExtra("title", title)
                     putExtra("message", message)
@@ -78,7 +126,6 @@ class AlarmSoundService : Service() {
         val message = intent?.getStringExtra("message") ?: "Wake up!"
         val requestCode = intent?.getIntExtra("requestCode", -1) ?: -1
 
-        
         // Decide whether to show fullscreen -> when device is not interactive (screen off / locked)
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
@@ -94,8 +141,8 @@ class AlarmSoundService : Service() {
             }
             startActivity(fullScreenIntent)
         }
-        
-        // Build the single notification and start foreground with it (this replaces separate notification)
+
+        // Build the single notification and start foreground with it
         val notification = AlarmNotificationHelper.buildAlarmNotification(
             this,
             title,
@@ -106,11 +153,16 @@ class AlarmSoundService : Service() {
         )
         startForeground(AlarmNotificationHelper.NOTIFICATION_ID, notification)
 
-        // Play alarm sound (service controls playback so notification can remain silent)
-        val soundUri: Uri? = intent?.getParcelableExtra("soundUri")
-            ?: AlarmNotificationHelper.getDefaultAlarmUri()
+        // Get soundUri from preferences
+        val soundUriString = prefs.getString("sound_uri", null)
+        val soundUri = if (!soundUriString.isNullOrEmpty()) {
+            Uri.parse(soundUriString)
+        } else {
+            AlarmNotificationHelper.getDefaultAlarmUri()
+        }
 
         playAlarmSound(soundUri)
+        startVibration()
 
         return START_STICKY
     }
@@ -141,6 +193,31 @@ class AlarmSoundService : Service() {
         }
     }
 
+    private fun startVibration() {
+        if (!shouldVibrate || vibrator == null) return
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val vibrationEffect = VibrationEffect.createWaveform(vibrationPattern, 0) // repeat at index 0
+                vibrator?.vibrate(vibrationEffect)
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(vibrationPattern, 0) // repeat at index 0
+            }
+        } catch (e: Exception) {
+            // Vibration might not be available on this device
+            e.printStackTrace()
+        }
+    }
+
+    private fun stopVibration() {
+        try {
+            vibrator?.cancel()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private fun stopAlarmSound() {
         mediaPlayer?.let {
             if (it.isPlaying) it.stop()
@@ -152,11 +229,13 @@ class AlarmSoundService : Service() {
 
     override fun onDestroy() {
         try {
+            unregisterReceiver(configReceiver)
             stopForeground(true)
         } catch (e: Exception) {
-            // ignore if not in foreground
+            // ignore if not registered or not in foreground
         }
         stopAlarmSound()
+        stopVibration()
         super.onDestroy()
     }
 

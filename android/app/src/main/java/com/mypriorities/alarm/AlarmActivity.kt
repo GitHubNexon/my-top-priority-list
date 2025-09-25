@@ -1,6 +1,13 @@
 package com.mypriorities.alarm
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.os.VibrationEffect
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -13,9 +20,35 @@ import java.util.Date
 import java.util.Locale
 
 class AlarmActivity : AppCompatActivity() {
+    private var vibrator: Vibrator? = null
+    private var shouldVibrate = true
+
+    private val configReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                "ALARM_CONFIG_CHANGED" -> {
+                    // Update vibration setting
+                    val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
+                    shouldVibrate = prefs.getBoolean("vibrate", true)
+
+                    // Restart vibration if needed
+                    stopVibration()
+                    if (shouldVibrate) {
+                        startVibration()
+                    }
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Register for config changes
+        val filter = IntentFilter("ALARM_CONFIG_CHANGED")
+        registerReceiver(configReceiver, filter)
+
+        initializeVibrator()
 
         makeFullScreenAndTransparent()
         setContentView(R.layout.activity_alarm)
@@ -79,6 +112,49 @@ class AlarmActivity : AppCompatActivity() {
         }
     }
 
+    private fun initializeVibrator() {
+        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vibratorManager.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+        
+        // Check vibration preference
+        val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
+        shouldVibrate = prefs.getBoolean("vibrate", true)
+        
+        // Start vibration when activity starts
+        startVibration()
+    }
+
+    private fun startVibration() {
+        if (!shouldVibrate || vibrator == null) return
+        
+        val vibrationPattern = longArrayOf(0, 1000, 500, 1000) // Wait, vibrate, pause, vibrate
+        
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val vibrationEffect = VibrationEffect.createWaveform(vibrationPattern, 0)
+                vibrator?.vibrate(vibrationEffect)
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(vibrationPattern, 0)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun stopVibration() {
+        try {
+            vibrator?.cancel()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private fun makeFullScreenAndTransparent() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             window.decorView.systemUiVisibility = (
@@ -120,7 +196,19 @@ class AlarmActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.alarmTime).text = currentTime
     }
 
+    
     override fun onBackPressed() {
         // Disable back button to prevent accidental dismissal
+    }
+    
+    override fun onDestroy() {
+        try {
+            unregisterReceiver(configReceiver)
+        } catch (e: Exception) {
+            // ignore if not registered
+        }
+        
+        stopVibration()
+        super.onDestroy()
     }
 }
