@@ -9,16 +9,28 @@ import org.json.JSONObject
 import java.util.Calendar
 
 object AlarmScheduler {
-    
     fun scheduleAlarm(
         context: Context,
         triggerAtMillis: Long,
         requestCode: Int,
+        requestCodeStr: String,
         title: String,
         message: String,
         recurrenceType: String,
         recurrencePattern: String
     ) {
+        // Save to storage
+        val alarmItem = AlarmItem(
+            requestCode = requestCode,
+            requestCodeStr = requestCodeStr,
+            timestamp = triggerAtMillis,
+            title = title,
+            message = message,
+            recurrenceType = recurrenceType,
+            recurrencePattern = recurrencePattern
+        )
+        AlarmStorageHelper.saveAlarm(context, alarmItem)
+        
         scheduleRecurringAlarm(
             context,
             triggerAtMillis,
@@ -106,14 +118,19 @@ object AlarmScheduler {
     fun scheduleSnooze(context: Context, minutes: Int, requestCode: Int, title: String, message: String) {
         val snoozeTime = System.currentTimeMillis() + minutes * 60 * 1000L
 
+        // Generate a unique request code string for the snooze
+        val snoozeRequestCodeStr = "snooze_${requestCode}_${System.currentTimeMillis()}"
+        val snoozeRequestCode = AlarmStorageHelper.generateRequestCode(snoozeRequestCodeStr)
+
         val intent = Intent(context, AlarmReceiver::class.java).apply {
-            putExtra("requestCode", requestCode)
+            putExtra("requestCode", snoozeRequestCode)
             putExtra("title", "$title (Snoozed)")
             putExtra("message", message)
             putExtra("recurrenceType", RecurrenceHelper.TYPE_ONCE)
+            putExtra("recurrencePattern", "") // Add empty pattern
             putExtra("originalTriggerTime", snoozeTime)
         }
-        
+
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             generateSnoozeRequestCode(requestCode),
@@ -127,6 +144,18 @@ object AlarmScheduler {
         } else {
             am.setExact(AlarmManager.RTC_WAKEUP, snoozeTime, pendingIntent)
         }
+
+        // Also save to storage
+        AlarmScheduler.scheduleAlarm(
+            context,
+            snoozeTime,
+            snoozeRequestCode,
+            snoozeRequestCodeStr,
+            "$title (Snoozed)",
+            message,
+            RecurrenceHelper.TYPE_ONCE,
+            ""
+        )
     }
 
     fun cancelAlarm(context: Context, requestCode: Int) {

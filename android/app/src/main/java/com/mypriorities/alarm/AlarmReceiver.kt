@@ -107,7 +107,7 @@ class AlarmReceiver : BroadcastReceiver() {
         // Stop current alarm
         stopAlarm(context)
 
-        // Schedule snooze as a one-time alarm
+        // Schedule snooze as a one-time alarm with proper parameters
         AlarmScheduler.scheduleSnooze(context, snoozeMinutes, requestCode, title, message)
     }
 }

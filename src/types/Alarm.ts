@@ -1,27 +1,30 @@
-
+// types/Alarm.ts
 export interface AlarmNativeModule {
+  // Single method for both single and recurring alarms
   scheduleAlarm(
     timestamp: number,
     title: string,
     message: string,
-    requestCodeStr: string,
+    requestCodeStr: string | null,
     recurrenceType: string,
     recurrencePattern: string,
   ): Promise<string>;
 
-  scheduleRecurringAlarm(
+  updateAlarm(
+    requestCodeStr: string,
     timestamp: number,
     title: string,
     message: string,
-    requestCodeStr: string,
     recurrenceType: string,
-    daysOfWeek: number[],
-    dayOfMonth: number,
-    interval: number,
+    recurrencePattern: string,
   ): Promise<string>;
 
   cancelAlarm(requestCodeStr: string): Promise<boolean>;
   cancelAllAlarms(): Promise<boolean>;
+  getAllScheduledAlarms(): Promise<any[]>;
+  getAlarm(requestCodeStr: string): Promise<any | null>;
+  generateRequestCode(): Promise<string>;
+  isAlarmScheduled(requestCodeStr: string): Promise<boolean>;
 }
 
 export interface AlarmScheduleConfig {
@@ -29,16 +32,14 @@ export interface AlarmScheduleConfig {
   title?: string;
   message: string;
   requestCodeStr?: string;
-  recurrenceType?: RecurrenceType;
-  daysOfWeek?: number[];
-  dayOfMonth?: number;
-  interval?: number;
+  recurrenceType?:
+    | 'ONCE'
+    | 'DAILY'
+    | 'WEEKLY'
+    | 'MONTHLY'
+    | 'YEARLY'
+    | 'CUSTOM';
+  daysOfWeek?: number[]; // 0-6 (Sunday=0) - required for WEEKLY
+  dayOfMonth?: number; // 1-31 - required for MONTHLY
+  interval?: number; // for DAILY and CUSTOM recurrences
 }
-
-export type RecurrenceType =
-  | 'ONCE'
-  | 'DAILY'
-  | 'WEEKLY'
-  | 'MONTHLY'
-  | 'YEARLY'
-  | 'CUSTOM';

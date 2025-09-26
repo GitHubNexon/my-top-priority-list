@@ -9,21 +9,28 @@ class SnoozeReceiver : BroadcastReceiver() {
         // Stop current sound
         context.stopService(Intent(context, AlarmSoundService::class.java))
 
-        val requestCode = intent.getIntExtra("requestCode", System.currentTimeMillis().toInt())
+        val originalRequestCode = intent.getIntExtra("requestCode", System.currentTimeMillis().toInt())
         val title = intent.getStringExtra("title") ?: "Snoozed Alarm"
         val message = intent.getStringExtra("message") ?: "Snoozed Alarm"
         val snoozeMinutes = intent.getIntExtra("snoozeMinutes", 10)
         val snoozeTime = System.currentTimeMillis() + (snoozeMinutes * 60 * 1000L)
+        
+        // Generate a unique request code string for the snooze alarm
+        val snoozeRequestCodeStr = "snooze_${originalRequestCode}_${System.currentTimeMillis()}"
+        val snoozeRequestCode = AlarmStorageHelper.generateRequestCode(snoozeRequestCodeStr)
 
+        // Use the storage-aware method
         AlarmScheduler.scheduleAlarm(
             context,
             snoozeTime,
-            requestCode,
-            title,
+            snoozeRequestCode,
+            snoozeRequestCodeStr,
+            "$title (Snoozed)",
             message,
             RecurrenceHelper.TYPE_ONCE,
             ""
         )
+        
         AlarmNotificationHelper.cancelAlarmNotification(context)
     }
 }

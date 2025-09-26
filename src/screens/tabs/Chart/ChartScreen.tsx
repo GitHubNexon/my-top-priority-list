@@ -187,11 +187,12 @@ const ChartScreen = () => {
 
   const scheduleDailyAlarm = async () => {
     try {
-      const requestCode = await alarm.scheduleDailyAlarm(
-        '09:00', // 9:00 AM
-        alarmMessage,
-        alarmTitle
-      );
+      const requestCode = await alarmManager.scheduleAlarm({
+          timestamp: Date.now(),
+          title: alarmTitle,
+          message: alarmMessage,
+          recurrenceType: 'DAILY',
+      });
       Alert.alert('Daily Alarm Scheduled!', `Request Code: ${requestCode}`);
     } catch (error: unknown) {
       if (error instanceof Error) {
