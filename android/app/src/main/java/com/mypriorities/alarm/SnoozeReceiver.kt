@@ -19,7 +19,7 @@ class SnoozeReceiver : BroadcastReceiver() {
         val snoozeRequestCodeStr = "snooze_${originalRequestCode}_${System.currentTimeMillis()}"
         val snoozeRequestCode = AlarmStorageHelper.generateRequestCode(snoozeRequestCodeStr)
 
-        // Use the storage-aware method
+        // Use the storage-aware method (this will automatically encrypt the alarm)
         AlarmScheduler.scheduleAlarm(
             context,
             snoozeTime,

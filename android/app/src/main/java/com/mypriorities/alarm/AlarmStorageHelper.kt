@@ -9,38 +9,75 @@ import java.util.*
 object AlarmStorageHelper {
     private const val PREFS_NAME = "ScheduledAlarms"
     private const val ALARMS_KEY = "alarms_list"
+    private const val ENCRYPTED_ALARMS_KEY = "encrypted_alarms_list"
     private val gson = Gson()
+
+    // Initialize encryption (call this in your Application class)
+    fun initializeEncryption(context: Context) {
+        EncryptionHelper.initialize(context)
+    }
 
     fun saveAlarm(context: Context, alarmItem: AlarmItem) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val alarms = getAllAlarms(context).toMutableList()
+        
+        // Convert alarm to JSON
+        val alarmJson = gson.toJson(alarmItem)
+        
+        // Encrypt the JSON string
+        val encryptedAlarmJson = EncryptionHelper.encrypt(alarmJson)
+        
+        // Get existing encrypted alarms
+        val existingEncryptedAlarms = getEncryptedAlarmsList(prefs)
         
         // Remove existing alarm with same requestCode
-        alarms.removeAll { it.requestCode == alarmItem.requestCode }
+        val updatedAlarms = existingEncryptedAlarms.toMutableList().apply {
+            // Find and remove existing alarm by requestCode
+            removeAll { encryptedAlarm ->
+                try {
+                    val decrypted = EncryptionHelper.decrypt(encryptedAlarm)
+                    val existingAlarm = gson.fromJson(decrypted, AlarmItem::class.java)
+                    existingAlarm.requestCode == alarmItem.requestCode
+                } catch (e: Exception) {
+                    false
+                }
+            }
+            // Add the new encrypted alarm
+            add(encryptedAlarmJson)
+        }
         
-        // Add new/updated alarm
-        alarms.add(alarmItem)
-        
-        val alarmsJson = gson.toJson(alarms)
-        prefs.edit().putString(ALARMS_KEY, alarmsJson).apply()
+        // Save the list of encrypted alarms
+        saveEncryptedAlarmsList(prefs, updatedAlarms)
     }
 
     fun removeAlarm(context: Context, requestCode: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val alarms = getAllAlarms(context).toMutableList()
+        val existingEncryptedAlarms = getEncryptedAlarmsList(prefs)
         
-        alarms.removeAll { it.requestCode == requestCode }
+        val updatedAlarms = existingEncryptedAlarms.filter { encryptedAlarm ->
+            try {
+                val decrypted = EncryptionHelper.decrypt(encryptedAlarm)
+                val alarm = gson.fromJson(decrypted, AlarmItem::class.java)
+                alarm.requestCode != requestCode
+            } catch (e: Exception) {
+                true // Keep if we can't decrypt (shouldn't happen)
+            }
+        }
         
-        val alarmsJson = gson.toJson(alarms)
-        prefs.edit().putString(ALARMS_KEY, alarmsJson).apply()
+        saveEncryptedAlarmsList(prefs, updatedAlarms)
     }
 
     fun getAllAlarms(context: Context): List<AlarmItem> {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val alarmsJson = prefs.getString(ALARMS_KEY, "[]") ?: "[]"
+        val encryptedAlarmsList = getEncryptedAlarmsList(prefs)
         
-        val type = object : TypeToken<List<AlarmItem>>() {}.type
-        return gson.fromJson(alarmsJson, type) ?: emptyList()
+        return encryptedAlarmsList.mapNotNull { encryptedAlarm ->
+            try {
+                val decrypted = EncryptionHelper.decrypt(encryptedAlarm)
+                gson.fromJson(decrypted, AlarmItem::class.java)
+            } catch (e: Exception) {
+                null // Skip if we can't decrypt
+            }
+        }
     }
 
     fun getAlarmByRequestCode(context: Context, requestCode: Int): AlarmItem? {
@@ -53,7 +90,7 @@ object AlarmStorageHelper {
 
     fun clearAllAlarms(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().remove(ALARMS_KEY).apply()
+        saveEncryptedAlarmsList(prefs, emptyList())
     }
 
     fun generateRequestCode(requestCodeStr: String? = null): Int {
@@ -63,5 +100,55 @@ object AlarmStorageHelper {
 
     fun generateRequestCodeStr(requestCodeStr: String? = null): String {
         return requestCodeStr ?: UUID.randomUUID().toString()
+    }
+
+    // Helper methods for encrypted list storage
+    private fun getEncryptedAlarmsList(prefs: SharedPreferences): List<String> {
+        val encryptedListJson = prefs.getString(ENCRYPTED_ALARMS_KEY, "[]") ?: "[]"
+        return try {
+            gson.fromJson(encryptedListJson, Array<String>::class.java)?.toList() ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun saveEncryptedAlarmsList(prefs: SharedPreferences, alarms: List<String>) {
+        val encryptedListJson = gson.toJson(alarms)
+        prefs.edit().putString(ENCRYPTED_ALARMS_KEY, encryptedListJson).apply()
+    }
+
+    // Migration method to encrypt existing plain text alarms
+    fun migrateExistingAlarms(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        
+        // Check if we already have encrypted data
+        if (prefs.contains(ENCRYPTED_ALARMS_KEY)) {
+            return // Already migrated
+        }
+        
+        // Check if we have legacy plain text data
+        val legacyAlarmsJson = prefs.getString(ALARMS_KEY, null)
+        if (legacyAlarmsJson != null) {
+            try {
+                val type = object : TypeToken<List<AlarmItem>>() {}.type
+                val legacyAlarms: List<AlarmItem> = gson.fromJson(legacyAlarmsJson, type) ?: emptyList()
+                
+                if (legacyAlarms.isNotEmpty()) {
+                    // Encrypt each alarm and save to new storage
+                    val encryptedAlarms = legacyAlarms.map { alarm ->
+                        val alarmJson = gson.toJson(alarm)
+                        EncryptionHelper.encrypt(alarmJson)
+                    }
+                    
+                    saveEncryptedAlarmsList(prefs, encryptedAlarms)
+                    
+                    // Optional: Remove legacy data after migration
+                    // prefs.edit().remove(ALARMS_KEY).apply()
+                }
+            } catch (e: Exception) {
+                // Migration failed, start fresh
+                saveEncryptedAlarmsList(prefs, emptyList())
+            }
+        }
     }
 }

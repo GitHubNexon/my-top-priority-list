@@ -192,6 +192,20 @@ object AlarmNotificationHelper {
         }
     }
 
+    fun getCustomAlarmUri(context: Context): Uri? {
+        return try {
+            // Check if the raw resource exists
+            val resId = context.resources.getIdentifier("urgent", "raw", context.packageName)
+            if (resId != 0) {
+                Uri.parse("android.resource://" + context.packageName + "/" + resId)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun getDefaultAlarmUri(): Uri {
         return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)

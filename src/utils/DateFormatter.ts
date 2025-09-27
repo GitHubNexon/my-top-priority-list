@@ -1,4 +1,3 @@
-// utils/dateFormatter.ts
 export const formatDate = (iso: string): string => {
   if (!iso) return '';
   const date = new Date(iso);

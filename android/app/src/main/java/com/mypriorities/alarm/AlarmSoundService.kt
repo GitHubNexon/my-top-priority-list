@@ -165,13 +165,15 @@ class AlarmSoundService : Service() {
         val soundUri = if (!soundUriString.isNullOrEmpty()) {
             Uri.parse(soundUriString)
         } else {
-            AlarmNotificationHelper.getDefaultAlarmUri()
+            AlarmNotificationHelper.getCustomAlarmUri(this) ?: AlarmNotificationHelper.getDefaultAlarmUri()
         }
-
-        // Only play sound if activity is not active (to avoid duplication)
-        if (!isActivityActive) {
-            playAlarmSound(soundUri)
-        }
+        
+        /**
+         * Always play sound regardless of activity state
+         * The service should always handle the sound,
+         * activity only handles UI and vibration
+         */
+        playAlarmSound(soundUri)
 
         return START_STICKY
     }
@@ -180,6 +182,17 @@ class AlarmSoundService : Service() {
         try {
             stopAlarmSound() // safety
 
+            // Get preferences for consistent sound selection
+            val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
+            val soundUriString = prefs.getString("sound_uri", null)
+
+            // Use the provided URI, or fallback to the same logic as onStartCommand
+            val finalUri = uri ?: if (!soundUriString.isNullOrEmpty()) {
+                Uri.parse(soundUriString)
+            } else {
+                AlarmNotificationHelper.getCustomAlarmUri(this) ?: AlarmNotificationHelper.getDefaultAlarmUri()
+            }
+
             mediaPlayer = MediaPlayer().apply {
                 setAudioAttributes(
                     AudioAttributes.Builder()
@@ -187,18 +200,37 @@ class AlarmSoundService : Service() {
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .build()
                 )
-                setDataSource(applicationContext, uri ?: AlarmNotificationHelper.getDefaultAlarmUri())
+                setDataSource(applicationContext, finalUri)
                 setOnPreparedListener { mp ->
                     mp.isLooping = true
                     mp.start()
                 }
                 setOnErrorListener { _, what, extra ->
-                    false
+                    // Try to fallback to default sound on error
+                    try {
+                        val defaultUri = AlarmNotificationHelper.getDefaultAlarmUri()
+                        if (finalUri != defaultUri) {
+                            stopAlarmSound()
+                            playAlarmSound(defaultUri)
+                        }
+                    } catch (e: Exception) {
+                        stopSelf()
+                    }
+                    true // Indicate we handled the error
                 }
                 prepareAsync()
             }
         } catch (e: Exception) {
-            stopSelf()
+            // If everything fails, try with default system alarm sound
+            try {
+                if (uri != AlarmNotificationHelper.getDefaultAlarmUri()) {
+                    playAlarmSound(AlarmNotificationHelper.getDefaultAlarmUri())
+                } else {
+                    stopSelf()
+                }
+            } catch (e2: Exception) {
+                stopSelf()
+            }
         }
     }
 

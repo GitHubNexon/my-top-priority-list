@@ -1,6 +1,7 @@
 package com.mypriorities
 
 import android.os.Bundle
+import com.mypriorities.alarm.AlarmStorageHelper
 import com.zoontek.rnbootsplash.RNBootSplash
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -11,6 +12,12 @@ class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     RNBootSplash.init(this, R.style.BootTheme) // ⬅️ initialize the splash screen
     super.onCreate(savedInstanceState) // super.onCreate(null) with react-native-screens
+
+    // Initialize encryption
+    AlarmStorageHelper.initializeEncryption(this)
+    
+    // Migrate existing alarms to encrypted format
+    AlarmStorageHelper.migrateExistingAlarms(this)
   }
 
   /**

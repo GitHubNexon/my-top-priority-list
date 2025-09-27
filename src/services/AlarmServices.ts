@@ -96,6 +96,12 @@ export class AlarmService {
       throw new Error('Alarm timestamp must be in the future');
     }
 
+    if (recurrenceType !== 'ONCE' && timestamp <= Date.now()) {
+      console.warn(
+        'Recurring alarm timestamp is in the past. It will trigger at the next scheduled occurrence.',
+      );
+    }
+
     if (recurrenceType === 'WEEKLY' && daysOfWeek.length === 0) {
       throw new Error(
         'Weekly recurrence requires at least one day of the week',
