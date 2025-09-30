@@ -3,6 +3,7 @@ package com.mypriorities
 import com.mypriorities.navigation.AndroidNavigationPackage
 import com.mypriorities.alarm.AlarmConfigPackage
 import com.mypriorities.alarm.AlarmPackage
+import com.mypriorities.alarm.AlarmStorageHelper
 import android.app.Application
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
@@ -12,6 +13,7 @@ import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
+import android.util.Log
 
 class MainApplication : Application(), ReactApplication {
 
@@ -39,6 +41,27 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
+    
+    // Initialize alarm system here (BEFORE React Native loads)
+    initializeAlarmSystem()
+    
+    // Then load React Native
     loadReactNative(this)
+  }
+
+  private fun initializeAlarmSystem() {
+    try {
+      Log.d("MainApplication", "Initializing alarm system...")
+      
+      // Initialize encryption for alarm storage
+      AlarmStorageHelper.initializeEncryption(this)
+      
+      // Migrate any existing alarms to encrypted storage
+      AlarmStorageHelper.migrateExistingAlarms(this)
+      
+      Log.d("MainApplication", "Alarm system initialized successfully")
+    } catch (e: Exception) {
+      Log.e("MainApplication", "Failed to initialize alarm system", e)
+    }
   }
 }
