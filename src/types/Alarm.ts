@@ -1,4 +1,3 @@
-// types/Alarm.ts
 export interface AlarmNativeModule {
   // Single method for both single and recurring alarms
   scheduleAlarm(
@@ -21,8 +20,8 @@ export interface AlarmNativeModule {
 
   cancelAlarm(requestCodeStr: string): Promise<boolean>;
   cancelAllAlarms(): Promise<boolean>;
-  getAllScheduledAlarms(): Promise<any[]>;
-  getAlarm(requestCodeStr: string): Promise<any | null>;
+  getAllScheduledAlarms(): Promise<AlarmScheduleConfig[]>;
+  getAlarm(requestCodeStr: string): Promise<AlarmScheduleConfig | null>;
   generateRequestCode(): Promise<string>;
   isAlarmScheduled(requestCodeStr: string): Promise<boolean>;
 }
