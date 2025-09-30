@@ -1,6 +1,6 @@
-import { useCallback, useState } from "react";
-import { Ringtone } from "../types/AlarmConfig";
-import useAlarmConfig from "./useAlarmConfig";
+import { useCallback, useState } from 'react';
+import { Ringtone } from '../types/AlarmConfig';
+import useAlarmConfig from './useAlarmConfig';
 
 // Hook for managing alarm settings state
 const useAlarmSettings = () => {
@@ -9,6 +9,8 @@ const useAlarmSettings = () => {
     availableSounds: Ringtone[];
     vibration: boolean;
     snoozeMinutes: number;
+    maxAlarmDuration: number;
+    autoSnoozeOnTimeout: boolean;
     icons: { small: string; big: string };
   } | null>(null);
 
@@ -20,8 +22,10 @@ const useAlarmSettings = () => {
     setAlarmSound,
     setVibration,
     setSnoozeMinutes,
+    setMaxAlarmDuration,
+    setAutoSnoozeOnTimeout,
     getCurrentVibrationStatus,
-    getAvailableAlarmSounds
+    getAvailableAlarmSounds,
   } = useAlarmConfig();
 
   const loadSettings = useCallback(async () => {
@@ -101,6 +105,32 @@ const useAlarmSettings = () => {
     [setSnoozeMinutes, loadSettings],
   );
 
+  const updateMaxAlarmDuration = useCallback(
+    async (seconds: number) => {
+      try {
+        await setMaxAlarmDuration(seconds);
+        // Refresh settings after update
+        await loadSettings();
+      } catch (err) {
+        throw err;
+      }
+    },
+    [setMaxAlarmDuration, loadSettings],
+  );
+
+  const updateAutoSnoozeOnTimeout = useCallback(
+    async (enabled: boolean) => {
+      try {
+        await setAutoSnoozeOnTimeout(enabled);
+        // Refresh settings after update
+        await loadSettings();
+      } catch (err) {
+        throw err;
+      }
+    },
+    [setAutoSnoozeOnTimeout, loadSettings],
+  );
+
   return {
     settings,
     isLoading,
@@ -108,8 +138,10 @@ const useAlarmSettings = () => {
     loadSettings,
     updateAlarmSound,
     updateVibration,
-    loadAvailableRingtones,
     updateSnoozeMinutes,
+    updateMaxAlarmDuration,
+    updateAutoSnoozeOnTimeout,
+    loadAvailableRingtones,
   };
 };
 

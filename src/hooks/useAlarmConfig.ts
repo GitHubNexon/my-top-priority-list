@@ -195,6 +195,94 @@ const useAlarmConfig = () => {
     }
   }, []);
 
+  // Alarm Timeout Settings
+  const setMaxAlarmDuration = useCallback(
+    async (seconds: number): Promise<boolean> => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        return await alarmConfigService.setMaxAlarmDuration(seconds);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to set max alarm duration',
+        );
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  const getMaxAlarmDuration = useCallback(async (): Promise<number> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      return await alarmConfigService.getMaxAlarmDuration();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to get max alarm duration',
+      );
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const setAutoSnoozeOnTimeout = useCallback(
+    async (enabled: boolean): Promise<boolean> => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        return await alarmConfigService.setAutoSnoozeOnTimeout(enabled);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to set auto snooze on timeout',
+        );
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  const getAutoSnoozeOnTimeout = useCallback(async (): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      return await alarmConfigService.getAutoSnoozeOnTimeout();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to get auto snooze on timeout',
+      );
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const getTimeoutSettings = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      return await alarmConfigService.getTimeoutSettings();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to get timeout settings',
+      );
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Complete Configuration
   const getAlarmConfig = useCallback(async (): Promise<AlarmConfigData> => {
     setIsLoading(true);
@@ -242,7 +330,7 @@ const useAlarmConfig = () => {
   const getCurrentVibrationStatus = useCallback(async (): Promise<{
     vibrateSetting: boolean;
     hasVibrator: boolean;
-    willVibrate: boolean
+    willVibrate: boolean;
   }> => {
     setIsLoading(true);
     setError(null);
@@ -296,6 +384,11 @@ const useAlarmConfig = () => {
     getSmallIcon,
     setBigIcon,
     getBigIcon,
+    setMaxAlarmDuration,
+    getMaxAlarmDuration,
+    setAutoSnoozeOnTimeout,
+    getAutoSnoozeOnTimeout,
+    getTimeoutSettings,
     getAlarmConfig,
     getAlarmSettings,
     clearAllSettings,
