@@ -23,6 +23,11 @@ class AlarmActivity : AppCompatActivity() {
     private var vibrator: Vibrator? = null
     private var shouldVibrate = true
     private var hasVibrator = false
+    private var maxAlarmDuration: Int = 0
+    private var autoSnoozeOnTimeout: Boolean = false
+    private var alarmStartTime: Long = 0
+    private var timeoutHandler: android.os.Handler? = null
+    private val timeoutRunnable = Runnable { handleAlarmTimeout() }
 
     private val configReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -32,10 +37,22 @@ class AlarmActivity : AppCompatActivity() {
                     val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
                     shouldVibrate = prefs.getBoolean("vibrate", true)
 
+                    // Update timeout settings
+                    maxAlarmDuration = prefs.getInt("max_alarm_duration", 0)
+                    autoSnoozeOnTimeout = prefs.getBoolean("auto_snooze_on_timeout", false)
+
                     // Restart vibration if needed
                     stopVibration()
                     if (shouldVibrate && hasVibrator) {
                         startVibration()
+                    }
+
+                    // Restart timeout check with new settings
+                    if (maxAlarmDuration > 0) {
+                        alarmStartTime = System.currentTimeMillis()
+                        startTimeoutCheck()
+                    } else {
+                        timeoutHandler?.removeCallbacks(timeoutRunnable)
                     }
                 }
             }
@@ -112,6 +129,56 @@ class AlarmActivity : AppCompatActivity() {
             sendBroadcast(snoozeIntent)
             finishAndRemoveTask()
         }
+    }
+
+    private fun startTimeoutCheck() {
+        timeoutHandler?.removeCallbacks(timeoutRunnable)
+        timeoutHandler = android.os.Handler(mainLooper)
+        
+        // Check every second
+        timeoutHandler?.postDelayed(timeoutRunnable, 1000)
+    }
+
+    private fun handleAlarmTimeout() {
+        val elapsedTime = (System.currentTimeMillis() - alarmStartTime) / 1000
+
+        if (maxAlarmDuration > 0 && elapsedTime >= maxAlarmDuration) {
+            // Timeout reached
+            if (autoSnoozeOnTimeout) {
+                triggerAutoSnooze()
+            } else {
+                triggerAutoStop()
+            }
+        } else {
+            // Continue checking
+            startTimeoutCheck()
+        }
+    }
+    
+    private fun triggerAutoSnooze() {
+        val requestCode = intent.getIntExtra("requestCode", -1)
+        val title = intent.getStringExtra("title") ?: "Alarm"
+        val message = intent.getStringExtra("message") ?: "Wake up!"
+        
+        val snoozeIntent = Intent(this, SnoozeReceiver::class.java).apply {
+            action = "SNOOZE_ALARM"
+            putExtra("requestCode", requestCode)
+            putExtra("title", title)
+            putExtra("message", message)
+        }
+        sendBroadcast(snoozeIntent)
+        finishAndRemoveTask()
+    }
+
+    private fun triggerAutoStop() {
+        val requestCode = intent.getIntExtra("requestCode", -1)
+
+        val stopIntent = Intent(this, StopAlarmReceiver::class.java).apply {
+            action = "STOP_ALARM"
+            putExtra("requestCode", requestCode)
+        }
+        sendBroadcast(stopIntent)
+        finishAndRemoveTask()
     }
 
     private fun initializeVibrator() {
@@ -209,6 +276,9 @@ class AlarmActivity : AppCompatActivity() {
     }
     
     override fun onDestroy() {
+        // Clean up timeout handler
+        timeoutHandler?.removeCallbacks(timeoutRunnable)
+        timeoutHandler = null
         try {
             unregisterReceiver(configReceiver)
         } catch (e: Exception) {

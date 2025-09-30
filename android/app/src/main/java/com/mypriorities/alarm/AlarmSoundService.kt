@@ -32,6 +32,17 @@ class AlarmSoundService : Service() {
     private var shouldVibrate = true
     private val vibrationPattern = longArrayOf(0, 1000, 500, 1000) // Wait, vibrate, pause, vibrate
     private var shouldHandleVibration = false // Default to false, let activity handle it
+    private var alarmStartTime: Long = 0
+    private var maxAlarmDuration: Int = 0 // 0 means infinite
+    private var autoSnoozeOnTimeout: Boolean = false
+    private var timeoutHandler: android.os.Handler? = null
+    private val timeoutRunnable = Runnable { handleAlarmTimeout() }
+    
+    // Store the intent and alarm details for timeout handling
+    private var currentIntent: Intent? = null
+    private var currentTitle: String = "Alarm"
+    private var currentMessage: String = "Wake up!"
+    private var currentRequestCode: Int = -1
 
     private val configReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -40,13 +51,23 @@ class AlarmSoundService : Service() {
                     // Update vibration setting
                     val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
                     shouldVibrate = prefs.getBoolean("vibrate", true)
-                    
+
+                    // Update timeout settings
+                    maxAlarmDuration = prefs.getInt("max_alarm_duration", 0)
+                    autoSnoozeOnTimeout = prefs.getBoolean("auto_snooze_on_timeout", false)
+
                     // Restart vibration if needed
-                    if (isPlaying) {
-                        stopVibration()
-                        if (shouldVibrate) {
-                            startVibration()
-                        }
+                    stopVibration()
+                    if (shouldVibrate && hasVibrator()) {
+                        startVibration()
+                    }
+
+                    // Restart timeout check with new settings
+                    if (maxAlarmDuration > 0) {
+                        alarmStartTime = System.currentTimeMillis()
+                        startTimeoutCheck()
+                    } else {
+                        timeoutHandler?.removeCallbacks(timeoutRunnable)
                     }
                 }
             }
@@ -72,14 +93,26 @@ class AlarmSoundService : Service() {
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
     }
+    
+    private fun hasVibrator(): Boolean {
+        return vibrator?.hasVibrator() ?: false
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Store the intent and alarm details for timeout handling
+        currentIntent = intent
+        currentTitle = intent?.getStringExtra("title") ?: "Alarm"
+        currentMessage = intent?.getStringExtra("message") ?: "Wake up!"
+        currentRequestCode = intent?.getIntExtra("requestCode", -1) ?: -1
+        
         isActivityActive = intent?.getBooleanExtra("activityActive", false) ?: false
         shouldHandleVibration = intent?.getBooleanExtra("shouldHandleVibration", true) ?: true
 
         // Get preferences
         val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
         shouldVibrate = prefs.getBoolean("vibrate", true)
+        maxAlarmDuration = prefs.getInt("max_alarm_duration", 0)
+        autoSnoozeOnTimeout = prefs.getBoolean("auto_snooze_on_timeout", false)
 
         if (!isActivityActive && shouldHandleVibration) {
             // Start vibration only if activity is not handling it
@@ -93,14 +126,10 @@ class AlarmSoundService : Service() {
             val showFullScreen = !powerManager.isInteractive || keyguardManager.isKeyguardLocked
         
             if (showFullScreen) {
-                val title = intent?.getStringExtra("title") ?: "Alarm"
-                val message = intent?.getStringExtra("message") ?: "Wake up!"
-                val requestCode = intent?.getIntExtra("requestCode", -1) ?: -1
-
                 val fullScreenIntent = Intent(this, AlarmActivity::class.java).apply {
-                    putExtra("title", title)
-                    putExtra("message", message)
-                    putExtra("requestCode", requestCode)
+                    putExtra("title", currentTitle)
+                    putExtra("message", currentMessage)
+                    putExtra("requestCode", currentRequestCode)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 }
                 startActivity(fullScreenIntent)
@@ -110,28 +139,29 @@ class AlarmSoundService : Service() {
         // If already playing, we still ensure notification is present and return
         if (isPlaying) {
             // Ensure notification still exists in case service restarted
-            val title = intent?.getStringExtra("title") ?: "Alarm"
-            val message = intent?.getStringExtra("message") ?: "Wake up!"
-            val requestCode = intent?.getIntExtra("requestCode", -1) ?: -1
             val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
             val showFullscreen = !pm.isInteractive
             val notification = AlarmNotificationHelper.buildAlarmNotification(
                 this,
-                title,
-                message,
-                requestCode,
+                currentTitle,
+                currentMessage,
+                currentRequestCode,
                 includeSound = false,
                 showFullScreen = showFullscreen
             )
             startForeground(AlarmNotificationHelper.NOTIFICATION_ID, notification)
+            
+            // Restart timeout check if needed
+            if (maxAlarmDuration > 0) {
+                alarmStartTime = System.currentTimeMillis()
+                startTimeoutCheck()
+            }
+            
             return START_STICKY
         }
 
         isPlaying = true
-
-        val title = intent?.getStringExtra("title") ?: "Alarm"
-        val message = intent?.getStringExtra("message") ?: "Wake up!"
-        val requestCode = intent?.getIntExtra("requestCode", -1) ?: -1
+        alarmStartTime = System.currentTimeMillis()
 
         // Decide whether to show fullscreen -> when device is not interactive (screen off / locked)
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -141,9 +171,9 @@ class AlarmSoundService : Service() {
         // If device is locked/screen off, start the full-screen activity
         if (showFullScreen) {
             val fullScreenIntent = Intent(this, AlarmActivity::class.java).apply {
-                putExtra("title", title)
-                putExtra("message", message)
-                putExtra("requestCode", requestCode)
+                putExtra("title", currentTitle)
+                putExtra("message", currentMessage)
+                putExtra("requestCode", currentRequestCode)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
             startActivity(fullScreenIntent)
@@ -152,9 +182,9 @@ class AlarmSoundService : Service() {
         // Build the single notification and start foreground with it
         val notification = AlarmNotificationHelper.buildAlarmNotification(
             this,
-            title,
-            message,
-            requestCode,
+            currentTitle,
+            currentMessage,
+            currentRequestCode,
             includeSound = false, // service handles audio
             showFullScreen = showFullScreen
         )
@@ -174,8 +204,39 @@ class AlarmSoundService : Service() {
          * activity only handles UI and vibration
          */
         playAlarmSound(soundUri)
+        
+        // Start timeout check if duration is set
+        if (maxAlarmDuration > 0) {
+            startTimeoutCheck()
+        }
 
         return START_STICKY
+    }
+
+    private fun startTimeoutCheck() {
+        timeoutHandler?.removeCallbacks(timeoutRunnable)
+        timeoutHandler = android.os.Handler(mainLooper)
+        
+        // Check every second
+        timeoutHandler?.postDelayed(timeoutRunnable, 1000)
+    }
+
+    private fun handleAlarmTimeout() {
+        val elapsedTime = (System.currentTimeMillis() - alarmStartTime) / 1000
+        
+        if (maxAlarmDuration > 0 && elapsedTime >= maxAlarmDuration) {
+            // Timeout reached - stop the alarm
+            if (autoSnoozeOnTimeout) {
+                // Auto-snooze
+                triggerAutoSnooze()
+            } else {
+                // Auto-stop
+                triggerAutoStop()
+            }
+        } else {
+            // Continue checking
+            startTimeoutCheck()
+        }
     }
 
     private fun playAlarmSound(uri: Uri?) {
@@ -274,7 +335,45 @@ class AlarmSoundService : Service() {
         isPlaying = false
     }
 
+    private fun triggerAutoSnooze() {
+        val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
+        val snoozeMinutes = prefs.getInt("snooze_minutes", 5)
+        
+        // Create snooze intent similar to SnoozeReceiver
+        val snoozeIntent = Intent(this, SnoozeReceiver::class.java).apply {
+            action = "SNOOZE_ALARM"
+            putExtra("snoozeMinutes", snoozeMinutes)
+            putExtra("requestCode", currentRequestCode)
+            putExtra("title", currentTitle)
+            putExtra("message", currentMessage)
+        }
+
+        // Send broadcast to trigger snooze
+        sendBroadcast(snoozeIntent)
+
+        // Stop current alarm
+        stopSelf()
+    }
+
+    private fun triggerAutoStop() {
+        // Create stop intent similar to StopAlarmReceiver
+        val stopIntent = Intent(this, StopAlarmReceiver::class.java).apply {
+            action = "STOP_ALARM"
+            putExtra("requestCode", currentRequestCode)
+        }
+
+        // Send broadcast to trigger stop
+        sendBroadcast(stopIntent)
+
+        // Stop current alarm
+        stopSelf()
+    }
+
     override fun onDestroy() {
+        // Clean up timeout handler
+        timeoutHandler?.removeCallbacks(timeoutRunnable)
+        timeoutHandler = null
+        
         try {
             unregisterReceiver(configReceiver)
             stopForeground(true)
@@ -283,6 +382,13 @@ class AlarmSoundService : Service() {
         }
         stopAlarmSound()
         stopVibration()
+        
+        // Clear stored intent and alarm details
+        currentIntent = null
+        currentTitle = "Alarm"
+        currentMessage = "Wake up!"
+        currentRequestCode = -1
+        
         super.onDestroy()
     }
 
