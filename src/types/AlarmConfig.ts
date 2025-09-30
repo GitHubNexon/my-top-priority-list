@@ -1,4 +1,3 @@
-
 export interface AlarmConfigNativeModule {
   setSnoozeMinutes(minutes: number): Promise<boolean>;
   getSnoozeMinutes(): Promise<number>;

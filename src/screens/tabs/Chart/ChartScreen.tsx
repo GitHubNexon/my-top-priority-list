@@ -177,7 +177,7 @@ const ChartScreen = () => {
     } catch (error) {
       Alert.alert('Error', 'Failed to reset sound');
     }
-  };  
+  };
 
   // ===== ALARM SCHEDULING FUNCTIONS =====
 
@@ -196,7 +196,7 @@ const ChartScreen = () => {
       );
       console.log('Alarm scheduled ✅ with code:', requestCode);
     } catch (error: unknown) {
-      if(error instanceof Error) {
+      if (error instanceof Error) {
         Alert.alert('Error', `Failed to schedule alarm: ${error.message}`)
       }
     }
@@ -229,10 +229,10 @@ const ChartScreen = () => {
   const scheduleDailyAlarm = async () => {
     try {
       const requestCode = await alarmManager.scheduleAlarm({
-          timestamp: Date.now(),
-          title: alarmTitle,
-          message: alarmMessage,
-          recurrenceType: 'DAILY',
+        timestamp: Date.now(),
+        title: alarmTitle,
+        message: alarmMessage,
+        recurrenceType: 'DAILY',
       });
       Alert.alert('Daily Alarm Scheduled!', `Request Code: ${requestCode}`);
     } catch (error: unknown) {
@@ -585,7 +585,7 @@ const ChartScreen = () => {
           <TouchableOpacity
             onPress={cancelAllAlarms}
             disabled={alarmManager.isLoading}
-            style={[styles.buttons,{
+            style={[styles.buttons, {
               backgroundColor: '#d66767'
             }]}
           >
