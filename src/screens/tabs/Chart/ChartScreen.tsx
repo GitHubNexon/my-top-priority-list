@@ -37,6 +37,8 @@ const ChartScreen = () => {
   const [showRingtonePicker, setShowRingtonePicker] = useState(false);
   const [availableRingtones, setAvailableRingtones] = useState<Ringtone[]>([]);
   const [selectedRingtone, setSelectedRingtone] = useState<Ringtone | null>(null);
+  const [maxAlarmDuration, setMaxAlarmDuration] = useState('0'); // 0 = infinite
+  const [autoSnoozeOnTimeout, setAutoSnoozeOnTimeout] = useState(false);
 
   // Load settings on component mount
   useEffect(() => {
@@ -49,14 +51,53 @@ const ChartScreen = () => {
   }, []);
 
   // Update local state when settings load
+  // Update the useEffect that loads settings
   useEffect(() => {
     if (alarmSettings.settings) {
       setSnoozeMinutes(alarmSettings.settings.snoozeMinutes.toString());
       setVibrationEnabled(alarmSettings.settings.vibration);
+      setMaxAlarmDuration(alarmSettings.settings.maxAlarmDuration.toString());
+      setAutoSnoozeOnTimeout(alarmSettings.settings.autoSnoozeOnTimeout);
     }
   }, [alarmSettings.settings]);
 
   // ===== SETTINGS FUNCTIONS =====
+
+  // Add these functions to handle timeout settings
+  const handleSaveMaxAlarmDuration = async () => {
+    try {
+      const seconds = parseInt(maxAlarmDuration, 10);
+      if (seconds >= 0) {
+        await alarmConfig.setMaxAlarmDuration(seconds);
+        await alarmSettings.updateMaxAlarmDuration(seconds);
+        Alert.alert('Success',
+          seconds === 0
+            ? 'Alarm duration set to infinite'
+            : `Alarm will auto-stop after ${seconds} seconds`
+        );
+      } else {
+        Alert.alert('Error', 'Max alarm duration cannot be negative');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save max alarm duration');
+    }
+  };
+
+  const handleToggleAutoSnooze = async (enabled: boolean) => {
+    try {
+      setAutoSnoozeOnTimeout(enabled);
+      await alarmConfig.setAutoSnoozeOnTimeout(enabled);
+      await alarmSettings.updateAutoSnoozeOnTimeout(enabled);
+      Alert.alert('Success',
+        enabled
+          ? 'Alarm will auto-snooze on timeout'
+          : 'Alarm will auto-stop on timeout'
+      );
+    } catch (error) {
+      setAutoSnoozeOnTimeout(!enabled); // Revert on error
+      Alert.alert('Error', 'Failed to update auto snooze setting');
+    }
+  };
 
   // Function to load available ringtones
   const loadAvailableRingtones = async () => {
@@ -143,7 +184,7 @@ const ChartScreen = () => {
   const schedule5SecondAlarm = async () => {
     try {
       const requestCode = await alarmManager.scheduleAlarm({
-        timestamp: Date.now() + 5000, // 5 seconds from now
+        timestamp: Date.now() + 300000, // 5 seconds from now
         title: alarmTitle,
         message: alarmMessage,
         recurrenceType: 'ONCE',
@@ -333,6 +374,59 @@ const ChartScreen = () => {
             </View>
           </View>
         </Modal>
+
+        {/* Timeout Settings Section */}
+        <Text style={{
+          fontSize: 20,
+          fontWeight: 'bold',
+          marginVertical: 10,
+          color: primaryFontColor,
+        }}>
+          ⏱️ Alarm Timeout Settings
+        </Text>
+
+        <View style={{ marginBottom: 15 }}>
+          <Text style={{ color: primaryFontColor }}>
+            Max Alarm Duration (seconds, 0 = infinite):
+          </Text>
+          <TextInput
+            value={maxAlarmDuration}
+            onChangeText={setMaxAlarmDuration}
+            keyboardType="numeric"
+            style={{
+              borderWidth: 1,
+              padding: 8,
+              marginVertical: 5,
+              color: primaryFontColor,
+            }}
+          />
+          <TouchableOpacity
+            onPress={handleSaveMaxAlarmDuration}
+            style={styles.buttons}
+          >
+            <Text style={[styles.textButtons, { color: primaryFontColor }]}>
+              Save Duration
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ marginBottom: 15, flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={{ color: primaryFontColor }}>Auto Snooze on Timeout: </Text>
+          <Switch
+            value={autoSnoozeOnTimeout}
+            onValueChange={handleToggleAutoSnooze}
+          />
+          <Text style={{ color: primaryFontColor }}>
+            {autoSnoozeOnTimeout ? 'Enabled' : 'Disabled'}
+          </Text>
+        </View>
+
+        <Text style={{ color: primaryFontColor, fontStyle: 'italic', marginBottom: 15 }}>
+          {maxAlarmDuration === '0'
+            ? 'Alarm will ring until manually stopped'
+            : `Alarm will ${autoSnoozeOnTimeout ? 'auto-snooze' : 'auto-stop'} after ${maxAlarmDuration} seconds`
+          }
+        </Text>
 
         {/* Settings Section */}
         <Text style={{
