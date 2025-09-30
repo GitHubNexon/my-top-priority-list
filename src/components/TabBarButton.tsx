@@ -27,7 +27,7 @@ const TabBarButton = (
 
     const animatedIconStyle = useAnimatedStyle(() => {
         return {
-            transform: [{ scale: isFocused ? withSpring(1.1) : withSpring(1) }]
+            transform: [{ scale: isFocused ? withSpring(1) : withSpring(0.8) }]
         }
     }, [isFocused]);
 
@@ -42,7 +42,8 @@ const TabBarButton = (
             </Animated.View>
             <Text style={{
                 color: isFocused ? primaryFontColor : secondaryFontColor,
-                fontSize: isFocused ? 12 : 10
+                fontSize: 12,
+                fontWeight: isFocused ? 600 : 400
             }}
             >
                 {label}
