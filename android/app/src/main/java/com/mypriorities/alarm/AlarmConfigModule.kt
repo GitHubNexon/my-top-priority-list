@@ -28,6 +28,11 @@ class AlarmConfigModule(reactContext: ReactApplicationContext)
             private const val DEFAULT_VIBRATE = true
             private const val DEFAULT_SMALL_ICON = "ic_alarm"
             private const val DEFAULT_BIG_ICON = "ic_alarm_big"
+
+            private const val PREFS_MAX_ALARM_DURATION = "max_alarm_duration"
+            private const val PREFS_AUTO_SNOOZE_ON_TIMEOUT = "auto_snooze_on_timeout"
+            private const val DEFAULT_MAX_ALARM_DURATION = 0 // 0 means infinite (default behavior)
+            private const val DEFAULT_AUTO_SNOOZE_ON_TIMEOUT = false
         }
     
         override fun getName(): String = "AlarmConfig"
@@ -56,7 +61,65 @@ class AlarmConfigModule(reactContext: ReactApplicationContext)
                 promise.reject("GET_ERROR", e)
             }
         }
-    
+
+        @ReactMethod
+        fun setMaxAlarmDuration(seconds: Int, promise: Promise) {
+            try {
+                if (seconds < 0) {
+                    promise.reject("INVALID_INPUT", "Max alarm duration cannot be negative")
+                    return
+                }
+                prefs.edit().putInt(PREFS_MAX_ALARM_DURATION, seconds).apply()
+
+                // Broadcast the change to running services
+                val intent = Intent("ALARM_CONFIG_CHANGED").apply {
+                    putExtra("max_alarm_duration", seconds)
+                }
+                reactApplicationContext.sendBroadcast(intent)
+
+                promise.resolve(true)
+            } catch (e: Exception) {
+                promise.reject("SET_ERROR", e)
+            }
+        }
+
+        @ReactMethod
+        fun getMaxAlarmDuration(promise: Promise) {
+            try {
+                val seconds = prefs.getInt(PREFS_MAX_ALARM_DURATION, DEFAULT_MAX_ALARM_DURATION)
+                promise.resolve(seconds)
+            } catch (e: Exception) {
+                promise.reject("GET_ERROR", e)
+            }
+        }
+
+        @ReactMethod
+        fun setAutoSnoozeOnTimeout(enabled: Boolean, promise: Promise) {
+            try {
+                prefs.edit().putBoolean(PREFS_AUTO_SNOOZE_ON_TIMEOUT, enabled).apply()
+
+                // Broadcast the change to running services
+                val intent = Intent("ALARM_CONFIG_CHANGED").apply {
+                    putExtra("auto_snooze_on_timeout", enabled)
+                }
+                reactApplicationContext.sendBroadcast(intent)
+
+                promise.resolve(true)
+            } catch (e: Exception) {
+                promise.reject("SET_ERROR", e)
+            }
+        }
+
+        @ReactMethod
+        fun getAutoSnoozeOnTimeout(promise: Promise) {
+            try {
+                val enabled = prefs.getBoolean(PREFS_AUTO_SNOOZE_ON_TIMEOUT, DEFAULT_AUTO_SNOOZE_ON_TIMEOUT)
+                promise.resolve(enabled)
+            } catch (e: Exception) {
+                promise.reject("GET_ERROR", e)
+            }
+        }
+
         // --- Ringtone ---
         @ReactMethod
         fun setRingtone(uri: String?, promise: Promise) {
@@ -225,11 +288,13 @@ class AlarmConfigModule(reactContext: ReactApplicationContext)
                     putInt("snoozeMinutes", prefs.getInt(PREFS_SNOOZE_MINUTES, DEFAULT_SNOOZE_MINUTES))
                     
                     val soundUri = prefs.getString(PREFS_SOUND_URI, null)
-                    putString("soundUri", soundUri)
                     
+                    putString("soundUri", soundUri)
                     putBoolean("vibrate", prefs.getBoolean(PREFS_VIBRATE, DEFAULT_VIBRATE))
                     putString("smallIcon", prefs.getString(PREFS_SMALL_ICON, DEFAULT_SMALL_ICON))
                     putString("bigIcon", prefs.getString(PREFS_BIG_ICON, DEFAULT_BIG_ICON))
+                    putInt("maxAlarmDuration", prefs.getInt(PREFS_MAX_ALARM_DURATION, DEFAULT_MAX_ALARM_DURATION))
+                    putBoolean("autoSnoozeOnTimeout", prefs.getBoolean(PREFS_AUTO_SNOOZE_ON_TIMEOUT, DEFAULT_AUTO_SNOOZE_ON_TIMEOUT))
                 }
                 promise.resolve(config)
             } catch (e: Exception) {
