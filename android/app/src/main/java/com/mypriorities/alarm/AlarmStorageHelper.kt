@@ -11,13 +11,36 @@ object AlarmStorageHelper {
     private const val ALARMS_KEY = "alarms_list"
     private const val ENCRYPTED_ALARMS_KEY = "encrypted_alarms_list"
     private val gson = Gson()
+    private var isInitialized = false
 
     // Initialize encryption (call this in your Application class)
     fun initializeEncryption(context: Context) {
-        EncryptionHelper.initialize(context)
+        if (!isInitialized) {
+            EncryptionHelper.initialize(context)
+            migrateExistingAlarms(context)
+            isInitialized = true
+        }
+    }
+
+    // Add this method to check initialization status
+    fun isInitialized(): Boolean {
+        return isInitialized
+    }
+
+    private fun ensureInitialized(context: Context) {
+        if (!isInitialized) {
+            initializeEncryption(context)
+        }
     }
 
     fun saveAlarm(context: Context, alarmItem: AlarmItem) {
+        ensureInitialized(context)
+
+        // Ensure encryption is initialized
+        if (!isInitialized) {
+            initializeEncryption(context)
+        }
+
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         
         // Convert alarm to JSON
@@ -67,6 +90,13 @@ object AlarmStorageHelper {
     }
 
     fun getAllAlarms(context: Context): List<AlarmItem> {
+        ensureInitialized(context)
+
+        // Ensure encryption is initialized
+        if (!isInitialized) {
+            initializeEncryption(context)
+        }
+
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val encryptedAlarmsList = getEncryptedAlarmsList(prefs)
         

@@ -13,10 +13,20 @@ object EncryptionHelper {
     private const val KEY_ALIAS = "alarm_encryption_key"
     
     private var mmkv: MMKV? = null
+    private var isInitialized = false
     
     fun initialize(context: Context) {
-        MMKV.initialize(context)
-        mmkv = MMKV.defaultMMKV()
+        if (!isInitialized) {
+            MMKV.initialize(context)
+            mmkv = MMKV.defaultMMKV()
+            isInitialized = true
+        }
+    }
+    
+    private fun ensureInitialized() {
+        if (!isInitialized) {
+            throw IllegalStateException("EncryptionHelper not initialized. Call initialize() first.")
+        }
     }
     
     private fun getOrCreateKey(): Key {
