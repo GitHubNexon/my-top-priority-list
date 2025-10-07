@@ -119,35 +119,18 @@ class AlarmSoundService : Service() {
             startVibration()
         }
 
-        // Only start full-screen activity if no activity is active and screen is off
-        if (!isActivityActive) {
-            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-            val showFullScreen = !powerManager.isInteractive || keyguardManager.isKeyguardLocked
-        
-            if (showFullScreen) {
-                val fullScreenIntent = Intent(this, AlarmActivity::class.java).apply {
-                    putExtra("title", currentTitle)
-                    putExtra("message", currentMessage)
-                    putExtra("requestCode", currentRequestCode)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                }
-                startActivity(fullScreenIntent)
-            }
-        }
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        val fullScreen = !powerManager.isInteractive || keyguardManager.isKeyguardLocked
 
-        // If already playing, we still ensure notification is present and return
-        if (isPlaying) {
-            // Ensure notification still exists in case service restarted
-            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-            val showFullscreen = !pm.isInteractive
+        if (fullScreen) {
             val notification = AlarmNotificationHelper.buildAlarmNotification(
                 this,
                 currentTitle,
                 currentMessage,
                 currentRequestCode,
                 includeSound = false,
-                showFullScreen = showFullscreen
+                showFullScreen = fullScreen
             )
             startForeground(AlarmNotificationHelper.NOTIFICATION_ID, notification)
             
@@ -156,39 +139,26 @@ class AlarmSoundService : Service() {
                 alarmStartTime = System.currentTimeMillis()
                 startTimeoutCheck()
             }
+        } else {
+            val notification = AlarmNotificationHelper.buildAlarmNotification(
+                this,
+                currentTitle,
+                currentMessage,
+                currentRequestCode,
+                includeSound = false,
+                showFullScreen = fullScreen
+            )
+            startForeground(AlarmNotificationHelper.NOTIFICATION_ID, notification)
             
-            return START_STICKY
+            // Restart timeout check if needed
+            if (maxAlarmDuration > 0) {
+                alarmStartTime = System.currentTimeMillis()
+                startTimeoutCheck()
+            }
         }
 
         isPlaying = true
         alarmStartTime = System.currentTimeMillis()
-
-        // Decide whether to show fullscreen -> when device is not interactive (screen off / locked)
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-        val showFullScreen = !powerManager.isInteractive || keyguardManager.isKeyguardLocked
-
-        // If device is locked/screen off, start the full-screen activity
-        if (showFullScreen) {
-            val fullScreenIntent = Intent(this, AlarmActivity::class.java).apply {
-                putExtra("title", currentTitle)
-                putExtra("message", currentMessage)
-                putExtra("requestCode", currentRequestCode)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            }
-            startActivity(fullScreenIntent)
-        }
-
-        // Build the single notification and start foreground with it
-        val notification = AlarmNotificationHelper.buildAlarmNotification(
-            this,
-            currentTitle,
-            currentMessage,
-            currentRequestCode,
-            includeSound = false, // service handles audio
-            showFullScreen = showFullScreen
-        )
-        startForeground(AlarmNotificationHelper.NOTIFICATION_ID, notification)
 
         // Get soundUri from preferences
         val soundUriString = prefs.getString("sound_uri", null)

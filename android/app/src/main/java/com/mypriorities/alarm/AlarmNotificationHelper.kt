@@ -35,13 +35,7 @@ object AlarmNotificationHelper {
             ).apply {
                 description = "Alarms and reminders"
                 enableVibration(prefs.getBoolean("vibrate", true))
-                setSound(
-                    soundUri,
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
+                setSound(null, null)
                 setBypassDnd(true)
                 lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
             }
@@ -147,9 +141,6 @@ object AlarmNotificationHelper {
             .addAction(android.R.drawable.ic_delete, "Stop", stopPI)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
-        // Fullscreen intent only if requested
-        builder.setFullScreenIntent(fullScreenPI, showFullScreen)
-
         if (bigIconResId != 0) {
             builder.setLargeIcon(BitmapFactory.decodeResource(context.resources, bigIconResId))
         }
@@ -162,8 +153,15 @@ object AlarmNotificationHelper {
                 builder.setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000)) // More pronounced pattern
             }
         } else {
-            // Ensure the notification itself is silent so service controls audio
-            builder.setSilent(true)
+            /**
+             * DON'T USE @param builder.setSilent(true)
+             * Since setSilent(true) marks it “non-interruptive,”
+             * Android treats it as a non-urgent background notification
+             * and blocks your full-screen intent when the screen is off.
+             */
+            builder.setSound(null)
+            builder.setVibrate(null)
+            builder.setDefaults(0) // disables default sound/vibration
         }
 
         return builder.build()

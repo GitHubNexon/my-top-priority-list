@@ -59,77 +59,54 @@ class AlarmActivity : AppCompatActivity() {
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // Register for config changes
-        val filter = IntentFilter("ALARM_CONFIG_CHANGED")
-        registerReceiver(configReceiver, filter)
-
-        initializeVibrator()
-
-        makeFullScreenAndTransparent()
-        setContentView(R.layout.activity_alarm)
-
-        val title = intent.getStringExtra("title") ?: "Alarm"
-        val message = intent.getStringExtra("message") ?: "Wake up!"
-        val requestCode = intent.getIntExtra("requestCode", -1)
-
-        updateUI(title, message)
-
-        // Stop any existing service and start a new one that knows the activity is active
-        stopService(Intent(this, AlarmSoundService::class.java))
-
-        val soundIntent = Intent(this, AlarmSoundService::class.java).apply {
-            putExtra("title", title)
-            putExtra("message", message)
-            putExtra("requestCode", requestCode)
-            putExtra("activityActive", true)
-            putExtra("shouldHandleVibration", false)
-        }
-    
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(soundIntent)
-        } else {
-            startService(soundIntent)
-        }
-
-        // Start the service once (if not already playing)
-        if (!AlarmSoundService.isPlaying) {
-            val soundIntent = Intent(this, AlarmSoundService::class.java).apply {
-                putExtra("title", title)
-                putExtra("message", message)
-                putExtra("requestCode", requestCode)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(soundIntent)
-            } else {
-                startService(soundIntent)
-            }
-        }
-
-        // --- Stop button ---
-        findViewById<View>(R.id.stopButton).setOnClickListener {
-            val stopIntent = Intent(this, StopAlarmReceiver::class.java).apply {
-                action = "STOP_ALARM"
-                putExtra("requestCode", requestCode)
-            }
-            sendBroadcast(stopIntent)
-            finishAndRemoveTask()
-        }
-
-        // --- Snooze button ---
-        findViewById<View>(R.id.snoozeButton).setOnClickListener {
-            val snoozeIntent = Intent(this, SnoozeReceiver::class.java).apply {
-                action = "SNOOZE_ALARM"
-                putExtra("requestCode", requestCode)
-                putExtra("title", title)
-                putExtra("message", message)
-            }
-            sendBroadcast(snoozeIntent)
-            finishAndRemoveTask()
-        }
-    }
+    // In your onCreate method, remove the duplicate service starts:
+	override fun onCreate(savedInstanceState: Bundle?) {
+	    super.onCreate(savedInstanceState)
+	
+	    // Register for config changes
+	    val filter = IntentFilter("ALARM_CONFIG_CHANGED")
+	    registerReceiver(configReceiver, filter)
+	
+	    initializeVibrator()
+	
+	    makeFullScreenAndTransparent()
+	    setContentView(R.layout.activity_alarm)
+	
+	    val title = intent.getStringExtra("title") ?: "Alarm"
+	    val message = intent.getStringExtra("message") ?: "Wake up!"
+	    val requestCode = intent.getIntExtra("requestCode", -1)
+	
+	    updateUI(title, message)
+	
+	    // REMOVE THESE LINES - Service is already running from AlarmReceiver
+	    // stopService(Intent(this, AlarmSoundService::class.java))
+	    // val soundIntent = Intent(this, AlarmSoundService::class.java).apply { ... }
+	
+	    // Just update the service that activity is active (if needed)
+	    // The service is already running and playing sound
+	
+	    // --- Stop button ---
+	    findViewById<View>(R.id.stopButton).setOnClickListener {
+	        val stopIntent = Intent(this, StopAlarmReceiver::class.java).apply {
+	            action = "STOP_ALARM"
+	            putExtra("requestCode", requestCode)
+	        }
+	        sendBroadcast(stopIntent)
+	        finishAndRemoveTask()
+	    }
+	
+	    // --- Snooze button ---
+	    findViewById<View>(R.id.snoozeButton).setOnClickListener {
+	        val snoozeIntent = Intent(this, SnoozeReceiver::class.java).apply {
+	            action = "SNOOZE_ALARM"
+	            putExtra("requestCode", requestCode)
+	            putExtra("title", title)
+	            putExtra("message", message)
+	        }
+	        sendBroadcast(snoozeIntent)
+	        finishAndRemoveTask()
+	    }
+	}
 
     private fun startTimeoutCheck() {
         timeoutHandler?.removeCallbacks(timeoutRunnable)
