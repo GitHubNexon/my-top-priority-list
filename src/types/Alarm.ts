@@ -1,4 +1,6 @@
 export interface AlarmNativeModule {
+  initializeAlarmSystem(): Promise<string>;
+  canScheduleExactAlarms(): Promise<boolean>;
   // Single method for both single and recurring alarms
   scheduleAlarm(
     timestamp: number,

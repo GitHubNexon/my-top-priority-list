@@ -6,13 +6,47 @@ const { AlarmModule } = NativeModules;
 
 export class AlarmService {
   private readonly nativeModule: AlarmNativeModule;
+  private isInitialized: boolean = false;
 
   constructor() {
     this.nativeModule = AlarmModule as AlarmNativeModule;
   }
 
+  // INITIALIZATION METHODS
+  async initializeAlarm(): Promise<string> {
+    try {
+      const result = await this.nativeModule.initializeAlarmSystem();
+
+      if (result === 'INITIALIZED') {
+        this.isInitialized = true;
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Failed to initialize alarm system:', error);
+      throw error;
+    }
+  }
+
+  async ensureInitialized(): Promise<void> {
+    if (!this.isInitialized) {
+      await this.initializeAlarm();
+    }
+  }
+
+  async checkExactAlarmPermission(): Promise<boolean> {
+    try {
+      return await this.nativeModule.canScheduleExactAlarms();
+    } catch (error) {
+      console.error('Failed to check exact alarm permission:', error);
+      return false;
+    }
+  }
+
   // ALARM SCHEDULING METHODS
   async scheduleAlarm(config: AlarmScheduleConfig): Promise<string> {
+    await this.ensureInitialized();
+
     const {
       timestamp,
       title = 'Alarm',
@@ -54,6 +88,8 @@ export class AlarmService {
   async updateAlarm(
     config: AlarmScheduleConfig & { requestCodeStr: string },
   ): Promise<string> {
+    await this.ensureInitialized();
+
     const {
       requestCodeStr,
       timestamp,

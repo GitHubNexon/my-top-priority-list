@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.media.RingtoneManager
 import android.net.Uri
+import android.os.Build
 import com.facebook.react.bridge.*
 import org.json.JSONObject
 
@@ -18,6 +19,47 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
     }
 
     override fun getName() = "AlarmModule"
+
+    @ReactMethod
+    fun initializeAlarmSystem(promise: Promise) {
+        try {
+            // Initialize encryption system
+            AlarmStorageHelper.initializeEncryption(reactContext)
+
+            // Ensure notification channel exists
+            AlarmNotificationHelper.ensureNotificationChannel(reactContext)
+
+            // Check and request necessary permissions for Android 14+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val alarmManager = reactContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val canScheduleExactAlarms = alarmManager.canScheduleExactAlarms()
+
+                if (!canScheduleExactAlarms) {
+                    promise.resolve("PERMISSION_NEEDED")
+                    return
+                }
+            }
+
+            promise.resolve("INITIALIZED")
+        } catch (e: Exception) {
+            promise.reject("E_INIT_ERROR", "Failed to initialize alarm system: ${e.message}")
+        }
+    }
+
+    @ReactMethod
+    fun canScheduleExactAlarms(promise: Promise) {
+        try {
+            val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val alarmManager = reactContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                alarmManager.canScheduleExactAlarms()
+            } else {
+                true
+            }
+            promise.resolve(result)
+        } catch (e: Exception) {
+            promise.reject("E_PERMISSION_CHECK", e)
+        }
+    }
 
     @ReactMethod
     fun scheduleAlarm(

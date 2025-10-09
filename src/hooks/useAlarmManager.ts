@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import useAlarm from './useAlarm';
 import { AlarmScheduleConfig } from '../types/Alarm';
 
@@ -8,15 +8,37 @@ const useAlarmManager = () => {
     new Set(),
   );
 
-  // Only use the error from useAlarm, don't create a separate one
+  // Use all state from useAlarm to keep everything synchronized
   const {
     scheduleAlarm,
     cancelAlarm,
     cancelAllAlarms,
+    getScheduledAlarms,
     isLoading,
+    isInitializing,
     error,
+    hasExactAlarmPermission,
+    checkPermission,
+    retryInitialization,
     clearError,
   } = useAlarm();
+
+  // Load existing alarms on initialization
+  useEffect(() => {
+    if (!isInitializing) {
+      loadExistingAlarms();
+    }
+  }, [isInitializing]);
+
+  const loadExistingAlarms = useCallback(async () => {
+    try {
+      const alarms = await getScheduledAlarms();
+      const alarmIds = alarms.map(alarm => alarm.requestCodeStr);
+      setScheduledAlarms(new Set(alarmIds));
+    } catch (err) {
+      console.error('Failed to load existing alarms:', err);
+    }
+  }, [getScheduledAlarms]);
 
   const scheduleAndTrackAlarm = useCallback(
     async (config: AlarmScheduleConfig): Promise<string> => {
@@ -50,6 +72,10 @@ const useAlarmManager = () => {
     return result;
   }, [cancelAllAlarms]);
 
+  const refreshAlarms = useCallback(async (): Promise<void> => {
+    await loadExistingAlarms();
+  }, [loadExistingAlarms]);
+
   const isAlarmScheduled = useCallback(
     (requestCodeStr: string): boolean => {
       return scheduledAlarms.has(requestCodeStr);
@@ -62,18 +88,23 @@ const useAlarmManager = () => {
   }, [scheduledAlarms]);
 
   return {
-    // State
+    // State (all synchronized from useAlarm)
     scheduledAlarms: Array.from(scheduledAlarms),
     scheduledAlarmsCount: scheduledAlarms.size,
     isLoading,
+    isInitializing,
     error,
+    hasExactAlarmPermission,
 
     // Actions
     scheduleAlarm: scheduleAndTrackAlarm,
     cancelAlarm: cancelAndUntrackAlarm,
     cancelAllAlarms: cancelAllTrackedAlarms,
+    refreshAlarms,
     isAlarmScheduled,
     getScheduledAlarmsCount,
+    checkPermission,
+    retryInitialization,
     clearError,
   };
 };
