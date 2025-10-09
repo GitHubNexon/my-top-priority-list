@@ -7,7 +7,9 @@ import android.content.IntentFilter
 import android.app.KeyguardManager
 import android.app.Notification
 import android.app.Service
+import android.content.pm.ServiceInfo
 import android.content.SharedPreferences
+import androidx.core.app.NotificationCompat
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.net.Uri
@@ -17,7 +19,6 @@ import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import androidx.core.app.NotificationCompat
 
 class AlarmSoundService : Service() {
     companion object {
@@ -123,38 +124,33 @@ class AlarmSoundService : Service() {
         val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         val fullScreen = !powerManager.isInteractive || keyguardManager.isKeyguardLocked
 
-        if (fullScreen) {
-            val notification = AlarmNotificationHelper.buildAlarmNotification(
-                this,
-                currentTitle,
-                currentMessage,
-                currentRequestCode,
-                includeSound = false,
-                showFullScreen = fullScreen
+        val notification = AlarmNotificationHelper.buildAlarmNotification(
+            this,
+            currentTitle,
+            currentMessage,
+            currentRequestCode,
+            includeSound = false,
+            showFullScreen = fullScreen
+        )
+
+        // Start as Foreground Service (required immediately)
+        if (Build.VERSION.SDK_INT >= 34) {
+            startForeground(
+                AlarmNotificationHelper.NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
             )
-            startForeground(AlarmNotificationHelper.NOTIFICATION_ID, notification)
-            
-            // Restart timeout check if needed
-            if (maxAlarmDuration > 0) {
-                alarmStartTime = System.currentTimeMillis()
-                startTimeoutCheck()
-            }
         } else {
-            val notification = AlarmNotificationHelper.buildAlarmNotification(
-                this,
-                currentTitle,
-                currentMessage,
-                currentRequestCode,
-                includeSound = false,
-                showFullScreen = fullScreen
+            startForeground(
+                AlarmNotificationHelper.NOTIFICATION_ID,
+                notification
             )
-            startForeground(AlarmNotificationHelper.NOTIFICATION_ID, notification)
-            
-            // Restart timeout check if needed
-            if (maxAlarmDuration > 0) {
-                alarmStartTime = System.currentTimeMillis()
-                startTimeoutCheck()
-            }
+        }
+        
+        // Restart timeout check if needed
+        if (maxAlarmDuration > 0) {
+            alarmStartTime = System.currentTimeMillis()
+            startTimeoutCheck()
         }
 
         isPlaying = true

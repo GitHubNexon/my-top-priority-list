@@ -18,7 +18,12 @@ const useAlarmManager = () => {
     isInitializing,
     error,
     hasExactAlarmPermission,
+    systemInfo,
+    initializationStatus,
     checkPermission,
+    requestFullScreenIntentPermission,
+    openAppSettings,
+    refreshInitializationStatus,
     retryInitialization,
     clearError,
   } = useAlarm();
@@ -95,6 +100,8 @@ const useAlarmManager = () => {
     isInitializing,
     error,
     hasExactAlarmPermission,
+    systemInfo,
+    initializationStatus,
 
     // Actions
     scheduleAlarm: scheduleAndTrackAlarm,
@@ -104,6 +111,9 @@ const useAlarmManager = () => {
     isAlarmScheduled,
     getScheduledAlarmsCount,
     checkPermission,
+    requestFullScreenIntentPermission,
+    openAppSettings,
+    refreshInitializationStatus,
     retryInitialization,
     clearError,
   };

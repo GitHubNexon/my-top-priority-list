@@ -1,6 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { AlarmService } from '../services/AlarmServices';
-import { AlarmScheduleConfig } from '../types/Alarm';
+import {
+  AlarmScheduleConfig,
+  SystemInfo,
+  InitializationStatus,
+} from '../types/Alarm';
 
 const alarmService = new AlarmService();
 
@@ -11,6 +15,9 @@ const useAlarm = () => {
   const [hasExactAlarmPermission, setHasExactAlarmPermission] = useState<
     boolean | null
   >(null);
+  const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
+  const [initializationStatus, setInitializationStatus] =
+    useState<InitializationStatus | null>(null);
 
   // Initialize alarm system on mount
   useEffect(() => {
@@ -20,13 +27,24 @@ const useAlarm = () => {
   const initializeAlarmSystem = useCallback(async () => {
     try {
       setIsInitializing(true);
-      // FIXED: Use the correct method name
-      const result = await alarmService.initializeAlarm();
+      setError(null);
+
+      // Get system info first
+      const sysInfo = await alarmService.getSystemInfo();
+      setSystemInfo(sysInfo);
+
+      // Get initialization status
+      const status = await alarmService.getInitializationStatus();
+      setInitializationStatus(status);
+
+      // Initialize alarm system
+      const result = await alarmService.initialize();
 
       if (result === 'PERMISSION_NEEDED') {
-        setError('SCHEDULE_EXACT_ALARM permission required for Android 14+');
+        setError('SCHEDULE_EXACT_ALARM permission required for Android 12+');
       }
 
+      // Check exact alarm permission
       const hasPermission = await alarmService.checkExactAlarmPermission();
       setHasExactAlarmPermission(hasPermission);
     } catch (err) {
@@ -49,7 +67,7 @@ const useAlarm = () => {
 
       if (hasExactAlarmPermission === false) {
         throw new Error(
-          'SCHEDULE_EXACT_ALARM permission required for Android 14+',
+          'SCHEDULE_EXACT_ALARM permission required for Android 12+',
         );
       }
 
@@ -79,6 +97,37 @@ const useAlarm = () => {
     } catch (err) {
       setError('Failed to check alarm permission');
       return false;
+    }
+  }, []);
+
+  // Request full screen intent permission
+  const requestFullScreenIntentPermission =
+    useCallback(async (): Promise<boolean> => {
+      try {
+        return await alarmService.ensureFullScreenIntentPermission();
+      } catch (err) {
+        setError('Failed to request full screen intent permission');
+        return false;
+      }
+    }, []);
+
+  // Open app settings
+  const openAppSettings = useCallback(async (): Promise<boolean> => {
+    try {
+      return await alarmService.openAppSettings();
+    } catch (err) {
+      setError('Failed to open app settings');
+      return false;
+    }
+  }, []);
+
+  // Refresh initialization status
+  const refreshInitializationStatus = useCallback(async (): Promise<void> => {
+    try {
+      const status = await alarmService.getInitializationStatus();
+      setInitializationStatus(status);
+    } catch (err) {
+      setError('Failed to refresh initialization status');
     }
   }, []);
 
@@ -137,10 +186,12 @@ const useAlarm = () => {
 
   return {
     // State
-    isLoading: isLoading || isInitializing, // Combined loading state
+    isLoading: isLoading || isInitializing,
     isInitializing,
     error,
     hasExactAlarmPermission,
+    systemInfo,
+    initializationStatus,
 
     // Actions
     scheduleAlarm,
@@ -148,6 +199,9 @@ const useAlarm = () => {
     cancelAllAlarms,
     getScheduledAlarms,
     checkPermission,
+    requestFullScreenIntentPermission,
+    openAppSettings,
+    refreshInitializationStatus,
     retryInitialization,
     clearError,
   };

@@ -23,41 +23,84 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
     @ReactMethod
     fun initializeAlarmSystem(promise: Promise) {
         try {
-            // Initialize encryption system
-            AlarmStorageHelper.initializeEncryption(reactContext)
-
-            // Ensure notification channel exists
-            AlarmNotificationHelper.ensureNotificationChannel(reactContext)
-
-            // Check and request necessary permissions for Android 14+
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val alarmManager = reactContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                val canScheduleExactAlarms = alarmManager.canScheduleExactAlarms()
-
-                if (!canScheduleExactAlarms) {
+            val result = AlarmSystemInitializer.initialize(reactContext)
+            
+            if (result.isSuccess) {
+                if (result.requiresExactAlarmPermission) {
                     promise.resolve("PERMISSION_NEEDED")
-                    return
+                } else {
+                    promise.resolve("INITIALIZED")
                 }
+            } else {
+                promise.reject(
+                    "E_INIT_ERROR", 
+                    "Failed to initialize alarm system: ${result.errorMessage}"
+                )
             }
-
-            promise.resolve("INITIALIZED")
         } catch (e: Exception) {
-            promise.reject("E_INIT_ERROR", "Failed to initialize alarm system: ${e.message}")
+            promise.reject("E_INIT_ERROR", "Unexpected error: ${e.message}")
+        }
+    }
+
+    @ReactMethod
+    fun ensureFullScreenIntentPermission(promise: Promise) {
+        try {
+            PermissionHelper.requestFullScreenIntentPermission(reactContext)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("E_FSI_PERMISSION", "Failed to request FSI permission: ${e.message}")
         }
     }
 
     @ReactMethod
     fun canScheduleExactAlarms(promise: Promise) {
         try {
-            val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val alarmManager = reactContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                alarmManager.canScheduleExactAlarms()
-            } else {
-                true
-            }
+            val result = PermissionHelper.canScheduleExactAlarms(reactContext)
             promise.resolve(result)
         } catch (e: Exception) {
-            promise.reject("E_PERMISSION_CHECK", e)
+            promise.reject("E_PERMISSION_CHECK", "Failed to check exact alarm permission: ${e.message}")
+        }
+    }
+
+    @ReactMethod
+    fun openAppSettings(promise: Promise) {
+        try {
+            PermissionHelper.openAppSettings(reactContext)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("E_OPEN_SETTINGS", "Failed to open app settings: ${e.message}")
+        }
+    }
+
+    @ReactMethod
+    fun getSystemInfo(promise: Promise) {
+        try {
+            val systemInfo = Arguments.createMap().apply {
+                putInt("sdkVersion", android.os.Build.VERSION.SDK_INT)
+                putString("manufacturer", android.os.Build.MANUFACTURER)
+                putString("model", android.os.Build.MODEL)
+                putBoolean("canScheduleExactAlarms", 
+                    PermissionHelper.canScheduleExactAlarms(reactContext))
+            }
+            promise.resolve(systemInfo)
+        } catch (e: Exception) {
+            promise.reject("E_SYSTEM_INFO", "Failed to get system info: ${e.message}")
+        }
+    }
+
+    @ReactMethod
+    fun getInitializationStatus(promise: Promise) {
+        try {
+            val result = AlarmSystemInitializer.initialize(reactContext)
+            val status = Arguments.createMap().apply {
+                putBoolean("isInitialized", result.isSuccess)
+                putBoolean("canScheduleExactAlarms", result.canScheduleExactAlarms)
+                putBoolean("requiresExactAlarmPermission", result.requiresExactAlarmPermission)
+                putString("errorMessage", result.errorMessage)
+            }
+            promise.resolve(status)
+        } catch (e: Exception) {
+            promise.reject("E_STATUS_CHECK", "Failed to get initialization status: ${e.message}")
         }
     }
 

@@ -1,5 +1,10 @@
 import { NativeModules } from 'react-native';
-import { AlarmNativeModule, AlarmScheduleConfig } from '../types/Alarm';
+import {
+  AlarmNativeModule,
+  AlarmScheduleConfig,
+  SystemInfo,
+  InitializationStatus,
+} from '../types/Alarm';
 import { buildRecurrencePattern, validateScheduleConfig } from '../utils/alarm';
 
 const { AlarmModule } = NativeModules;
@@ -13,12 +18,15 @@ export class AlarmService {
   }
 
   // INITIALIZATION METHODS
-  async initializeAlarm(): Promise<string> {
+  async initialize(): Promise<string> {
     try {
       const result = await this.nativeModule.initializeAlarmSystem();
 
       if (result === 'INITIALIZED') {
         this.isInitialized = true;
+
+        // Also ensure full screen intent permission for Android 14+
+        await this.ensureFullScreenIntentPermission();
       }
 
       return result;
@@ -30,7 +38,7 @@ export class AlarmService {
 
   async ensureInitialized(): Promise<void> {
     if (!this.isInitialized) {
-      await this.initializeAlarm();
+      await this.initialize();
     }
   }
 
@@ -40,6 +48,42 @@ export class AlarmService {
     } catch (error) {
       console.error('Failed to check exact alarm permission:', error);
       return false;
+    }
+  }
+
+  async ensureFullScreenIntentPermission(): Promise<boolean> {
+    try {
+      return await this.nativeModule.ensureFullScreenIntentPermission();
+    } catch (error) {
+      console.error('Failed to ensure full screen intent permission:', error);
+      return false;
+    }
+  }
+
+  async openAppSettings(): Promise<boolean> {
+    try {
+      return await this.nativeModule.openAppSettings();
+    } catch (error) {
+      console.error('Failed to open app settings:', error);
+      return false;
+    }
+  }
+
+  async getSystemInfo(): Promise<SystemInfo> {
+    try {
+      return await this.nativeModule.getSystemInfo();
+    } catch (error) {
+      console.error('Failed to get system info:', error);
+      throw error;
+    }
+  }
+
+  async getInitializationStatus(): Promise<InitializationStatus> {
+    try {
+      return await this.nativeModule.getInitializationStatus();
+    } catch (error) {
+      console.error('Failed to get initialization status:', error);
+      throw error;
     }
   }
 
@@ -60,7 +104,14 @@ export class AlarmService {
 
     validateScheduleConfig(config);
 
-    // Build recurrence pattern based on recurrence type
+    // Check exact alarm permission for Android 12+
+    const hasPermission = await this.checkExactAlarmPermission();
+    if (!hasPermission) {
+      throw new Error(
+        'SCHEDULE_EXACT_ALARM permission required for Android 12+',
+      );
+    }
+
     const recurrencePattern = buildRecurrencePattern(
       recurrenceType,
       daysOfWeek,
@@ -68,7 +119,6 @@ export class AlarmService {
       interval,
     );
 
-    // Use the single scheduleAlarm method for both single and recurring alarms
     return this.nativeModule.scheduleAlarm(
       timestamp,
       title,
@@ -80,7 +130,6 @@ export class AlarmService {
   }
 
   private async generateRequestCode(): Promise<string> {
-    // Use the native method to generate a request code
     return this.nativeModule.generateRequestCode();
   }
 

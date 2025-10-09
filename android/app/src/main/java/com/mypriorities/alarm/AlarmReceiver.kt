@@ -42,10 +42,21 @@ class AlarmReceiver : BroadcastReceiver() {
             putExtra("shouldHandleVibration", true) // Service should handle vibration initially
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(soundIntent)
-        } else {
-            context.startService(soundIntent)
+        try {
+            when {
+                Build.VERSION.SDK_INT >= 34 -> {
+                    // Android 14+ special-use FGS (alarm)
+                    context.startForegroundService(soundIntent)
+                }
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
+                    context.startForegroundService(soundIntent)
+                }
+                else -> {
+                    context.startService(soundIntent)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
         // Reschedule if it's a recurring alarm (except for snoozed alarms)
