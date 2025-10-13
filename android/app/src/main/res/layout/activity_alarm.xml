@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical"
-    android:background="@android:color/transparent"
+    android:background="@color/alarm_dark_background"
     android:padding="24dp">
 
     <!-- Alarm Title -->

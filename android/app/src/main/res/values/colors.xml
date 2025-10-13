@@ -1,4 +1,5 @@
 <resources>
     <color name="bootsplash_background">#CFFFDC</color>
     <color name="iconBackground">#CFFFDC</color>
+    <color name="alarm_dark_background">#121212</color>
 </resources>

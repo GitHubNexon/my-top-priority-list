@@ -82,7 +82,12 @@ class AlarmSoundService : Service() {
         
         // Register for config changes
         val filter = IntentFilter("ALARM_CONFIG_CHANGED")
-        registerReceiver(configReceiver, filter)
+        if (Build.VERSION.SDK_INT >= 34 && applicationInfo.targetSdkVersion >= 34) {
+            // use the 5-arg overload: (receiver, filter, receiverPermission, scheduler, flags)
+            registerReceiver(configReceiver, filter, /* receiverPermission = */ null, /* scheduler = */ null, Context.RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(configReceiver, filter)
+        }
     }
 
     private fun initializeVibrator() {
@@ -105,20 +110,6 @@ class AlarmSoundService : Service() {
         currentTitle = intent?.getStringExtra("title") ?: "Alarm"
         currentMessage = intent?.getStringExtra("message") ?: "Wake up!"
         currentRequestCode = intent?.getIntExtra("requestCode", -1) ?: -1
-        
-        isActivityActive = intent?.getBooleanExtra("activityActive", false) ?: false
-        shouldHandleVibration = intent?.getBooleanExtra("shouldHandleVibration", true) ?: true
-
-        // Get preferences
-        val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
-        shouldVibrate = prefs.getBoolean("vibrate", true)
-        maxAlarmDuration = prefs.getInt("max_alarm_duration", 0)
-        autoSnoozeOnTimeout = prefs.getBoolean("auto_snooze_on_timeout", false)
-
-        if (!isActivityActive && shouldHandleVibration) {
-            // Start vibration only if activity is not handling it
-            startVibration()
-        }
 
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
@@ -138,13 +129,27 @@ class AlarmSoundService : Service() {
             startForeground(
                 AlarmNotificationHelper.NOTIFICATION_ID,
                 notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
             )
         } else {
             startForeground(
                 AlarmNotificationHelper.NOTIFICATION_ID,
                 notification
             )
+        }
+
+        isActivityActive = intent?.getBooleanExtra("activityActive", false) ?: false
+        shouldHandleVibration = intent?.getBooleanExtra("shouldHandleVibration", true) ?: true
+
+        // Get preferences
+        val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
+        shouldVibrate = prefs.getBoolean("vibrate", true)
+        maxAlarmDuration = prefs.getInt("max_alarm_duration", 0)
+        autoSnoozeOnTimeout = prefs.getBoolean("auto_snooze_on_timeout", false)
+
+        if (!isActivityActive && shouldHandleVibration) {
+            // Start vibration only if activity is not handling it
+            startVibration()
         }
         
         // Restart timeout check if needed

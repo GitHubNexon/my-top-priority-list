@@ -28,6 +28,12 @@ object AlarmNotificationHelper {
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val soundUri = getSoundUri(context, prefs)
 
+            // Check if channel already exists
+            val existingChannel = nm.getNotificationChannel(CHANNEL_ID)
+            if (existingChannel != null) {
+                return // Channel already exists
+            }
+
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Alarms",
@@ -135,7 +141,7 @@ object AlarmNotificationHelper {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(false)
             .setOngoing(true)
-            .setFullScreenIntent(fullScreenPI, true)
+            .setFullScreenIntent(fullScreenPI, showFullScreen)
             .setDeleteIntent(deletePI)
             .addAction(android.R.drawable.ic_media_pause, "Snooze (${prefs.getInt("snooze_minutes", 5)} min)", snoozePI)
             .addAction(android.R.drawable.ic_delete, "Stop", stopPI)
@@ -165,15 +171,6 @@ object AlarmNotificationHelper {
         }
 
         return builder.build()
-    }
-
-    /**
-     * Convenience: notify using built notification (not needed if service will startForeground with the notification).
-     */
-    fun showAlarmNotification(context: Context, title: String, message: String, requestCode: Int) {
-        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification = buildAlarmNotification(context, title, message, requestCode, includeSound = true, showFullScreen = false)
-        nm.notify(NOTIFICATION_ID, notification)
     }
 
     fun cancelAlarmNotification(context: Context) {

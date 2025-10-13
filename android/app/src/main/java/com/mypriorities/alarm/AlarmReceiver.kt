@@ -2,6 +2,7 @@ package com.mypriorities.alarm
 
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
 
@@ -44,9 +45,31 @@ class AlarmReceiver : BroadcastReceiver() {
 
         try {
             when {
-                Build.VERSION.SDK_INT >= 34 -> {
-                    // Android 14+ special-use FGS (alarm)
-                    context.startForegroundService(soundIntent)
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                    // Instead of directly calling startForegroundService (which can be denied),
+                    // create a PendingIntent that starts the service as a foreground service and send it.
+                    val svcIntent = Intent(context, AlarmSoundService::class.java).apply {
+                        putExtra("title", title)
+                        putExtra("message", message)
+                        putExtra("requestCode", requestCode)
+                        putExtra("shouldHandleVibration", true)
+                    }
+                    val pi = PendingIntent.getForegroundService(
+                        context,
+                        requestCode,
+                        svcIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                    try {
+                        pi.send()
+                    } catch (e: PendingIntent.CanceledException) {
+                        // fallback to startForegroundService if PendingIntent failed
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            context.startForegroundService(svcIntent)
+                        } else {
+                            context.startService(svcIntent)
+                        }
+                    }
                 }
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
                     context.startForegroundService(soundIntent)
