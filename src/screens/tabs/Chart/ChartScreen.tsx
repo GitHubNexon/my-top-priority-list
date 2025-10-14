@@ -184,7 +184,7 @@ const ChartScreen = () => {
   const schedule5SecondAlarm = async () => {
     try {
       const requestCode = await alarmManager.scheduleAlarm({
-        timestamp: Date.now() + 5000, // 5 seconds from now
+        timestamp: Date.now() + 10000, // 5 seconds from now
         title: alarmTitle,
         message: alarmMessage,
         recurrenceType: 'ONCE',
