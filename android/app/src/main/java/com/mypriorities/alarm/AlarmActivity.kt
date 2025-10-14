@@ -99,7 +99,7 @@ class AlarmActivity : AppCompatActivity() {
                 putExtra("requestCode", requestCode)
             }
             sendBroadcast(stopIntent)
-            fadeOutAndFinish()
+            showActionFeedback("Alarm Stopped")
         }
 
         // Snooze button
@@ -111,30 +111,24 @@ class AlarmActivity : AppCompatActivity() {
                 putExtra("message", message)
             }
             sendBroadcast(snoozeIntent)
-            fadeOutAndFinish()
+            showActionFeedback("Alarm Snoozed")
         }
     }
 
     // --- Helper UI functions ---
-
     private fun makeFullScreenAndDimmed() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                )
-        }
-
-        // Soft dark background
-        window.setBackgroundDrawable(ColorDrawable(Color.parseColor("#121212")))
+        window.decorView.systemUiVisibility = (
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        )
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            window.statusBarColor = Color.parseColor("#121212")
-            window.navigationBarColor = Color.parseColor("#121212")
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            window.navigationBarColor = android.graphics.Color.TRANSPARENT
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
@@ -149,6 +143,30 @@ class AlarmActivity : AppCompatActivity() {
                         WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
             )
         }
+
+        window.setBackgroundDrawableResource(R.color.alarm_dark_background)
+    }
+
+    private fun showActionFeedback(message: String) {
+        val rootView = findViewById<View>(R.id.alarmRoot)
+        val feedbackText = TextView(this).apply {
+            text = message
+            setTextColor(Color.WHITE)
+            textSize = 22f
+            setPadding(0, 32, 0, 0)
+            gravity = android.view.Gravity.CENTER
+        }
+
+        // Remove existing content temporarily
+        (rootView as? android.widget.LinearLayout)?.apply {
+            removeAllViews()
+            addView(feedbackText)
+        }
+
+        // Fade out after short delay
+        rootView.postDelayed({
+            fadeOutAndFinish()
+        }, 1500)
     }
 
     private fun fadeOutAndFinish() {
