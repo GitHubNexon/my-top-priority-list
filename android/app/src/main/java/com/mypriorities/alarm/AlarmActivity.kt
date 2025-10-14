@@ -33,20 +33,29 @@ class AlarmActivity : AppCompatActivity() {
 
     private val configReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == "ALARM_CONFIG_CHANGED") {
-                val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
-                shouldVibrate = prefs.getBoolean("vibrate", true)
-                maxAlarmDuration = prefs.getInt("max_alarm_duration", 0)
-                autoSnoozeOnTimeout = prefs.getBoolean("auto_snooze_on_timeout", false)
+            when (intent.action) {
+                "ALARM_CONFIG_CHANGED" -> {
+                    // Update vibration setting
+                    val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
+                    shouldVibrate = prefs.getBoolean("vibrate", true)
 
-                stopVibration()
-                if (shouldVibrate && hasVibrator) startVibration()
+                    // Update timeout settings
+                    maxAlarmDuration = prefs.getInt("max_alarm_duration", 0)
+                    autoSnoozeOnTimeout = prefs.getBoolean("auto_snooze_on_timeout", false)
 
-                if (maxAlarmDuration > 0) {
-                    alarmStartTime = System.currentTimeMillis()
-                    startTimeoutCheck()
-                } else {
-                    timeoutHandler?.removeCallbacks(timeoutRunnable)
+                    // Restart vibration if needed
+                    stopVibration()
+                    if (shouldVibrate && hasVibrator) {
+                        startVibration()
+                    }
+
+                    // Restart timeout check with new settings
+                    if (maxAlarmDuration > 0) {
+                        alarmStartTime = System.currentTimeMillis()
+                        startTimeoutCheck()
+                    } else {
+                        timeoutHandler?.removeCallbacks(timeoutRunnable)
+                    }
                 }
             }
         }
@@ -164,7 +173,6 @@ class AlarmActivity : AppCompatActivity() {
     }
 
     // --- Timeout management ---
-
     private fun startTimeoutCheck() {
         timeoutHandler?.removeCallbacks(timeoutRunnable)
         timeoutHandler = android.os.Handler(mainLooper)
@@ -206,7 +214,6 @@ class AlarmActivity : AppCompatActivity() {
     }
 
     // --- Vibration management ---
-
     private fun initializeVibrator() {
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
