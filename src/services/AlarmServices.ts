@@ -189,4 +189,22 @@ export class AlarmService {
   async isAlarmScheduled(requestCodeStr: string): Promise<boolean> {
     return this.nativeModule.isAlarmScheduled(requestCodeStr);
   }
+
+  async requestNotificationPermission(): Promise<string> {
+    try {
+      return await this.nativeModule.requestNotificationPermission();
+    } catch (error) {
+      console.error('Failed to request notification permission:', error);
+      throw error;
+    }
+  }
+
+  async checkNotificationPermission(): Promise<string> {
+    try {
+      return await this.nativeModule.checkNotificationPermission();
+    } catch (error) {
+      console.error('Failed to check notification permission:', error);
+      throw error;
+    }
+  }
 }

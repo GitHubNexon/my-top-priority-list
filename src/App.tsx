@@ -21,16 +21,18 @@ import {
 } from './hooks/useNavigation';
 import notifee, { EventType } from '@notifee/react-native';
 import { NavigationTypeProvider } from './context';
-import { useTheme } from './hooks';
+import { useAlarm, useTheme } from './hooks';
 
 export default function App() {
     const { theme } = useTheme();
+    const alarm = useAlarm();
 
     useEffect(() => {
         AuthServices.initializeGoogleSDK();
-        const notifeePermission = async () => await notifee.requestPermission();
+        alarm.requestNotificationPermission();
+        //const notifeePermission = async () => await notifee.requestPermission();
 
-        notifeePermission();
+        //notifeePermission();
     }, []);
 
     useEffect(() => {

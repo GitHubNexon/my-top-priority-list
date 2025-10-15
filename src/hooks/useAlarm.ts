@@ -180,6 +180,27 @@ const useAlarm = () => {
     }
   }, []);
 
+  const requestNotificationPermission =
+    useCallback(async (): Promise<string> => {
+      try {
+        const result = await alarmService.requestNotificationPermission();
+        return result;
+      } catch (err) {
+        setError('Failed to request notification permission');
+        throw err;
+      }
+    }, []);
+
+  const checkNotificationPermission = useCallback(async (): Promise<string> => {
+    try {
+      const result = await alarmService.checkNotificationPermission();
+      return result;
+    } catch (err) {
+      setError('Failed to check notification permission');
+      throw err;
+    }
+  }, []);
+
   const clearError = useCallback(() => {
     setError(null);
   }, []);
@@ -203,6 +224,8 @@ const useAlarm = () => {
     openAppSettings,
     refreshInitializationStatus,
     retryInitialization,
+    requestNotificationPermission,
+    checkNotificationPermission,
     clearError,
   };
 };
