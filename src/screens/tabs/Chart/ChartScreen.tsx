@@ -39,6 +39,7 @@ const ChartScreen = () => {
   const [selectedRingtone, setSelectedRingtone] = useState<Ringtone | null>(null);
   const [maxAlarmDuration, setMaxAlarmDuration] = useState('0'); // 0 = infinite
   const [autoSnoozeOnTimeout, setAutoSnoozeOnTimeout] = useState(false);
+  const [timeoutAction, setTimeoutAction] = useState<'SNOOZE' | 'STOP'>('SNOOZE');
 
   // Load settings on component mount
   useEffect(() => {
@@ -63,6 +64,16 @@ const ChartScreen = () => {
 
   // ===== SETTINGS FUNCTIONS =====
 
+  // Load timeout action from settings
+  const loadTimeoutAction = async () => {
+    try {
+      const action = await alarmConfig.getAlarmTimeoutAction();
+      setTimeoutAction(action as 'SNOOZE' | 'STOP');
+    } catch (error) {
+      console.error('Failed to load timeout action:', error);
+    }
+  };
+
   // Add these functions to handle timeout settings
   const handleSaveMaxAlarmDuration = async () => {
     try {
@@ -80,22 +91,6 @@ const ChartScreen = () => {
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to save max alarm duration');
-    }
-  };
-
-  const handleToggleAutoSnooze = async (enabled: boolean) => {
-    try {
-      setAutoSnoozeOnTimeout(enabled);
-      await alarmConfig.setAutoSnoozeOnTimeout(enabled);
-      await alarmSettings.updateAutoSnoozeOnTimeout(enabled);
-      Alert.alert('Success',
-        enabled
-          ? 'Alarm will auto-snooze on timeout'
-          : 'Alarm will auto-stop on timeout'
-      );
-    } catch (error) {
-      setAutoSnoozeOnTimeout(!enabled); // Revert on error
-      Alert.alert('Error', 'Failed to update auto snooze setting');
     }
   };
 
@@ -179,12 +174,25 @@ const ChartScreen = () => {
     }
   };
 
+  // Handle timeout action change
+  const handleTimeoutActionChange = async (action: 'SNOOZE' | 'STOP') => {
+    try {
+      setTimeoutAction(action);
+      await alarmConfig.setAlarmTimeoutAction(action);
+      Alert.alert('Success', `Timeout action set to: ${action}`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update timeout action');
+      // Revert on error
+      loadTimeoutAction();
+    }
+  };
+
   // ===== ALARM SCHEDULING FUNCTIONS =====
 
   const schedule5SecondAlarm = async () => {
     try {
       const requestCode = await alarmManager.scheduleAlarm({
-        timestamp: Date.now() + 10000, // 5 seconds from now
+        timestamp: Date.now() + 5000, // 5 seconds from now
         title: alarmTitle,
         message: alarmMessage,
         recurrenceType: 'ONCE',
@@ -274,6 +282,49 @@ const ChartScreen = () => {
       <ScrollView style={{
         backgroundColor: 'transparent'
       }}>
+
+        <Text style={{
+          fontSize: 20,
+          fontWeight: 'bold',
+          marginVertical: 10,
+          color: primaryFontColor,
+        }}>
+          ⏰ Timeout Action
+        </Text>
+
+        <View style={{ marginBottom: 15 }}>
+          <Text style={{ color: primaryFontColor }}>
+            When alarm duration expires:
+          </Text>
+          <View style={{ flexDirection: 'row', marginTop: 10 }}>
+            <TouchableOpacity
+              onPress={() => handleTimeoutActionChange('SNOOZE')}
+              style={[
+                styles.buttons,
+                timeoutAction === 'SNOOZE' && { backgroundColor: '#2e7d32' }
+              ]}
+            >
+              <Text style={[styles.textButtons, { color: primaryFontColor }]}>
+                Snooze Alarm
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleTimeoutActionChange('STOP')}
+              style={[
+                styles.buttons,
+                timeoutAction === 'STOP' && { backgroundColor: '#2e7d32' }
+              ]}
+            >
+              <Text style={[styles.textButtons, { color: primaryFontColor }]}>
+                Stop Alarm
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={{ color: primaryFontColor, fontStyle: 'italic', marginTop: 5 }}>
+            Current: {timeoutAction === 'SNOOZE' ? 'Snooze Alarm' : 'Stop Alarm'}
+          </Text>
+        </View>
+
         <Text style={{
           fontSize: 24,
           fontWeight: 'bold',
@@ -408,17 +459,6 @@ const ChartScreen = () => {
               Save Duration
             </Text>
           </TouchableOpacity>
-        </View>
-
-        <View style={{ marginBottom: 15, flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ color: primaryFontColor }}>Auto Snooze on Timeout: </Text>
-          <Switch
-            value={autoSnoozeOnTimeout}
-            onValueChange={handleToggleAutoSnooze}
-          />
-          <Text style={{ color: primaryFontColor }}>
-            {autoSnoozeOnTimeout ? 'Enabled' : 'Disabled'}
-          </Text>
         </View>
 
         <Text style={{ color: primaryFontColor, fontStyle: 'italic', marginBottom: 15 }}>
