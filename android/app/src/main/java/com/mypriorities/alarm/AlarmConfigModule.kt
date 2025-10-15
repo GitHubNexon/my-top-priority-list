@@ -30,9 +30,9 @@ class AlarmConfigModule(reactContext: ReactApplicationContext)
             private const val DEFAULT_BIG_ICON = "ic_alarm_big"
 
             private const val PREFS_MAX_ALARM_DURATION = "max_alarm_duration"
-            private const val PREFS_AUTO_SNOOZE_ON_TIMEOUT = "auto_snooze_on_timeout"
             private const val DEFAULT_MAX_ALARM_DURATION = 0 // 0 means infinite (default behavior)
-            private const val DEFAULT_AUTO_SNOOZE_ON_TIMEOUT = false
+            private const val PREFS_ALARM_TIMEOUT_ACTION = "alarm_timeout_action"
+            private const val DEFAULT_ALARM_TIMEOUT_ACTION = "SNOOZE" // SNOOZE or STOP
         }
     
         override fun getName(): String = "AlarmConfig"
@@ -94,27 +94,32 @@ class AlarmConfigModule(reactContext: ReactApplicationContext)
         }
 
         @ReactMethod
-        fun setAutoSnoozeOnTimeout(enabled: Boolean, promise: Promise) {
+        fun setAlarmTimeoutAction(action: String, promise: Promise) {
             try {
-                prefs.edit().putBoolean(PREFS_AUTO_SNOOZE_ON_TIMEOUT, enabled).apply()
-
-                // Broadcast the change to running services
+                val normalized = action.trim().uppercase()
+                if (normalized != "SNOOZE" && normalized != "STOP") {
+                    promise.reject("INVALID_ACTION", "Valid values are 'SNOOZE' or 'STOP'")
+                    return
+                }
+                prefs.edit().putString(PREFS_ALARM_TIMEOUT_ACTION, normalized).apply()
+            
+                // Broadcast change so running services update behavior immediately
                 val intent = Intent("ALARM_CONFIG_CHANGED").apply {
-                    putExtra("auto_snooze_on_timeout", enabled)
+                    putExtra("alarm_timeout_action", normalized)
                 }
                 reactApplicationContext.sendBroadcast(intent)
-
+            
                 promise.resolve(true)
             } catch (e: Exception) {
                 promise.reject("SET_ERROR", e)
             }
         }
-
+        
         @ReactMethod
-        fun getAutoSnoozeOnTimeout(promise: Promise) {
+        fun getAlarmTimeoutAction(promise: Promise) {
             try {
-                val enabled = prefs.getBoolean(PREFS_AUTO_SNOOZE_ON_TIMEOUT, DEFAULT_AUTO_SNOOZE_ON_TIMEOUT)
-                promise.resolve(enabled)
+                val action = prefs.getString(PREFS_ALARM_TIMEOUT_ACTION, DEFAULT_ALARM_TIMEOUT_ACTION)
+                promise.resolve(action)
             } catch (e: Exception) {
                 promise.reject("GET_ERROR", e)
             }
@@ -286,15 +291,15 @@ class AlarmConfigModule(reactContext: ReactApplicationContext)
             try {
                 val config = Arguments.createMap().apply {
                     putInt("snoozeMinutes", prefs.getInt(PREFS_SNOOZE_MINUTES, DEFAULT_SNOOZE_MINUTES))
-                    
+
                     val soundUri = prefs.getString(PREFS_SOUND_URI, null)
-                    
+
                     putString("soundUri", soundUri)
                     putBoolean("vibrate", prefs.getBoolean(PREFS_VIBRATE, DEFAULT_VIBRATE))
                     putString("smallIcon", prefs.getString(PREFS_SMALL_ICON, DEFAULT_SMALL_ICON))
                     putString("bigIcon", prefs.getString(PREFS_BIG_ICON, DEFAULT_BIG_ICON))
                     putInt("maxAlarmDuration", prefs.getInt(PREFS_MAX_ALARM_DURATION, DEFAULT_MAX_ALARM_DURATION))
-                    putBoolean("autoSnoozeOnTimeout", prefs.getBoolean(PREFS_AUTO_SNOOZE_ON_TIMEOUT, DEFAULT_AUTO_SNOOZE_ON_TIMEOUT))
+                    putString("alarmTimeoutAction", prefs.getString(PREFS_ALARM_TIMEOUT_ACTION, DEFAULT_ALARM_TIMEOUT_ACTION))
                 }
                 promise.resolve(config)
             } catch (e: Exception) {

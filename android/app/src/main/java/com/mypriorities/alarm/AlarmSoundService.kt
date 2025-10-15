@@ -196,13 +196,15 @@ class AlarmSoundService : Service() {
         val elapsedTime = (System.currentTimeMillis() - alarmStartTime) / 1000
         
         if (maxAlarmDuration > 0 && elapsedTime >= maxAlarmDuration) {
-            // Timeout reached - stop the alarm
-            if (autoSnoozeOnTimeout) {
-                // Auto-snooze
-                triggerAutoSnooze()
-            } else {
-                // Auto-stop
+            // Get the timeout action preference
+            val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
+            val timeoutAction = prefs.getString("alarm_timeout_action", "SNOOZE") ?: "SNOOZE"
+            
+            if (timeoutAction == "STOP") {
                 triggerAutoStop()
+            } else {
+                // Default to snooze
+                triggerAutoSnooze()
             }
         } else {
             // Continue checking

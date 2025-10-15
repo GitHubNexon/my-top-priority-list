@@ -200,8 +200,16 @@ class AlarmActivity : AppCompatActivity() {
     private fun handleAlarmTimeout() {
         val elapsedTime = (System.currentTimeMillis() - alarmStartTime) / 1000
         if (maxAlarmDuration > 0 && elapsedTime >= maxAlarmDuration) {
-            if (autoSnoozeOnTimeout) triggerAutoSnooze()
-            else triggerAutoStop()
+            // Get the timeout action preference
+            val prefs = getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
+            val timeoutAction = prefs.getString("alarm_timeout_action", "SNOOZE") ?: "SNOOZE"
+            
+            if (timeoutAction == "STOP") {
+                triggerAutoStop()
+            } else {
+                // Default to snooze
+                triggerAutoSnooze()
+            }
         } else {
             startTimeoutCheck()
         }
@@ -211,6 +219,15 @@ class AlarmActivity : AppCompatActivity() {
         val requestCode = intent.getIntExtra("requestCode", -1)
         val title = intent.getStringExtra("title") ?: "Alarm"
         val message = intent.getStringExtra("message") ?: "Wake up!"
+
+        // --- Stop all alarm effects first ---
+        stopVibration()
+        try {
+            val stopSoundIntent = Intent(this, AlarmSoundService::class.java)
+            stopService(stopSoundIntent)
+        } catch (_: Exception) {}
+
+        // --- Broadcast auto snooze ---
         val snoozeIntent = Intent(this, SnoozeReceiver::class.java).apply {
             action = "SNOOZE_ALARM"
             putExtra("requestCode", requestCode)
@@ -218,17 +235,36 @@ class AlarmActivity : AppCompatActivity() {
             putExtra("message", message)
         }
         sendBroadcast(snoozeIntent)
-        fadeOutAndFinish()
+
+        // --- Optional user feedback ---
+        runOnUiThread {
+            fadeOutAndFinish()
+            showActionFeedback("Alarm Snoozed")
+        }
     }
 
     private fun triggerAutoStop() {
         val requestCode = intent.getIntExtra("requestCode", -1)
+
+        // --- Stop all alarm effects first ---
+        stopVibration()
+        try {
+            val stopSoundIntent = Intent(this, AlarmSoundService::class.java)
+            stopService(stopSoundIntent)
+        } catch (_: Exception) {}
+
+        // --- Broadcast auto stop ---
         val stopIntent = Intent(this, StopAlarmReceiver::class.java).apply {
             action = "STOP_ALARM"
             putExtra("requestCode", requestCode)
         }
         sendBroadcast(stopIntent)
-        fadeOutAndFinish()
+
+        // --- Optional user feedback ---
+        runOnUiThread {
+            fadeOutAndFinish()
+            showActionFeedback("Alarm Stopped")
+        }
     }
 
     // --- Vibration management ---
