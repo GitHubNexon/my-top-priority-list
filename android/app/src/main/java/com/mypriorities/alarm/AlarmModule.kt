@@ -1,13 +1,20 @@
 package com.mypriorities.alarm
 
+import android.Manifest
+import android.app.Activity
 import android.app.AlarmManager
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.*
 import org.json.JSONObject
 
@@ -18,27 +25,43 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
         reactContext.getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
     }
 
+    private val REQUEST_POST_NOTIFICATIONS = 2345
+    private var pendingPermissionPromise: Promise? = null
+
+    // Must be declared before init block
+    private val activityEventListener = object : BaseActivityEventListener() {
+        override fun onActivityResult(
+            activity: Activity,
+            requestCode: Int,
+            resultCode: Int,
+            data: Intent?
+        ) {
+            // Handle results if needed
+        }
+    }
+
+    init {
+        reactContext.addActivityEventListener(activityEventListener)
+    }
+
     override fun getName() = "AlarmModule"
 
+    // Alarm initialization & system info
     @ReactMethod
     fun initializeAlarmSystem(promise: Promise) {
         try {
             val result = AlarmSystemInitializer.initialize(reactContext)
-            
-            if (result.isSuccess) {
-                if (result.requiresExactAlarmPermission) {
+            when {
+                result.isSuccess && result.requiresExactAlarmPermission ->
                     promise.resolve("PERMISSION_NEEDED")
-                } else {
+
+                result.isSuccess ->
                     promise.resolve("INITIALIZED")
-                }
-            } else {
-                promise.reject(
-                    "E_INIT_ERROR", 
-                    "Failed to initialize alarm system: ${result.errorMessage}"
-                )
+
+                else -> promise.reject("E_INIT_ERROR", "Failed to initialize: ${result.errorMessage}")
             }
         } catch (e: Exception) {
-            promise.reject("E_INIT_ERROR", "Unexpected error: ${e.message}")
+            promise.reject("E_INIT_ERROR", e.message)
         }
     }
 
@@ -48,17 +71,16 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
             PermissionHelper.requestFullScreenIntentPermission(reactContext)
             promise.resolve(true)
         } catch (e: Exception) {
-            promise.reject("E_FSI_PERMISSION", "Failed to request FSI permission: ${e.message}")
+            promise.reject("E_FSI_PERMISSION", e.message)
         }
     }
 
     @ReactMethod
     fun canScheduleExactAlarms(promise: Promise) {
         try {
-            val result = PermissionHelper.canScheduleExactAlarms(reactContext)
-            promise.resolve(result)
+            promise.resolve(PermissionHelper.canScheduleExactAlarms(reactContext))
         } catch (e: Exception) {
-            promise.reject("E_PERMISSION_CHECK", "Failed to check exact alarm permission: ${e.message}")
+            promise.reject("E_PERMISSION_CHECK", e.message)
         }
     }
 
@@ -68,7 +90,7 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
             PermissionHelper.openAppSettings(reactContext)
             promise.resolve(true)
         } catch (e: Exception) {
-            promise.reject("E_OPEN_SETTINGS", "Failed to open app settings: ${e.message}")
+            promise.reject("E_OPEN_SETTINGS", e.message)
         }
     }
 
@@ -76,15 +98,70 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
     fun getSystemInfo(promise: Promise) {
         try {
             val systemInfo = Arguments.createMap().apply {
-                putInt("sdkVersion", android.os.Build.VERSION.SDK_INT)
-                putString("manufacturer", android.os.Build.MANUFACTURER)
-                putString("model", android.os.Build.MODEL)
-                putBoolean("canScheduleExactAlarms", 
+                putInt("sdkVersion", Build.VERSION.SDK_INT)
+                putString("manufacturer", Build.MANUFACTURER)
+                putString("model", Build.MODEL)
+                putBoolean("canScheduleExactAlarms",
                     PermissionHelper.canScheduleExactAlarms(reactContext))
             }
             promise.resolve(systemInfo)
         } catch (e: Exception) {
-            promise.reject("E_SYSTEM_INFO", "Failed to get system info: ${e.message}")
+            promise.reject("E_SYSTEM_INFO", e.message)
+        }
+    }
+
+    // Notification Permission Handling
+    @ReactMethod
+    fun requestNotificationPermission(promise: Promise) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val activity = getCurrentActivity() ?: reactContext.currentActivity
+                if (ContextCompat.checkSelfPermission(
+                        reactContext,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    promise.resolve("GRANTED")
+                    return
+                }
+
+                if (activity == null) {
+                    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                        putExtra(Settings.EXTRA_APP_PACKAGE, reactContext.packageName)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    reactContext.startActivity(intent)
+                    promise.resolve("REQUESTED")
+                    return
+                }
+
+                pendingPermissionPromise = promise
+                ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    REQUEST_POST_NOTIFICATIONS
+                )
+            } else {
+                promise.resolve("GRANTED")
+            }
+        } catch (e: Exception) {
+            pendingPermissionPromise = null
+            promise.reject("PERMISSION_ERROR", e.message)
+        }
+    }
+
+    @ReactMethod
+    fun checkNotificationPermission(promise: Promise) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                val manager =
+                    reactContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                promise.resolve(if (manager.areNotificationsEnabled()) "GRANTED" else "DENIED")
+            } else {
+                promise.resolve("GRANTED")
+            }
+        } catch (e: Exception) {
+            promise.reject("PERMISSION_ERROR", e.message)
         }
     }
 
