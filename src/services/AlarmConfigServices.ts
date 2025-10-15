@@ -27,6 +27,14 @@ export class AlarmConfigServices {
     return this.nativeModule.getSnoozeMinutes();
   }
 
+  async setAlarmTimeoutAction(action: 'SNOOZE' | 'STOP'): Promise<boolean> {
+    return this.nativeModule.setAlarmTimeoutAction(action);
+  }
+
+  async getAlarmTimeoutAction(): Promise<string> {
+    return this.nativeModule.getAlarmTimeoutAction();
+  }
+
   // Ringtone
   async setRingtone(uri: string | null): Promise<boolean> {
     if (uri && !isValidUri(uri)) {
@@ -87,17 +95,15 @@ export class AlarmConfigServices {
     return this.nativeModule.getMaxAlarmDuration();
   }
 
-  async setAutoSnoozeOnTimeout(enabled: boolean): Promise<boolean> {
-    return this.nativeModule.setAutoSnoozeOnTimeout(enabled);
-  }
-
-  async getAutoSnoozeOnTimeout(): Promise<boolean> {
-    return this.nativeModule.getAutoSnoozeOnTimeout();
-  }
-
   // Full Config
   async getConfig(): Promise<AlarmConfigData> {
-    return this.nativeModule.getConfig();
+    const config = await this.nativeModule.getConfig();
+    const timeoutAction = await this.getAlarmTimeoutAction();
+
+    return {
+      ...config,
+      alarmTimeoutAction: timeoutAction,
+    };
   }
 
   // Enhanced Methods
@@ -155,7 +161,6 @@ export class AlarmConfigServices {
       this.setVibrate(true),
       this.setSnoozeMinutes(5),
       this.setMaxAlarmDuration(0), // Reset to infinite
-      this.setAutoSnoozeOnTimeout(false),
     ]);
     return true;
   }
@@ -171,18 +176,15 @@ export class AlarmConfigServices {
   // Helper method to get timeout settings in a user-friendly format
   async getTimeoutSettings(): Promise<{
     maxAlarmDuration: number;
-    autoSnoozeOnTimeout: boolean;
     isInfinite: boolean;
     formattedDuration: string;
   }> {
-    const [maxDuration, autoSnooze] = await Promise.all([
-      this.getMaxAlarmDuration(),
-      this.getAutoSnoozeOnTimeout(),
+    const [maxDuration] = await Promise.all([
+      this.getMaxAlarmDuration()
     ]);
 
     return {
       maxAlarmDuration: maxDuration,
-      autoSnoozeOnTimeout: autoSnooze,
       isInfinite: maxDuration === 0,
       formattedDuration:
         maxDuration === 0 ? 'Infinite' : `${maxDuration} seconds`,

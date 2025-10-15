@@ -23,7 +23,6 @@ const useAlarmSettings = () => {
     setVibration,
     setSnoozeMinutes,
     setMaxAlarmDuration,
-    setAutoSnoozeOnTimeout,
     getCurrentVibrationStatus,
     getAvailableAlarmSounds,
   } = useAlarmConfig();
@@ -118,19 +117,6 @@ const useAlarmSettings = () => {
     [setMaxAlarmDuration, loadSettings],
   );
 
-  const updateAutoSnoozeOnTimeout = useCallback(
-    async (enabled: boolean) => {
-      try {
-        await setAutoSnoozeOnTimeout(enabled);
-        // Refresh settings after update
-        await loadSettings();
-      } catch (err) {
-        throw err;
-      }
-    },
-    [setAutoSnoozeOnTimeout, loadSettings],
-  );
-
   return {
     settings,
     isLoading,
@@ -140,7 +126,6 @@ const useAlarmSettings = () => {
     updateVibration,
     updateSnoozeMinutes,
     updateMaxAlarmDuration,
-    updateAutoSnoozeOnTimeout,
     loadAvailableRingtones,
   };
 };

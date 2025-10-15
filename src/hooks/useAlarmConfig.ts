@@ -231,43 +231,6 @@ const useAlarmConfig = () => {
     }
   }, []);
 
-  const setAutoSnoozeOnTimeout = useCallback(
-    async (enabled: boolean): Promise<boolean> => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        return await alarmConfigService.setAutoSnoozeOnTimeout(enabled);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Failed to set auto snooze on timeout',
-        );
-        throw err;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [],
-  );
-
-  const getAutoSnoozeOnTimeout = useCallback(async (): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      return await alarmConfigService.getAutoSnoozeOnTimeout();
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to get auto snooze on timeout',
-      );
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   const getTimeoutSettings = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -362,6 +325,39 @@ const useAlarmConfig = () => {
     [],
   );
 
+  const setAlarmTimeoutAction = useCallback(
+    async (action: 'SNOOZE' | 'STOP'): Promise<boolean> => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        return await alarmConfigService.setAlarmTimeoutAction(action);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to set timeout action',
+        );
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  const getAlarmTimeoutAction = useCallback(async (): Promise<string> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      return await alarmConfigService.getAlarmTimeoutAction();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to get timeout action',
+      );
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const clearError = useCallback(() => {
     setError(null);
   }, []);
@@ -386,14 +382,14 @@ const useAlarmConfig = () => {
     getBigIcon,
     setMaxAlarmDuration,
     getMaxAlarmDuration,
-    setAutoSnoozeOnTimeout,
-    getAutoSnoozeOnTimeout,
     getTimeoutSettings,
     getAlarmConfig,
     getAlarmSettings,
     clearAllSettings,
     getCurrentVibrationStatus,
     testSoundPreview,
+    setAlarmTimeoutAction,
+    getAlarmTimeoutAction,
     clearError,
   };
 };

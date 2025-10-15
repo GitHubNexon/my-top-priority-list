@@ -3,8 +3,6 @@ export interface AlarmConfigNativeModule {
   getSnoozeMinutes(): Promise<number>;
   setMaxAlarmDuration(duration: number): Promise<boolean>;
   getMaxAlarmDuration(): Promise<number>;
-  setAutoSnoozeOnTimeout(enabled: boolean): Promise<boolean>;
-  getAutoSnoozeOnTimeout(): Promise<boolean>;
   setRingtone(uri: string | null): Promise<boolean>;
   getSelectedRingtone(): Promise<Ringtone | null>;
   getAllRingtones(): Promise<Ringtone[]>;
@@ -21,6 +19,8 @@ export interface AlarmConfigNativeModule {
     hasVibrator: boolean;
     willVibrate: boolean;
   }>;
+  setAlarmTimeoutAction(action: string): Promise<boolean>;
+  getAlarmTimeoutAction(): Promise<string>;
 }
 
 export interface AlarmConfigData {
@@ -31,6 +31,7 @@ export interface AlarmConfigData {
   vibrate: boolean;
   smallIcon: string;
   bigIcon: string;
+  alarmTimeoutAction: string;
 }
 
 export interface Ringtone {
