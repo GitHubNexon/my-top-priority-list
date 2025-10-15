@@ -61,6 +61,23 @@ class AlarmActivity : AppCompatActivity() {
         }
     }
 
+    private val finishReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                "STOP_ALARM",
+                "SNOOZE_ALARM" -> {
+                    stopVibration()
+                    try {
+                        val stopSoundIntent = Intent(this@AlarmActivity, AlarmSoundService::class.java)
+                        stopService(stopSoundIntent)
+                    } catch (_: Exception) {}
+                    finishAndRemoveTask()
+                    overridePendingTransition(0, 0)
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -70,6 +87,17 @@ class AlarmActivity : AppCompatActivity() {
             registerReceiver(configReceiver, filter, Context.RECEIVER_EXPORTED)
         } else {
             registerReceiver(configReceiver, filter)
+        }
+
+        val finishFilter = IntentFilter().apply {
+            addAction("STOP_ALARM")
+            addAction("SNOOZE_ALARM")
+        }
+
+        if (Build.VERSION.SDK_INT >= 34 && applicationInfo.targetSdkVersion >= 34) {
+            registerReceiver(finishReceiver, finishFilter, Context.RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(finishReceiver, finishFilter)
         }
 
         initializeVibrator()
@@ -308,6 +336,7 @@ class AlarmActivity : AppCompatActivity() {
         timeoutHandler?.removeCallbacks(timeoutRunnable)
         timeoutHandler = null
         try { unregisterReceiver(configReceiver) } catch (_: Exception) {}
+        try { unregisterReceiver(finishReceiver) } catch (_: Exception) {}
         stopVibration()
         super.onDestroy()
     }

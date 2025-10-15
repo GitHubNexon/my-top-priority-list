@@ -64,11 +64,26 @@ object AlarmNotificationHelper {
         message: String,
         requestCode: Int,
         includeSound: Boolean = false,
-        showFullScreen: Boolean = false
+        showFullScreen: Boolean = false,
+        noteType: String? = null
     ): Notification {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         ensureNotificationChannel(context)
+
+        val contentIntent = Intent(context, NotificationTapReceiver::class.java).apply {
+            putExtra("title", title)
+            putExtra("message", message)
+            putExtra("requestCode", requestCode)
+            putExtra("noteType", noteType) // Add noteType to intent
+            putExtra("timestamp", System.currentTimeMillis())
+        }
+        val contentPI = PendingIntent.getBroadcast(
+            context,
+            generateActionRequestCode(requestCode, 5), // Use a new request code
+            contentIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         // Snooze action -> uses dedicated SnoozeReceiver
         val snoozeIntent = Intent(context, SnoozeReceiver::class.java).apply {
@@ -135,6 +150,7 @@ object AlarmNotificationHelper {
                 if (smallIconResId != 0) smallIconResId 
                 else android.R.drawable.ic_lock_idle_alarm) // Use configured icon
             .setLargeIcon(BitmapFactory.decodeResource(context.resources, android.R.drawable.ic_lock_idle_alarm))
+            .setContentIntent(contentPI)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_MAX)

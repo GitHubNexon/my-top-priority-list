@@ -3,18 +3,41 @@ package com.mypriorities.alarm
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 
 class StopAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val requestCode = intent.getIntExtra("requestCode", 1001)
 
-        // Stop ringing
-        context.stopService(Intent(context, AlarmSoundService::class.java))
+        Log.d("StopAlarmReceiver", "onReceive STOP_ALARM requestCode=$requestCode")
 
-        // Cancel the notification
-        AlarmNotificationHelper.cancelAlarmNotification(context)
+        try {
+            context.stopService(Intent(context, AlarmSoundService::class.java))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
 
-        // Cancel the alarm
-        AlarmScheduler.cancelAlarm(context, requestCode)
+        try {
+            AlarmNotificationHelper.cancelAlarmNotification(context)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        try {
+            AlarmScheduler.cancelAlarm(context, requestCode)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        try {
+            val finishIntent = Intent().apply {
+                action = "STOP_ALARM"
+                putExtra("requestCode", requestCode)
+            }
+            context.sendBroadcast(finishIntent)
+            Log.d("StopAlarmReceiver", "Broadcasted STOP_ALARM")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
