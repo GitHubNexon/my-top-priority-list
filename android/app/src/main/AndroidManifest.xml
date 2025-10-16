@@ -74,6 +74,14 @@
         <action android:name="android.intent.action.REBOOT" />
       </intent-filter>
     </receiver>
+    <receiver
+      android:name=".alarm.AlarmResetReceiver"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="ALARM_CONFIG_CLEARED" />
+        <action android:name="ALARM_STOP_ALL" />
+      </intent-filter>
+    </receiver>
     <service
       android:name=".alarm.AlarmSoundService"
       android:exported="false"
