@@ -1,91 +1,82 @@
 package com.mypriorities.alarm
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.tencent.mmkv.MMKV
+import com.google.gson.Gson
 
 object EncryptedStorageHelper {
     private const val ENCRYPTED_PREFS_NAME = "encrypted_alarms"
-    
-    private fun getEncryptedMMKV(): MMKV {
-        return MMKV.mmkvWithID(ENCRYPTED_PREFS_NAME, MMKV.MULTI_PROCESS_MODE)!!
+
+    private fun getMMKV(context: Context): MMKV {
+        val encryptionKey = EncryptionHelper.getOrCreateMMKVKey(context)
+        return MMKV.mmkvWithID(ENCRYPTED_PREFS_NAME, MMKV.MULTI_PROCESS_MODE, encryptionKey)
+            ?: throw IllegalStateException("Failed to initialize MMKV with encryption")
     }
-    
+
     fun saveEncryptedAlarm(context: Context, alarmItem: AlarmItem) {
-        val gson = com.google.gson.Gson()
+        val gson = Gson()
         val alarmJson = gson.toJson(alarmItem)
-        val encryptedJson = EncryptionHelper.encrypt(alarmJson)
-        
-        val mmkv = getEncryptedMMKV()
-        mmkv.encode(alarmItem.requestCodeStr, encryptedJson)
-        
-        // Also maintain a list of all alarm IDs for easy retrieval
-        val alarmIds = getAlarmIdList(mmkv)
-        if (!alarmIds.contains(alarmItem.requestCodeStr)) {
-            alarmIds.add(alarmItem.requestCodeStr)
-            saveAlarmIdList(mmkv, alarmIds)
+
+        val mmkv = getMMKV(context)
+        mmkv.encode(alarmItem.requestCodeStr, alarmJson)
+
+        // Maintain list of IDs for retrieval
+        val ids = getAlarmIdList(context).toMutableList()
+        if (!ids.contains(alarmItem.requestCodeStr)) {
+            ids.add(alarmItem.requestCodeStr)
+            saveAlarmIdList(context, ids)
         }
     }
-    
-    fun getEncryptedAlarm(requestCodeStr: String): AlarmItem? {
+
+    fun getEncryptedAlarm(context: Context, requestCodeStr: String): AlarmItem? {
         return try {
-            val mmkv = getEncryptedMMKV()
-            val encryptedJson = mmkv.decodeString(requestCodeStr) ?: return null
-            val decryptedJson = EncryptionHelper.decrypt(encryptedJson)
-            com.google.gson.Gson().fromJson(decryptedJson, AlarmItem::class.java)
+            val mmkv = getMMKV(context)
+            val json = mmkv.decodeString(requestCodeStr) ?: return null
+            Gson().fromJson(json, AlarmItem::class.java)
         } catch (e: Exception) {
             null
         }
     }
-    
-    fun getAllEncryptedAlarms(): List<AlarmItem> {
-        val alarms = mutableListOf<AlarmItem>()
-        val mmkv = getEncryptedMMKV()
-        val alarmIds = getAlarmIdList(mmkv)
-        
-        alarmIds.forEach { id ->
-            getEncryptedAlarm(id)?.let { alarm ->
-                alarms.add(alarm)
-            }
+
+    fun getAllEncryptedAlarms(context: Context): List<AlarmItem> {
+        val mmkv = getMMKV(context)
+        val ids = getAlarmIdList(context)
+        val gson = Gson()
+
+        return ids.mapNotNull { id ->
+            mmkv.decodeString(id)?.let { json -> gson.fromJson(json, AlarmItem::class.java) }
         }
-        
-        return alarms
     }
-    
-    fun removeEncryptedAlarm(requestCodeStr: String) {
-        val mmkv = getEncryptedMMKV()
+
+    fun removeEncryptedAlarm(context: Context, requestCodeStr: String) {
+        val mmkv = getMMKV(context)
         mmkv.removeValueForKey(requestCodeStr)
-        
-        // Update the ID list
-        val alarmIds = getAlarmIdList(mmkv)
-        alarmIds.remove(requestCodeStr)
-        saveAlarmIdList(mmkv, alarmIds)
+
+        val ids = getAlarmIdList(context).toMutableList()
+        ids.remove(requestCodeStr)
+        saveAlarmIdList(context, ids)
     }
-    
-    fun clearAllEncryptedAlarms() {
-        val mmkv = getEncryptedMMKV()
-        val alarmIds = getAlarmIdList(mmkv)
-        
-        alarmIds.forEach { id ->
-            mmkv.removeValueForKey(id)
-        }
-        
-        mmkv.removeValueForKey("alarm_ids")
+
+    fun clearAllEncryptedAlarms(context: Context) {
+        try {
+            // Reset everything related to encryption and MMKV
+            EncryptionHelper.resetKeys(context)
+        } catch (_: Exception) {}
     }
-    
-    private fun getAlarmIdList(mmkv: MMKV): MutableList<String> {
-        val encryptedIds = mmkv.decodeString("alarm_ids")
-        return if (encryptedIds != null) {
-            val decryptedIds = EncryptionHelper.decrypt(encryptedIds)
-            com.google.gson.Gson().fromJson(decryptedIds, Array<String>::class.java).toMutableList()
+
+    private fun getAlarmIdList(context: Context): List<String> {
+        val mmkv = getMMKV(context)
+        val idsJson = mmkv.decodeString("alarm_ids")
+        return if (idsJson != null) {
+            Gson().fromJson(idsJson, Array<String>::class.java).toList()
         } else {
-            mutableListOf()
+            emptyList()
         }
     }
-    
-    private fun saveAlarmIdList(mmkv: MMKV, ids: List<String>) {
-        val idsJson = com.google.gson.Gson().toJson(ids)
-        val encryptedIds = EncryptionHelper.encrypt(idsJson)
-        mmkv.encode("alarm_ids", encryptedIds)
+
+    private fun saveAlarmIdList(context: Context, ids: List<String>) {
+        val mmkv = getMMKV(context)
+        val json = Gson().toJson(ids)
+        mmkv.encode("alarm_ids", json)
     }
 }
