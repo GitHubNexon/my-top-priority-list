@@ -56,9 +56,6 @@ class MainApplication : Application(), ReactApplication {
       // Initialize encryption for alarm storage
       AlarmStorageHelper.initializeEncryption(this)
       
-      // Migrate any existing alarms to encrypted storage
-      AlarmStorageHelper.migrateExistingAlarms(this)
-      
       Log.d("MainApplication", "Alarm system initialized successfully")
     } catch (e: Exception) {
       Log.e("MainApplication", "Failed to initialize alarm system", e)
