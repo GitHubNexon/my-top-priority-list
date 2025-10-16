@@ -332,12 +332,11 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun getAllScheduledAlarms(promise: Promise) {
+    fun getAlarm(requestCodeStr: String, promise: Promise) {
         try {
-            val alarms = AlarmStorageHelper.getAllAlarms(reactContext)
-            val alarmsArray = Arguments.createArray()
+            val alarm = AlarmStorageHelper.getAlarmByRequestCodeStr(reactContext, requestCodeStr)
             
-            alarms.forEach { alarm ->
+            if (alarm != null) {
                 val alarmMap = Arguments.createMap().apply {
                     putString("requestCodeStr", alarm.requestCodeStr)
                     putDouble("timestamp", alarm.timestamp.toDouble())
@@ -347,21 +346,22 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
                     putString("recurrencePattern", alarm.recurrencePattern)
                     putBoolean("isActive", alarm.isActive)
                 }
-                alarmsArray.pushMap(alarmMap)
+                promise.resolve(alarmMap)
+            } else {
+                promise.resolve(null)
             }
-            
-            promise.resolve(alarmsArray)
         } catch (e: Exception) {
-            promise.reject("E_GET_ALARMS", e)
+            promise.reject("E_GET_ALARM", e)
         }
     }
 
     @ReactMethod
-    fun getAlarm(requestCodeStr: String, promise: Promise) {
+    fun getAllScheduledAlarms(promise: Promise) {
         try {
-            val alarm = AlarmStorageHelper.getAlarmByRequestCodeStr(reactContext, requestCodeStr)
+            val alarms = AlarmStorageHelper.getAllAlarms(reactContext)
+            val alarmsArray = Arguments.createArray()
             
-            if (alarm != null) {
+            alarms.forEach { alarm ->
                 val alarmMap = Arguments.createMap().apply {
                     putString("requestCodeStr", alarm.requestCodeStr)
                     putDouble("timestamp", alarm.timestamp.toDouble())
