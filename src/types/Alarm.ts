@@ -33,6 +33,7 @@ export interface AlarmNativeModule {
   isAlarmScheduled(requestCodeStr: string): Promise<boolean>;
   requestNotificationPermission(): Promise<string>;
   checkNotificationPermission(): Promise<string>;
+  clearAllAlarms(): Promise<string>;
 }
 
 export interface AlarmScheduleConfig {

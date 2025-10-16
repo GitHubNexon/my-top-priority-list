@@ -16,6 +16,7 @@ import {
 import { useAlarm, useAlarmConfig, useAlarmManager, useAlarmSettings, useTheme } from '../../../hooks';
 import { AlarmConfigServices } from '../../../services/AlarmConfigServices';
 import { Ringtone } from '../../../types/AlarmConfig';
+import { AlarmService } from '../../../services/AlarmServices';
 
 const ChartScreen = () => {
   const alarmConfigService = new AlarmConfigServices();
@@ -192,7 +193,7 @@ const ChartScreen = () => {
   const schedule5SecondAlarm = async () => {
     try {
       const requestCode = await alarmManager.scheduleAlarm({
-        timestamp: Date.now() + 5000, // 5 seconds from now
+        timestamp: Date.now() + 300000, // 5 seconds from now
         title: alarmTitle,
         message: alarmMessage,
         recurrenceType: 'ONCE',
@@ -253,6 +254,8 @@ const ChartScreen = () => {
   const cancelAllAlarms = async () => {
     try {
       await alarmManager.cancelAllAlarms();
+      const alarmService = new AlarmService();
+      await alarmService.clearAllAlarms();
       Alert.alert('Success', 'All alarms cancelled');
     } catch (error) {
       Alert.alert('Error', 'Failed to cancel alarms');

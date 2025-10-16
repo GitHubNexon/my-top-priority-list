@@ -207,4 +207,9 @@ export class AlarmService {
       throw error;
     }
   }
+
+  // OTHER ALARM MANAGEMENT METHODS
+  async clearAllAlarms() {
+    return await this.nativeModule.clearAllAlarms();
+  }
 }
