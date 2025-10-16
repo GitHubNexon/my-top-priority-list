@@ -312,6 +312,19 @@ class AlarmConfigModule(reactContext: ReactApplicationContext)
         fun clearAllSettings(promise: Promise) {
             try {
                 prefs.edit().clear().apply()
+            
+                // Broadcast to notify all alarm-related components
+                val intent = Intent("ALARM_CONFIG_CLEARED")
+                reactApplicationContext.sendBroadcast(intent)
+            
+                // Optionally re-create notification channel (with default vibration state)
+                val context = reactApplicationContext
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    nm.deleteNotificationChannel(AlarmNotificationHelper.CHANNEL_ID)
+                    AlarmNotificationHelper.ensureNotificationChannel(context)
+                }
+
                 promise.resolve(true)
             } catch (e: Exception) {
                 promise.reject("CLEAR_ERROR", e)
