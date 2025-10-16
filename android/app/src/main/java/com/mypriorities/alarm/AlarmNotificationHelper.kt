@@ -80,7 +80,7 @@ object AlarmNotificationHelper {
         }
         val contentPI = PendingIntent.getBroadcast(
             context,
-            generateActionRequestCode(requestCode, 5), // Use a new request code
+            RequestCodeHelper.generateActionRequestCode(requestCode, 5), // Use a new request code
             contentIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -95,7 +95,7 @@ object AlarmNotificationHelper {
         }
         val snoozePI = PendingIntent.getBroadcast(
             context,
-            generateActionRequestCode(requestCode, 1),
+            RequestCodeHelper.generateActionRequestCode(requestCode, 1),
             snoozeIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -107,7 +107,7 @@ object AlarmNotificationHelper {
         }
         val stopPI = PendingIntent.getBroadcast(
             context,
-            generateActionRequestCode(requestCode, 2),
+            RequestCodeHelper.generateActionRequestCode(requestCode, 2),
             stopIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -121,7 +121,7 @@ object AlarmNotificationHelper {
         }
         val fullScreenPI = PendingIntent.getActivity(
             context,
-            generateActionRequestCode(requestCode, 3),
+            RequestCodeHelper.generateActionRequestCode(requestCode, 3),
             fullScreenIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -133,7 +133,7 @@ object AlarmNotificationHelper {
         }
         val deletePI = PendingIntent.getBroadcast(
             context,
-            generateActionRequestCode(requestCode, 4),
+            RequestCodeHelper.generateActionRequestCode(requestCode, 4),
             deleteIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -221,9 +221,5 @@ object AlarmNotificationHelper {
         return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-    }
-
-    private fun generateActionRequestCode(baseRequestCode: Int, actionType: Int): Int {
-        return (baseRequestCode.toString() + actionType.toString()).hashCode() and 0x7FFFFFFF
     }
 }

@@ -182,11 +182,21 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
+    fun generateRequestCode(promise: Promise) {
+        try {
+            val requestCodeStr = RequestCodeHelper.generateRequestCodeStr()
+            promise.resolve(requestCodeStr)
+        } catch (e: Exception) {
+            promise.reject("E_GENERATE_CODE", e)
+        }
+    }
+
+    @ReactMethod
     fun scheduleAlarm(
         timestamp: Double,
         title: String,
         message: String,
-        requestCodeStr: String?,
+        requestCodeStr: String,
         recurrenceType: String,
         recurrencePattern: String,
         promise: Promise
@@ -199,8 +209,8 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
             }
 
             // Generate request code if not provided
-            val finalRequestCodeStr = AlarmStorageHelper.generateRequestCodeStr(requestCodeStr)
-            val requestCode = AlarmStorageHelper.generateRequestCode(finalRequestCodeStr)
+            val finalRequestCodeStr = RequestCodeHelper.generateRequestCodeStr(requestCodeStr)
+            val requestCode = RequestCodeHelper.generateRequestCode(finalRequestCodeStr)
             val finalTitle = title.ifEmpty { "Alarm" }
 
             // Schedule the alarm with storage

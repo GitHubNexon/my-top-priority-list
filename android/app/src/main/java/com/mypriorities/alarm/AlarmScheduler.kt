@@ -97,7 +97,7 @@ object AlarmScheduler {
 
         // Generate a unique request code string for the snooze
         val snoozeRequestCodeStr = "snooze_${requestCode}_${System.currentTimeMillis()}"
-        val snoozeRequestCode = AlarmStorageHelper.generateRequestCode(snoozeRequestCodeStr)
+        val snoozeRequestCode = RequestCodeHelper.generateRequestCode(snoozeRequestCodeStr)
 
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("requestCode", snoozeRequestCode)
@@ -122,14 +122,14 @@ object AlarmScheduler {
             }
             PendingIntent.getForegroundService(
                 context,
-                generateSnoozeRequestCode(requestCode),
+                RequestCodeHelper.generateSnoozeRequestCode(requestCode),
                 svcIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         } else {
             PendingIntent.getBroadcast(
                 context,
-                generateSnoozeRequestCode(requestCode),
+                RequestCodeHelper.generateSnoozeRequestCode(requestCode),
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
@@ -165,9 +165,5 @@ object AlarmScheduler {
         )
         am.cancel(pi)
         pi.cancel()
-    }
-
-    private fun generateSnoozeRequestCode(originalRequestCode: Int): Int {
-        return (originalRequestCode.toString() + "snooze").hashCode() and 0x7FFFFFFF
     }
 }
