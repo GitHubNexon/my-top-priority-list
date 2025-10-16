@@ -255,6 +255,8 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
             // Cancel existing alarm
             AlarmScheduler.cancelAlarm(reactContext, requestCode)
 
+            AlarmStorageHelper.removeAlarm(reactContext, existingAlarm.requestCode)
+
             // Schedule updated alarm with storage using the SAME requestCode
             val finalTitle = title.ifEmpty { "Alarm" }
 
@@ -288,9 +290,6 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
 
             val requestCode = alarm.requestCode // Use the EXACT requestCode from storage
 
-            // Remove from storage
-            AlarmStorageHelper.removeAlarm(reactContext, requestCode)
-
             // Cancel the alarm using the exact same requestCode that was used to schedule it
             AlarmScheduler.cancelAlarm(reactContext, requestCode)
             AlarmNotificationHelper.cancelAlarmNotification(reactContext)
@@ -317,9 +316,6 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
             alarms.forEach { alarm ->
                 AlarmScheduler.cancelAlarm(reactContext, alarm.requestCode)
             }
-            
-            // Clear all from storage
-            AlarmStorageHelper.clearAllAlarms(reactContext)
             
             // Stop any running service
             try {
@@ -375,22 +371,12 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
                     putString("recurrencePattern", alarm.recurrencePattern)
                     putBoolean("isActive", alarm.isActive)
                 }
-                promise.resolve(alarmMap)
-            } else {
-                promise.resolve(null)
+                alarmsArray.pushMap(alarmMap)
             }
+            
+            promise.resolve(alarmsArray)
         } catch (e: Exception) {
-            promise.reject("E_GET_ALARM", e)
-        }
-    }
-
-    @ReactMethod
-    fun generateRequestCode(promise: Promise) {
-        try {
-            val requestCodeStr = AlarmStorageHelper.generateRequestCodeStr()
-            promise.resolve(requestCodeStr)
-        } catch (e: Exception) {
-            promise.reject("E_GENERATE_CODE", e)
+            promise.reject("E_GET_ALARMS", e)
         }
     }
 
@@ -401,6 +387,90 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
             promise.resolve(alarm != null)
         } catch (e: Exception) {
             promise.reject("E_CHECK_ALARM", e)
+        }
+    }
+
+        /**
+     * Deletes a specific alarm from all storages (MMKV, SharedPreferences, EncryptedSharedPreferences)
+     * and cancels its scheduled alarm.
+     */
+    @ReactMethod
+    fun clearAlarm(requestCodeStr: String, promise: Promise) {
+        try {
+            // Try to find the alarm in either storage
+            val alarm = AlarmStorageHelper.getAlarmByRequestCodeStr(reactContext, requestCodeStr)
+                ?: EncryptedStorageHelper.getEncryptedAlarm(reactContext, requestCodeStr)
+
+            if (alarm == null) {
+                promise.resolve(false)
+                return
+            }
+
+            // Cancel scheduled alarm
+            AlarmScheduler.cancelAlarm(reactContext, alarm.requestCode)
+
+            // Remove alarm from all storage layers
+            AlarmStorageHelper.removeAlarm(reactContext, alarm.requestCode)
+
+            // Stop any running alarm services or notifications
+            try {
+                AlarmNotificationHelper.cancelAlarmNotification(reactContext)
+                reactContext.stopService(Intent(reactContext, AlarmSoundService::class.java))
+            } catch (_: Exception) { }
+
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("E_CLEAR_ALARM", e)
+        }
+    }
+
+    /**
+     * Completely wipes all stored alarms, preferences, MMKV data,
+     * encrypted files, and resets encryption keys.
+     * This is effectively a full local alarm data reset.
+     */
+    @ReactMethod
+    fun clearAllAlarms(promise: Promise) {
+        try {
+            val intent = Intent("ALARM_CONFIG_CLEARED")
+
+            // Cancel all scheduled alarms first
+            val alarms = AlarmStorageHelper.getAllAlarms(reactContext)
+            alarms.forEach { alarm ->
+                AlarmScheduler.cancelAlarm(reactContext, alarm.requestCode)
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val nm = reactContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                nm.deleteNotificationChannel(AlarmNotificationHelper.CHANNEL_ID)
+                AlarmNotificationHelper.ensureNotificationChannel(reactContext)
+            }
+
+            // Clear all local storages
+            AlarmStorageHelper.clearAllAlarms(reactContext)
+
+            // Clear general SharedPreferences or EncryptedSharedPreferences
+            try {
+                val encPrefs = reactContext.getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
+                encPrefs.edit().clear().apply()
+            } catch (_: Exception) { }
+
+            // Reset encryption keys (optional, full wipe)
+            try {
+                EncryptionHelper.resetKeys(reactContext)
+            } catch (_: Exception) { }
+
+            // Stop running services and remove notifications
+            try {
+                reactContext.stopService(Intent(reactContext, AlarmSoundService::class.java))
+                AlarmNotificationHelper.cancelAlarmNotification(reactContext)
+            } catch (_: Exception) { }
+
+            reactContext.sendBroadcast(intent)
+
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("E_CLEAR_ALL_ALARMS", e)
         }
     }
 }
