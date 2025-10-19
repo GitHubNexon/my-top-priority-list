@@ -5,6 +5,7 @@ import {
   Ringtone,
 } from '../types/AlarmConfig';
 import { isValidUri } from '../utils/alarmConfig';
+import { AlarmTimeoutAction } from '../types/Alarm';
 
 const { AlarmConfig } = NativeModules;
 
@@ -27,12 +28,21 @@ export class AlarmConfigServices {
     return this.nativeModule.getSnoozeMinutes();
   }
 
-  async setAlarmTimeoutAction(action: 'SNOOZE' | 'STOP'): Promise<boolean> {
+  async setAlarmTimeoutAction(action: AlarmTimeoutAction): Promise<boolean> {
     return this.nativeModule.setAlarmTimeoutAction(action);
   }
 
-  async getAlarmTimeoutAction(): Promise<string> {
-    return this.nativeModule.getAlarmTimeoutAction();
+  async getAlarmTimeoutAction(): Promise<AlarmTimeoutAction> {
+    const result = await this.nativeModule.getAlarmTimeoutAction();
+    // Validate and cast to enum
+    if (result === 'SNOOZE' || result === 'STOP') {
+      return result as AlarmTimeoutAction;
+    }
+    // Return default if invalid value
+    console.warn(
+      `Invalid alarm timeout action received: ${result}, defaulting to SNOOZE`,
+    );
+    return AlarmTimeoutAction.SNOOZE;
   }
 
   // Ringtone
@@ -98,7 +108,7 @@ export class AlarmConfigServices {
   // Full Config
   async getConfig(): Promise<AlarmConfigData> {
     const config = await this.nativeModule.getConfig();
-    const timeoutAction = await this.getAlarmTimeoutAction();
+    const timeoutAction = await this.getAlarmTimeoutAction(); // Now returns proper type
 
     return {
       ...config,
@@ -179,9 +189,7 @@ export class AlarmConfigServices {
     isInfinite: boolean;
     formattedDuration: string;
   }> {
-    const [maxDuration] = await Promise.all([
-      this.getMaxAlarmDuration()
-    ]);
+    const [maxDuration] = await Promise.all([this.getMaxAlarmDuration()]);
 
     return {
       maxAlarmDuration: maxDuration,

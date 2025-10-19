@@ -4,6 +4,9 @@ import {
   AlarmScheduleConfig,
   SystemInfo,
   InitializationStatus,
+  RecurrenceType,
+  NotificationPermissionStatus,
+  InitializationResult,
 } from '../types/Alarm';
 import { buildRecurrencePattern, validateScheduleConfig } from '../utils/alarm';
 
@@ -17,18 +20,10 @@ export class AlarmService {
     this.nativeModule = AlarmModule as AlarmNativeModule;
   }
 
-  // INITIALIZATION METHODS
-  async initialize(): Promise<string> {
+  async initialize(): Promise<InitializationResult> {
     try {
       const result = await this.nativeModule.initializeAlarmSystem();
-
-      if (result === 'INITIALIZED') {
-        this.isInitialized = true;
-
-        // Also ensure full screen intent permission for Android 14+
-        await this.ensureFullScreenIntentPermission();
-      }
-
+      this.isInitialized = result === InitializationResult.INITIALIZED;
       return result;
     } catch (error) {
       console.error('Failed to initialize alarm system:', error);
@@ -87,7 +82,6 @@ export class AlarmService {
     }
   }
 
-  // ALARM SCHEDULING METHODS
   async scheduleAlarm(config: AlarmScheduleConfig): Promise<string> {
     await this.ensureInitialized();
 
@@ -96,7 +90,7 @@ export class AlarmService {
       title = 'Alarm',
       message,
       requestCodeStr = await this.generateRequestCode(),
-      recurrenceType = 'ONCE',
+      recurrenceType = RecurrenceType.ONCE,
       daysOfWeek = [],
       dayOfMonth = 0,
       interval = 1,
@@ -104,7 +98,6 @@ export class AlarmService {
 
     validateScheduleConfig(config);
 
-    // Check exact alarm permission for Android 12+
     const hasPermission = await this.checkExactAlarmPermission();
     if (!hasPermission) {
       throw new Error(
@@ -133,7 +126,6 @@ export class AlarmService {
     return this.nativeModule.generateRequestCode();
   }
 
-  // UPDATE ALARM METHOD
   async updateAlarm(
     config: AlarmScheduleConfig & { requestCodeStr: string },
   ): Promise<string> {
@@ -144,7 +136,7 @@ export class AlarmService {
       timestamp,
       title = 'Alarm',
       message,
-      recurrenceType = 'ONCE',
+      recurrenceType = RecurrenceType.ONCE,
       daysOfWeek = [],
       dayOfMonth = 0,
       interval = 1,
@@ -169,7 +161,6 @@ export class AlarmService {
     );
   }
 
-  // OTHER ALARM MANAGEMENT METHODS
   async cancelAlarm(requestCodeStr: string): Promise<boolean> {
     return this.nativeModule.cancelAlarm(requestCodeStr);
   }
@@ -178,11 +169,11 @@ export class AlarmService {
     return this.nativeModule.cancelAllAlarms();
   }
 
-  async getAllScheduledAlarms(): Promise<any[]> {
+  async getAllScheduledAlarms(): Promise<AlarmScheduleConfig[]> {
     return this.nativeModule.getAllScheduledAlarms();
   }
 
-  async getAlarm(requestCodeStr: string): Promise<any> {
+  async getAlarm(requestCodeStr: string): Promise<AlarmScheduleConfig | null> {
     return this.nativeModule.getAlarm(requestCodeStr);
   }
 
@@ -190,7 +181,7 @@ export class AlarmService {
     return this.nativeModule.isAlarmScheduled(requestCodeStr);
   }
 
-  async requestNotificationPermission(): Promise<string> {
+  async requestNotificationPermission(): Promise<NotificationPermissionStatus> {
     try {
       return await this.nativeModule.requestNotificationPermission();
     } catch (error) {
@@ -199,7 +190,7 @@ export class AlarmService {
     }
   }
 
-  async checkNotificationPermission(): Promise<string> {
+  async checkNotificationPermission(): Promise<NotificationPermissionStatus> {
     try {
       return await this.nativeModule.checkNotificationPermission();
     } catch (error) {
@@ -208,8 +199,7 @@ export class AlarmService {
     }
   }
 
-  // OTHER ALARM MANAGEMENT METHODS
-  async clearAllAlarms() {
+  async clearAllAlarms(): Promise<boolean> {
     return await this.nativeModule.clearAllAlarms();
   }
 }
