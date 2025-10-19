@@ -67,29 +67,29 @@ object EncryptionHelper {
     }
 
     /**
-     * Completely resets encryption keys and clears all related storage.
-     * This wipes MMKV, EncryptedSharedPreferences, and alarm-related SharedPreferences.
-     * Call this ONLY when performing a full data wipe (factory reset or user logout).
+     * Completely resets encryption keys and clears all alarm-related storage.
+     * 
+     * ⚠️ WARNING: This will remove all alarm data and encryption keys.
+     * Do NOT call this during normal runtime except for:
+     *   - Full app factory reset
+     *   - User-initiated "reset alarms" action
+     *
+     * It will NOT affect login or global MMKV data.
      */
     fun resetKeys(context: Context) {
         try {
-            Log.w("EncryptionHelper", "Resetting all encryption keys and storage...")
+            Log.w("EncryptionHelper", "Resetting all encryption keys and alarm storage...")
 
-            // 1. Clear MMKV encrypted alarms
+            // 1️⃣ Clear only the encrypted alarms MMKV instance
             try {
-                MMKV.mmkvWithID("encrypted_alarms")?.clearAll()
-                MMKV.onExit()
-            } catch (_: Exception) { }
+                val mmkv = MMKV.mmkvWithID("encrypted_alarms")
+                mmkv?.clearAll()
+                Log.i("EncryptionHelper", "Cleared MMKV: encrypted_alarms")
+            } catch (e: Exception) {
+                Log.w("EncryptionHelper", "Failed to clear MMKV encrypted_alarms: ${e.message}")
+            }
 
-            // Delete MMKV directory manually
-            try {
-                val mmkvDir = context.filesDir.resolve("mmkv")
-                if (mmkvDir.exists() && mmkvDir.isDirectory) {
-                    mmkvDir.deleteRecursively()
-                }
-            } catch (_: Exception) { }
-
-            // 2. Clear encrypted SharedPreferences (the MMKV key)
+            // 2️⃣ Clear EncryptedSharedPreferences (used for MMKV key)
             try {
                 val masterKey = MasterKey.Builder(context)
                     .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
@@ -97,35 +97,33 @@ object EncryptionHelper {
 
                 val encryptedPrefs = EncryptedSharedPreferences.create(
                     context,
-                    PREF_FILE_NAME,
+                    PREF_FILE_NAME, // same name used for alarm encryption key
                     masterKey,
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
                 )
+
                 encryptedPrefs.edit().clear().apply()
-            } catch (_: Exception) { }
+                Log.i("EncryptionHelper", "Cleared EncryptedSharedPreferences: $PREF_FILE_NAME")
+            } catch (e: Exception) {
+                Log.w("EncryptionHelper", "Failed to clear EncryptedSharedPreferences: ${e.message}")
+            }
 
-            // 3. Clear all alarm SharedPreferences
-            try {
-                val prefs = context.getSharedPreferences("ScheduledAlarms", Context.MODE_PRIVATE)
-                prefs.edit().clear().apply()
-            } catch (_: Exception) { }
+            // 3️⃣ Clear alarm-related SharedPreferences (ScheduledAlarms, EncryptionPrefs, AlarmConfig)
+            val alarmPrefsList = listOf("ScheduledAlarms", "EncryptionPrefs", "AlarmConfig")
+            alarmPrefsList.forEach { name ->
+                try {
+                    context.getSharedPreferences(name, Context.MODE_PRIVATE)
+                        .edit().clear().apply()
+                    Log.i("EncryptionHelper", "Cleared SharedPreferences: $name")
+                } catch (e: Exception) {
+                    Log.w("EncryptionHelper", "Failed to clear SharedPreferences $name: ${e.message}")
+                }
+            }
 
-            // 4. Clear encryption cache
-            try {
-                val cachePrefs = context.getSharedPreferences("EncryptionPrefs", Context.MODE_PRIVATE)
-                cachePrefs.edit().clear().apply()
-            } catch (_: Exception) { }
-
-            // 5. Clear AlarmConfig prefs
-            try {
-                val alarmConfigPrefs = context.getSharedPreferences("AlarmConfig", Context.MODE_PRIVATE)
-                alarmConfigPrefs.edit().clear().apply()
-            } catch (_: Exception) { }
-
-            Log.i("EncryptionHelper", "All encryption and MMKV data successfully cleared.")
+            Log.i("EncryptionHelper", "✅ Alarm encryption and MMKV data cleared successfully.")
         } catch (e: Exception) {
-            Log.e("EncryptionHelper", "Error resetting keys: ${e.message}", e)
+            Log.e("EncryptionHelper", "Error during resetKeys: ${e.message}", e)
         }
     }
 }
