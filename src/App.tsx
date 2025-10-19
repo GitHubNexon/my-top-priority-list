@@ -21,11 +21,14 @@ import {
 } from './hooks/useNavigation';
 import notifee, { EventType } from '@notifee/react-native';
 import { NavigationTypeProvider } from './context';
-import { useAlarm, useTheme } from './hooks';
+import { useTheme } from './hooks';
+import { AlarmService } from './services/AlarmServices';
+import AlarmConfigProvider from './context/AlarmConfigContext';
+import AlarmProvider from './context/AlarmContext';
 
 export default function App() {
     const { theme } = useTheme();
-    const alarm = useAlarm();
+    const alarm = new AlarmService;
 
     useEffect(() => {
         AuthServices.initializeGoogleSDK();
@@ -120,11 +123,15 @@ export default function App() {
                         <NavigationTypeProvider>
                             <AuthProvider>
                                 <FirestoreProvider>
-                                    <NotesProvider>
-                                        <PortalProvider>
-                                            <RootNavigator />
-                                        </PortalProvider>
-                                    </NotesProvider>
+                                    <AlarmConfigProvider>
+                                        <AlarmProvider>
+                                            <NotesProvider>
+                                                <PortalProvider>
+                                                    <RootNavigator />
+                                                </PortalProvider>
+                                            </NotesProvider>
+                                        </AlarmProvider>
+                                    </AlarmConfigProvider>
                                 </FirestoreProvider>
                             </AuthProvider>
                         </NavigationTypeProvider>

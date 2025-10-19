@@ -1,18 +1,38 @@
+export enum RecurrenceType {
+  ONCE = 'ONCE',
+  DAILY = 'DAILY',
+  WEEKLY = 'WEEKLY',
+  MONTHLY = 'MONTHLY',
+  YEARLY = 'YEARLY',
+  CUSTOM = 'CUSTOM',
+}
+
+export enum InitializationResult {
+  INITIALIZED = 'INITIALIZED',
+  PERMISSION_NEEDED = 'PERMISSION_NEEDED',
+  ERROR = 'ERROR',
+}
+
+export enum NotificationPermissionStatus {
+  GRANTED = 'granted',
+  DENIED = 'denied',
+  SHOULD_REQUEST = 'should_request',
+}
+
 export interface AlarmNativeModule {
-  initializeAlarmSystem(): Promise<string>;
+  initializeAlarmSystem(): Promise<InitializationResult>;
   ensureFullScreenIntentPermission(): Promise<boolean>;
   canScheduleExactAlarms(): Promise<boolean>;
   openAppSettings(): Promise<boolean>;
   getSystemInfo(): Promise<SystemInfo>;
   getInitializationStatus(): Promise<InitializationStatus>;
 
-  // Single method for both single and recurring alarms
   scheduleAlarm(
     timestamp: number,
     title: string,
     message: string,
     requestCodeStr: string | null,
-    recurrenceType: string,
+    recurrenceType: RecurrenceType,
     recurrencePattern: string,
   ): Promise<string>;
 
@@ -21,7 +41,7 @@ export interface AlarmNativeModule {
     timestamp: number,
     title: string,
     message: string,
-    recurrenceType: string,
+    recurrenceType: RecurrenceType,
     recurrencePattern: string,
   ): Promise<string>;
 
@@ -31,9 +51,9 @@ export interface AlarmNativeModule {
   getAlarm(requestCodeStr: string): Promise<AlarmScheduleConfig | null>;
   generateRequestCode(): Promise<string>;
   isAlarmScheduled(requestCodeStr: string): Promise<boolean>;
-  requestNotificationPermission(): Promise<string>;
-  checkNotificationPermission(): Promise<string>;
-  clearAllAlarms(): Promise<string>;
+  requestNotificationPermission(): Promise<NotificationPermissionStatus>;
+  checkNotificationPermission(): Promise<NotificationPermissionStatus>;
+  clearAllAlarms(): Promise<boolean>;
 }
 
 export interface AlarmScheduleConfig {
@@ -41,16 +61,10 @@ export interface AlarmScheduleConfig {
   title?: string;
   message: string;
   requestCodeStr?: string;
-  recurrenceType?:
-    | 'ONCE'
-    | 'DAILY'
-    | 'WEEKLY'
-    | 'MONTHLY'
-    | 'YEARLY'
-    | 'CUSTOM';
-  daysOfWeek?: number[]; // 0-6 (Sunday=0) - required for WEEKLY
-  dayOfMonth?: number; // 1-31 - required for MONTHLY
-  interval?: number; // for DAILY and CUSTOM recurrences
+  recurrenceType?: RecurrenceType;
+  daysOfWeek?: number[];
+  dayOfMonth?: number;
+  interval?: number;
 }
 
 export interface SystemInfo {
@@ -65,4 +79,20 @@ export interface InitializationStatus {
   canScheduleExactAlarms: boolean;
   requiresExactAlarmPermission: boolean;
   errorMessage?: string;
+}
+
+export interface AlarmError {
+  code: string;
+  message: string;
+  details?: unknown;
+}
+
+export interface AlarmState {
+  isLoading: boolean;
+  isInitializing: boolean;
+  error: AlarmError | null;
+  hasExactAlarmPermission: boolean | null;
+  systemInfo: SystemInfo | null;
+  initializationStatus: InitializationStatus | null;
+  scheduledAlarms: AlarmScheduleConfig[];
 }

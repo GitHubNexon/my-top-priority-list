@@ -13,22 +13,18 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { useAlarm, useAlarmConfig, useAlarmManager, useAlarmSettings, useTheme } from '../../../hooks';
-import { AlarmConfigServices } from '../../../services/AlarmConfigServices';
-import { Ringtone } from '../../../types/AlarmConfig';
-import { AlarmService } from '../../../services/AlarmServices';
+import { AlarmTimeoutAction, Ringtone } from '../../../types/AlarmConfig';
+import { useAlarmManager, useAlarmSettings, useTheme } from '../../../hooks';
+import { RecurrenceType } from '../../../types/Alarm';
 
 const ChartScreen = () => {
-  const alarmConfigService = new AlarmConfigServices();
   const { theme } = useTheme();
   const themeColor = theme.myColors?.triadic;
-  const primaryFontColor = theme.fontColors?.primary
+  const primaryFontColor = theme.fontColors?.primary;
 
-  // Use all hooks
-  const alarmConfig = useAlarmConfig();
+  // Use all hooks - these now come from Context providers
   const alarmSettings = useAlarmSettings();
   const alarmManager = useAlarmManager();
-  const alarm = useAlarm();
 
   // Local state for demo
   const [snoozeMinutes, setSnoozeMinutes] = useState('5');
@@ -36,42 +32,53 @@ const ChartScreen = () => {
   const [alarmMessage, setAlarmMessage] = useState('Wake up! This is a test alarm');
   const [alarmTitle, setAlarmTitle] = useState('Test Alarm');
   const [showRingtonePicker, setShowRingtonePicker] = useState(false);
-  const [availableRingtones, setAvailableRingtones] = useState<Ringtone[]>([]);
+  const [availableRingtones, setAvailableRingtones] = useState<Ringtone[] | undefined>([]);
   const [selectedRingtone, setSelectedRingtone] = useState<Ringtone | null>(null);
   const [maxAlarmDuration, setMaxAlarmDuration] = useState('0'); // 0 = infinite
   const [autoSnoozeOnTimeout, setAutoSnoozeOnTimeout] = useState(false);
-  const [timeoutAction, setTimeoutAction] = useState<'SNOOZE' | 'STOP'>('SNOOZE');
+  const [timeoutAction, setTimeoutAction] = useState<AlarmTimeoutAction>(AlarmTimeoutAction.SNOOZE);
 
   // Load settings on component mount
   useEffect(() => {
-    alarmSettings.loadSettings();
+    loadInitialSettings();
   }, []);
 
-  // Load available ringtones when component mounts
-  useEffect(() => {
-    alarmSettings.loadAvailableRingtones();
-  }, []);
+  const loadInitialSettings = async () => {
+    try {
+      await alarmSettings?.loadSettings();
+      await loadTimeoutAction();
+      await loadAvailableRingtones();
+    } catch (error) {
+      console.error('Failed to load initial settings:', error);
+    }
+  };
 
   // Update local state when settings load
-  // Update the useEffect that loads settings
   useEffect(() => {
-    if (alarmSettings.settings) {
-      setSnoozeMinutes(alarmSettings.settings.snoozeMinutes.toString());
-      setVibrationEnabled(alarmSettings.settings.vibration);
-      setMaxAlarmDuration(alarmSettings.settings.maxAlarmDuration.toString());
-      setAutoSnoozeOnTimeout(alarmSettings.settings.autoSnoozeOnTimeout);
+    if (alarmSettings?.settings) {
+      setSnoozeMinutes(alarmSettings?.settings.snoozeMinutes.toString());
+      setVibrationEnabled(alarmSettings?.settings.vibration);
+      setMaxAlarmDuration(alarmSettings?.settings.maxAlarmDuration.toString());
+      setAutoSnoozeOnTimeout(alarmSettings?.settings.autoSnoozeOnTimeout);
+      setSelectedRingtone(alarmSettings?.settings.currentSound);
     }
-  }, [alarmSettings.settings]);
+  }, [alarmSettings?.settings]);
 
   // ===== SETTINGS FUNCTIONS =====
 
   // Load timeout action from settings
   const loadTimeoutAction = async () => {
     try {
-      const action = await alarmConfig.getAlarmTimeoutAction();
-      setTimeoutAction(action as 'SNOOZE' | 'STOP');
+      const action = await alarmSettings?.getAlarmTimeoutAction();
+
+      if (action && Object.values(AlarmTimeoutAction).includes(action)) {
+        setTimeoutAction(action);
+      } else {
+        setTimeoutAction(AlarmTimeoutAction.SNOOZE);
+      }
     } catch (error) {
       console.error('Failed to load timeout action:', error);
+      setTimeoutAction(AlarmTimeoutAction.SNOOZE); // fallback on error
     }
   };
 
@@ -80,8 +87,7 @@ const ChartScreen = () => {
     try {
       const seconds = parseInt(maxAlarmDuration, 10);
       if (seconds >= 0) {
-        await alarmConfig.setMaxAlarmDuration(seconds);
-        await alarmSettings.updateMaxAlarmDuration(seconds);
+        await alarmSettings?.setMaxAlarmDuration(seconds);
         Alert.alert('Success',
           seconds === 0
             ? 'Alarm duration set to infinite'
@@ -98,7 +104,7 @@ const ChartScreen = () => {
   // Function to load available ringtones
   const loadAvailableRingtones = async () => {
     try {
-      const ringtones = await alarmConfig.getAvailableAlarmSounds();
+      const ringtones = await alarmSettings?.getAvailableAlarmSounds();
       setAvailableRingtones(ringtones);
     } catch (error) {
       console.error('Failed to load ringtones:', error);
@@ -119,7 +125,7 @@ const ChartScreen = () => {
   const handleSelectRingtone = async (ringtone: Ringtone) => {
     try {
       setSelectedRingtone(ringtone);
-      await alarmSettings.updateAlarmSound(ringtone.uri);
+      await alarmSettings?.setAlarmSound(ringtone.uri);
       setShowRingtonePicker(false);
       Alert.alert('Success', `Alarm sound set to: ${ringtone.title}`);
     } catch (error) {
@@ -131,8 +137,7 @@ const ChartScreen = () => {
     try {
       const minutes = parseInt(snoozeMinutes, 10);
       if (minutes >= 1 && minutes <= 60) {
-        await alarmConfig.setSnoozeMinutes(minutes);
-        await alarmSettings.updateSnoozeMinutes(minutes);
+        await alarmSettings?.setSnoozeMinutes(minutes);
         Alert.alert('Success', `Snooze minutes set to ${minutes}`);
       } else {
         Alert.alert('Error', 'Snooze minutes must be between 1 and 60');
@@ -145,8 +150,7 @@ const ChartScreen = () => {
   const handleToggleVibration = async (enabled: boolean) => {
     try {
       setVibrationEnabled(enabled);
-      await alarmConfig.setVibration(enabled);
-      await alarmSettings.updateVibration(enabled);
+      await alarmSettings?.setVibration(enabled);
       Alert.alert('Success', `Vibration ${enabled ? 'enabled' : 'disabled'}`);
     } catch (error) {
       setVibrationEnabled(!enabled); // Revert on error
@@ -156,7 +160,7 @@ const ChartScreen = () => {
 
   const handleTestSound = async () => {
     try {
-      await alarmConfig.testSoundPreview();
+      await alarmSettings?.testSoundPreview();
       Alert.alert('Sound Test', 'Playing alarm sound preview...');
     } catch (error) {
       Alert.alert('Error', 'Sound preview not available');
@@ -166,8 +170,7 @@ const ChartScreen = () => {
   // Function to reset to default sound
   const handleResetToDefaultSound = async () => {
     try {
-      await alarmConfig.resetToDefaultSound();
-      await alarmSettings.updateAlarmSound(null);
+      await alarmSettings?.setAlarmSound(null);
       setSelectedRingtone(null);
       Alert.alert('Success', 'Reset to default alarm sound');
     } catch (error) {
@@ -176,10 +179,10 @@ const ChartScreen = () => {
   };
 
   // Handle timeout action change
-  const handleTimeoutActionChange = async (action: 'SNOOZE' | 'STOP') => {
+  const handleTimeoutActionChange = async (action: AlarmTimeoutAction) => {
     try {
       setTimeoutAction(action);
-      await alarmConfig.setAlarmTimeoutAction(action);
+      await alarmSettings?.setAlarmTimeoutAction(action);
       Alert.alert('Success', `Timeout action set to: ${action}`);
     } catch (error) {
       Alert.alert('Error', 'Failed to update timeout action');
@@ -192,11 +195,11 @@ const ChartScreen = () => {
 
   const schedule5SecondAlarm = async () => {
     try {
-      const requestCode = await alarmManager.scheduleAlarm({
-        timestamp: Date.now() + 300000, // 5 seconds from now
+      const requestCode = await alarmManager?.scheduleAlarm({
+        timestamp: Date.now() + 10000, // 5 seconds from now
         title: alarmTitle,
         message: alarmMessage,
-        recurrenceType: 'ONCE',
+        recurrenceType: RecurrenceType.ONCE,
       });
 
       Alert.alert(
@@ -206,42 +209,37 @@ const ChartScreen = () => {
       console.log('Alarm scheduled ✅ with code:', requestCode);
     } catch (error: unknown) {
       if (error instanceof Error) {
-        Alert.alert('Error', `Failed to schedule alarm: ${error.message}`)
+        Alert.alert('Error', `Failed to schedule alarm: ${error.message}`);
       }
     }
   };
 
-  const getCurrentVibrationMode = () => {
-    // try {
-    //   const mode = alarmConfigService.getCurrentVibrationStatus();
-    //   const ringtones = alarmConfigService.getAllRingtones();
-    //   console.log(`Vibrate: ${(await mode).hasVibrator} - ${(await mode).vibrateSetting} - ${(await mode).willVibrate}`);
-    //   console.log(`Ringtones: ${ringtones} `);
-    // } catch (error: unknown) {
-    //   if(error instanceof Error) {
-    //     Alert.alert('Error', `Failed to schedule alarm: ${error.message}`)
-    //   }
-    // }
-    alarmConfigService.getAllRingtones()
-      .then(ringtones => {
-        console.log('Ringtones:', ringtones);
-        // ringtones is an array of objects: [{title: string, uri: string}, ...]
-        ringtones.forEach((ringtone, index) => {
-          console.log(`${index + 1}. ${ringtone.title}: ${ringtone.uri}`);
-        });
-      })
-      .catch(error => {
-        console.error('Error getting ringtones:', error);
-      });
+  const getCurrentVibrationMode = async () => {
+    try {
+      const vibrationStatus = await alarmSettings?.getVibration();
+      Alert.alert(
+        'Vibration Status',
+        `Has Vibrator: ${vibrationStatus?.valueOf ? 'Yes' : 'No'}\n` +
+        `Vibration Setting: ${vibrationStatus?.valueOf ? 'On' : 'Off'}\n` +
+        `Will Vibrate: ${vibrationStatus?.valueOf ? 'Yes' : 'No'}`
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to get vibration status');
+    }
   };
 
   const scheduleDailyAlarm = async () => {
     try {
-      const requestCode = await alarmManager.scheduleAlarm({
-        timestamp: Date.now(),
+      // Schedule for next day at 9:00 AM
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(9, 0, 0, 0);
+
+      const requestCode = await alarmManager?.scheduleAlarm({
+        timestamp: tomorrow.getTime(),
         title: alarmTitle,
         message: alarmMessage,
-        recurrenceType: 'DAILY',
+        recurrenceType: RecurrenceType.ONCE,
       });
       Alert.alert('Daily Alarm Scheduled!', `Request Code: ${requestCode}`);
     } catch (error: unknown) {
@@ -253,9 +251,7 @@ const ChartScreen = () => {
 
   const cancelAllAlarms = async () => {
     try {
-      await alarmManager.cancelAllAlarms();
-      const alarmService = new AlarmService();
-      await alarmService.clearAllAlarms();
+      await alarmManager?.cancelAllAlarms();
       Alert.alert('Success', 'All alarms cancelled');
     } catch (error) {
       Alert.alert('Error', 'Failed to cancel alarms');
@@ -264,7 +260,7 @@ const ChartScreen = () => {
 
   // ===== RENDER =====
 
-  if (alarmSettings.isLoading && !alarmSettings.settings) {
+  if (alarmSettings?.isLoading && !alarmSettings?.settings) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text>Loading alarm settings...</Text>
@@ -276,12 +272,6 @@ const ChartScreen = () => {
     <View style={[styles.container, {
       backgroundColor: themeColor,
     }]}>
-      {/* <WIP
-        width='100%'
-        height='100%'
-        style={styles.backgroundImage}
-      /> */}
-
       <ScrollView style={{
         backgroundColor: 'transparent'
       }}>
@@ -301,7 +291,7 @@ const ChartScreen = () => {
           </Text>
           <View style={{ flexDirection: 'row', marginTop: 10 }}>
             <TouchableOpacity
-              onPress={() => handleTimeoutActionChange('SNOOZE')}
+              onPress={() => handleTimeoutActionChange(AlarmTimeoutAction.SNOOZE)}
               style={[
                 styles.buttons,
                 timeoutAction === 'SNOOZE' && { backgroundColor: '#2e7d32' }
@@ -312,7 +302,7 @@ const ChartScreen = () => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handleTimeoutActionChange('STOP')}
+              onPress={() => handleTimeoutActionChange(AlarmTimeoutAction.STOP)}
               style={[
                 styles.buttons,
                 timeoutAction === 'STOP' && { backgroundColor: '#2e7d32' }
@@ -517,29 +507,6 @@ const ChartScreen = () => {
           <Text style={{ color: primaryFontColor, }}>{vibrationEnabled ? 'Enabled' : 'Disabled'}</Text>
         </View>
 
-        {/* Sound Settings */}
-        <View style={{ marginBottom: 15 }}>
-          <Text style={{ color: primaryFontColor, }}>Current Sound: {alarmSettings.settings?.currentSound?.title || 'Default'}</Text>
-          <View style={{ flexDirection: 'row', marginTop: 5 }}>
-            <TouchableOpacity
-              onPress={handleTestSound}
-              style={styles.buttons}
-            >
-              <Text style={[styles.textButtons, {
-                color: primaryFontColor,
-              }]}>Test Sound</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleResetToDefaultSound}
-              style={styles.buttons}
-            >
-              <Text style={[styles.textButtons, {
-                color: primaryFontColor,
-              }]}>Reset to Default</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {/* Alarm Configuration Section */}
         <Text style={{
           fontSize: 20,
@@ -591,31 +558,31 @@ const ChartScreen = () => {
         <View style={{ marginBottom: 10 }}>
           <TouchableOpacity
             onPress={schedule5SecondAlarm}
-            disabled={alarmManager.isLoading}
+            disabled={alarmManager?.isLoading}
             style={styles.buttons}
           >
             <Text style={[styles.textButtons, {
               color: primaryFontColor,
-            }]}>Set Alarm</Text>
+            }]}>Set Alarm (5 seconds)</Text>
           </TouchableOpacity>
         </View>
 
         <View style={{ marginBottom: 10 }}>
           <TouchableOpacity
             onPress={getCurrentVibrationMode}
-            disabled={alarmManager.isLoading}
+            disabled={alarmManager?.isLoading}
             style={styles.buttons}
           >
             <Text style={[styles.textButtons, {
               color: primaryFontColor,
-            }]}>Vibration Mode</Text>
+            }]}>Vibration Status</Text>
           </TouchableOpacity>
         </View>
 
         <View style={{ marginBottom: 10 }}>
           <TouchableOpacity
             onPress={scheduleDailyAlarm}
-            disabled={alarm.isLoading}
+            disabled={alarmManager?.isLoading}
             style={styles.buttons}
           >
             <Text style={[styles.textButtons, {
@@ -627,7 +594,7 @@ const ChartScreen = () => {
         <View style={{ marginBottom: 10 }}>
           <TouchableOpacity
             onPress={cancelAllAlarms}
-            disabled={alarmManager.isLoading}
+            disabled={alarmManager?.isLoading}
             style={[styles.buttons, {
               backgroundColor: '#d66767'
             }]}
@@ -647,27 +614,25 @@ const ChartScreen = () => {
         }}>
           📊 Status
         </Text>
-
-        <Text style={{ color: primaryFontColor, }}>Scheduled Alarms: {alarmManager.scheduledAlarmsCount}</Text>
-        <Text style={{ color: primaryFontColor, }}>Current Snooze: {alarmSettings.settings?.snoozeMinutes || 5} minutes</Text>
-        <Text style={{ color: primaryFontColor, }}>Vibration: {alarmSettings.settings?.vibration ? 'On' : 'Off'}</Text>
+        <Text style={{ color: primaryFontColor, }}>Current Snooze: {alarmSettings?.settings?.snoozeMinutes || 5} minutes</Text>
+        <Text style={{ color: primaryFontColor, }}>Vibration: {alarmSettings?.settings?.vibration ? 'On' : 'Off'}</Text>
+        <Text style={{ color: primaryFontColor, }}>Max Duration: {alarmSettings?.settings?.maxAlarmDuration === 0 ? 'Infinite' : `${alarmSettings?.settings?.maxAlarmDuration} seconds`}</Text>
+        <Text style={{ color: primaryFontColor, }}>Timeout Action: {timeoutAction}</Text>
 
         {/* Error Display */}
-        {(alarmConfig.error || alarmSettings.error || alarmManager.error || alarm.error) && (
+        {(alarmSettings?.error || alarmSettings?.error || alarmManager?.error || alarmManager?.error) && (
           <View style={{ marginTop: 15, padding: 10, backgroundColor: '#ffebee' }}>
             <Text style={{ color: 'red', fontWeight: 'bold' }}>Errors:</Text>
-            {alarmConfig.error && <Text style={{ color: 'red' }}>Config: {alarmConfig.error}</Text>}
-            {alarmSettings.error && <Text style={{ color: 'red' }}>Settings: {alarmSettings.error}</Text>}
-            {alarmManager.error && <Text style={{ color: 'red' }}>Manager: {alarmManager.error}</Text>}
-            {alarm.error && <Text style={{ color: 'red' }}>Alarm: {alarm.error}</Text>}
+            {alarmSettings?.error && <Text style={{ color: 'red' }}>Config: {alarmSettings?.error}</Text>}
+            {alarmSettings?.error && <Text style={{ color: 'red' }}>Settings: {alarmSettings?.error}</Text>}
+            {alarmManager?.error && <Text style={{ color: 'red' }}>Alarm: {alarmManager?.error.message}</Text>}
             <TouchableOpacity
               onPress={() => {
-                alarmConfig.clearError();
-                alarmSettings.loadSettings(); // Reload to clear error state
-                alarmManager.clearError();
-                alarm.clearError();
+                alarmSettings?.clearError();
+                alarmSettings?.clearError();
+                alarmManager?.clearError();
+                alarmManager?.clearError();
               }}
-              disabled={alarmManager.isLoading}
               style={styles.buttons}
             >
               <Text style={styles.textButtons}>Clear Errors</Text>
@@ -676,13 +641,12 @@ const ChartScreen = () => {
         )}
 
         {/* Loading Indicator */}
-        {(alarmConfig.isLoading || alarmSettings.isLoading || alarmManager.isLoading || alarm.isLoading) && (
+        {(alarmSettings?.isLoading || alarmSettings?.isLoading || alarmManager?.isLoading || alarmManager?.isLoading) && (
           <View style={{ marginTop: 15 }}>
-            <Text>Loading...</Text>
+            <Text style={{ color: primaryFontColor }}>Loading...</Text>
           </View>
         )}
       </ScrollView>
-
     </View>
   )
 };
@@ -694,7 +658,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 80,
-    fontWeight: 600,
+    fontWeight: '600',
   },
   box: {
     height: 60,
@@ -727,7 +691,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
   },
-
   closeButtonText: {
     color: 'white',
     fontWeight: 'bold',
@@ -738,21 +701,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   modalContent: {
     width: '80%',
     maxHeight: '70%',
     borderRadius: 10,
     padding: 20,
   },
-
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
     textAlign: 'center',
   },
-
   ringtoneItem: {
     padding: 15,
     borderBottomWidth: 1,
@@ -761,11 +721,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-
   selectedRingtone: {
     backgroundColor: 'rgba(54, 146, 79, 0.2)',
   },
-
   selectedText: {
     color: '#36924f',
     fontWeight: 'bold',

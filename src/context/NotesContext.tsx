@@ -101,9 +101,6 @@ const NotesProvider = ({ children }: { children: React.ReactNode }) => {
 
     const addNote = async (note: Notes) => {
         setNotes(prev => [...prev, note]);
-        if (note.Time) {
-            await NotificationService.scheduleNoteNotification(note);
-        }
     };
 
     const updateNote = async (id: string, updates: Partial<Notes>) => {
@@ -112,10 +109,6 @@ const NotesProvider = ({ children }: { children: React.ReactNode }) => {
 
         const updatedNote = { ...currentNote, ...updates };
         setNotes(prev => prev.map(n => n.id === id ? updatedNote : n));
-
-        if (updates.Time !== null && updates.Time !== currentNote.Time) {
-            await NotificationService.updateNoteNotification(updatedNote);
-        }
     };
 
     const deleteNote = async (note: Notes) => {

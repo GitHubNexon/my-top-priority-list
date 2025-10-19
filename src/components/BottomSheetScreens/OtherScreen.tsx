@@ -1,4 +1,5 @@
 import {
+    useAlarmManager,
     useAuth,
     useFirestore,
     useNotes,
@@ -18,6 +19,8 @@ import { v4 as uuidv4 } from 'uuid';
 import CustomDateTimePicker from '../CustomDateTimePicker';
 import DropdownTypeofNotes from '../DropdownTypeofNotes';
 import { BottomSheetWrapper } from '../Wrapper';
+import { RecurrenceType } from '../../types/Alarm';
+import { getOneTimeAlarmFromUtcString } from '../../utils/alarm';
 
 type OtherScreenProps = BottomSheetScreenProps & {
     notesProp?: Notes;
@@ -50,6 +53,7 @@ const OtherScreen = ({ bottomSheetRef, notesProp }: OtherScreenProps) => {
     });
 
     const { uid } = useAuth();
+    const alarmManager = useAlarmManager();
 
     useEffect(() => {
         if (!notesProp) return;
@@ -103,6 +107,16 @@ const OtherScreen = ({ bottomSheetRef, notesProp }: OtherScreenProps) => {
             try {
                 updateNote(id, updatedFields);
                 updateNoteInFirestore(uid ?? '', id, noteData);
+                const timestamp = getOneTimeAlarmFromUtcString(noteData.Time ?? '', noteData.Date)
+                const requestCode = alarmManager?.scheduleAlarm({
+                    timestamp: timestamp,
+                    title: noteData.Title,
+                    message: noteData.Description ?? '',
+                    recurrenceType: RecurrenceType.ONCE,
+                });
+                console.log('Alarm scheduled ✅ with code:', requestCode);
+                console.log('Time: ', noteData.Time);
+                console.log('Date: ', noteData.Date);
                 getNotesToastMessage("Note updated successfully.")
             } catch (error: unknown) {
                 let errorMessage = "Failed to update note.";
@@ -118,6 +132,16 @@ const OtherScreen = ({ bottomSheetRef, notesProp }: OtherScreenProps) => {
             try {
                 addNote(noteData);
                 uploadNoteInFirestore(noteData);
+                const timestamp = getOneTimeAlarmFromUtcString(noteData.Time ?? '',noteData.Date)
+                const requestCode = alarmManager?.scheduleAlarm({
+                    timestamp: timestamp,
+                    title: noteData.Title,
+                    message: noteData.Description ?? '',
+                    recurrenceType: RecurrenceType.ONCE,
+                });
+                console.log('Alarm scheduled ✅ with code:', requestCode);
+                console.log('Time: ', noteData.Time);
+                console.log('Date: ', noteData.Date);
                 getNotesToastMessage("Note saved successfully.")
             } catch (error: unknown) {
                 let errorMessage = "Failed to save note.";
