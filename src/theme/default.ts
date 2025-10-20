@@ -28,7 +28,7 @@ export const DefaultLightTheme: CustomTheme = {
   },
   fontColors: {
     primary: '#202020',
-    secondary: '#7F7F7F',
+    secondary: '#575757',
   },
 };
 
@@ -53,6 +53,6 @@ export const DefaultDarkTheme: CustomTheme = {
   },
   fontColors: {
     primary: '#E1E1E1',
-    secondary: '#909090',
+    secondary: '#B3B3B3',
   },
 };
