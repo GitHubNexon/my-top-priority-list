@@ -25,17 +25,16 @@ import { useTheme } from './hooks';
 import { AlarmService } from './services/AlarmServices';
 import AlarmConfigProvider from './context/AlarmConfigContext';
 import AlarmProvider from './context/AlarmContext';
+import { FireStoreServices } from './services/FirestoreServices';
 
 export default function App() {
     const { theme } = useTheme();
     const alarm = new AlarmService;
 
     useEffect(() => {
-        AuthServices.initializeGoogleSDK();
         alarm.requestNotificationPermission();
-        //const notifeePermission = async () => await notifee.requestPermission();
-
-        //notifeePermission();
+        AuthServices.initializeGoogleSDK();
+        FireStoreServices.initializedFireStore();
     }, []);
 
     useEffect(() => {

@@ -7,16 +7,34 @@ import {
   FirebaseFirestoreTypes,
   getDocs,
   getFirestore,
-  initializeFirestore,
   setDoc,
 } from '@react-native-firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 import { isErrorWithCode } from '@react-native-google-signin/google-signin';
 
 const cache = new Map<string, FirebaseFirestoreTypes.CollectionReference>();
 type data = FirebaseFirestoreTypes.DocumentData | undefined;
 
 export class FireStoreServices {
-  
+  /**
+   * Disable offline persistence
+   * Disable saving the database locally 
+   */
+  static async initializedFireStore(): Promise<void> {
+    try {
+      await firestore().settings({
+        persistence: false,
+      });
+    } catch (error: unknown) {
+      let errorMessage = 'Disabling offline persistence failed.';
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      throw errorMessage;
+    }
+  }
 
   // Returns a memoizable reference to the user's notes collection
   static getUserNotesCollectionRef(uid: string | null) {
