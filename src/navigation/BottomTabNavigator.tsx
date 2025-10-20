@@ -32,6 +32,7 @@ const BottomTabNavigator = () => {
          * and useEffect
          */
       detachInactiveScreens={true}
+      initialRouteName='Profile'
       backBehavior="history"
       screenOptions={{
         lazy: true,
