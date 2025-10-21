@@ -13,11 +13,14 @@ import {
   Image,
   Pressable,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View
 } from "react-native";
 import Ionicons from '@react-native-vector-icons/ionicons';
+import Feather from '@react-native-vector-icons/feather';
+import Fontisto from "@react-native-vector-icons/fontisto";
 import { useProfileNavigation } from "../../../hooks/useNavigation";
 import Toast from "../../../components/ToastMessage";
 import { ScrollView } from "react-native-gesture-handler";
@@ -33,10 +36,12 @@ const ProfileScreen = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [vibrationEnabled, setVibrationEnabled] = useState(true);
 
-  const triadicThemeColor = theme.myColors?.triadic;
   const primaryThemeColor = theme.myColors?.primary;
-  const complementaryColor = theme.myColors?.complementary;
+  const analogousThemColor = theme.myColors?.analogous;
+  const triadicThemeColor = theme.myColors?.triadic;
+  const complementaryThemeColor = theme.myColors?.complementary;
   const primaryFontColor = theme.fontColors?.primary;
   const secondaryFontColor = theme.fontColors?.secondary;
 
@@ -75,7 +80,6 @@ const ProfileScreen = () => {
     };
   };
 
-
   const handleSignOut = async () => {
     setIsSyncing(true);
     try {
@@ -98,6 +102,14 @@ const ProfileScreen = () => {
 
   const faqHandle = () => {
     navigation.push("FaQScreen");
+  };
+
+  const handleToggleVibration = async (enabled: boolean) => {
+    try {
+      setVibrationEnabled(enabled);
+    } catch (error) {
+      setVibrationEnabled(!enabled); // Revert on error
+    }
   };
 
   return (
@@ -131,7 +143,7 @@ const ProfileScreen = () => {
               }]}>
                 <Ionicons
                   name="camera"
-                  color={complementaryColor}
+                  color={complementaryThemeColor}
                   size={20}
                 />
               </View>
@@ -139,7 +151,7 @@ const ProfileScreen = () => {
           </View>
           <View style={[styles.userInfoContainer, {
             backgroundColor: primaryThemeColor,
-            width: width * .9,
+            width: width * .93,
             height: height * .2
           }]}>
             <Text style={[styles.userFullName, {
@@ -166,84 +178,194 @@ const ProfileScreen = () => {
           <Text style={styles.title}>
             About Me
           </Text>
-          <View style={[styles.aboutMeContainer, {
-            width: width * .9,
-            height: height * .15
+          <View style={styles.aboutMeContainer}>
+            <View style={[styles.topTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .06,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .2
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Full Name :</Text>
+              </View>
+              <Text style={[styles.secondaryText, {
+                color: secondaryFontColor,
+              }]}>
+                John McDonald S. Doe Sr.
+              </Text>
+              <TouchableOpacity
+                style={styles.editIconContainer}
+              >
+                <Feather
+                  name='edit'
+                  color={analogousThemColor}
+                  size={20}
+                />
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.midTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .06,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .2
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>B-day :</Text>
+              </View>
+              <Text style={[styles.secondaryText, {
+                color: secondaryFontColor,
+              }]}>
+                January 2
+              </Text>
+            </View>
+            <View style={[styles.midTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .06,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .2
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Gender :</Text>
+              </View>
+              <Text style={[styles.secondaryText, {
+                color: secondaryFontColor,
+              }]}>
+                Prefer not to say
+              </Text>
+            </View>
+            <View style={[styles.bottomTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .06,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .2
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Age :</Text>
+              </View>
+              <Text style={[styles.secondaryText, {
+                color: secondaryFontColor,
+              }]}>
+                21 - 30
+              </Text>
+            </View>
+          </View>
+          <Text style={[styles.title, {
+            marginTop: 38,
           }]}>
-            <View style={styles.aboutMeContent}>
-              <View style={[styles.topTextContainer, {
-                backgroundColor: primaryThemeColor,
-                width: width * .9,
-                height: height * .06,
+            App Settings
+          </Text>
+          <View style={styles.appSettingsContainer}>
+            <TouchableOpacity style={[styles.topTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .06,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7
               }]}>
-                <View style={[styles.textContainer, {
-                  width: width * .2
-                }]}>
-                  <Text style={[styles.primaryText, {
-                    color: primaryFontColor,
-                  }]}>Full Name :</Text>
-                </View>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Alarm Sound</Text>
                 <Text style={[styles.secondaryText, {
+                  fontSize: 12,
                   color: secondaryFontColor,
-                }]}>
-                  John McDonald S. Doe Sr.
-                </Text>
+                }]}>Default: App ringtone</Text>
               </View>
-              <View style={[styles.midTextContainer, {
-                backgroundColor: primaryThemeColor,
-                width: width * .9,
-                height: height * .06,
-              }]}>
-                <View style={[styles.textContainer, {
-                  width: width * .2
-                }]}>
-                  <Text style={[styles.primaryText, {
-                    color: primaryFontColor,
-                  }]}>B-day :</Text>
-                </View>
-                <Text style={[styles.secondaryText, {
-                  color: secondaryFontColor,
-                }]}>
-                  January 2
-                </Text>
+              <View style={styles.appSettingsIcon}>
+                <Fontisto
+                  name='angle-right'
+                  color={analogousThemColor}
+                  size={20}
+                />
               </View>
-              <View style={[styles.midTextContainer, {
-                backgroundColor: primaryThemeColor,
-                width: width * .9,
-                height: height * .06,
+            </TouchableOpacity>
+            <View style={[styles.midTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .06,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7
               }]}>
-                <View style={[styles.textContainer, {
-                  width: width * .2
-                }]}>
-                  <Text style={[styles.primaryText, {
-                    color: primaryFontColor,
-                  }]}>Gender :</Text>
-                </View>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Vibrate</Text>
                 <Text style={[styles.secondaryText, {
+                  fontSize: 12,
                   color: secondaryFontColor,
-                }]}>
-                  Prefer not to say
-                </Text>
+                }]}>Status: On</Text>
               </View>
-              <View style={[styles.bottomTextContainer, {
-                backgroundColor: primaryThemeColor,
-                width: width * .9,
-                height: height * .06,
-              }]}>
-                <View style={[styles.textContainer, {
-                  width: width * .2
-                }]}>
-                  <Text style={[styles.primaryText, {
-                    color: primaryFontColor,
-                  }]}>Age :</Text>
-                </View>
-                <Text style={[styles.secondaryText, {
-                  color: secondaryFontColor,
-                }]}>
-                  21 - 30
-                </Text>
+              <View style={styles.appSettingsIcon}>
+                <Switch
+                  value={vibrationEnabled}
+                  onValueChange={handleToggleVibration}
+                  trackColor={{ false: '#767577', true: analogousThemColor }}
+                  thumbColor={vibrationEnabled ? complementaryThemeColor : '#f4f3f4'}
+                />
               </View>
             </View>
+            <TouchableOpacity style={[styles.midTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .06,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Alarm Timeout</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>Duration: 0s - Infinite</Text>
+              </View>
+              <View
+                style={styles.appSettingsIcon}
+              >
+                <Feather
+                  name='edit'
+                  color={analogousThemColor}
+                  size={20}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.bottomTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .06,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Alarm Timeout Action</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>Action: Snooze</Text>
+              </View>
+              <View style={styles.appSettingsIcon}>
+                <Fontisto
+                  name='angle-right'
+                  color={analogousThemColor}
+                  size={20}
+                />
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -320,7 +442,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: 100,
+    paddingBottom: 48,
   },
   accountImageContainer: {
     justifyContent: 'center',
@@ -371,15 +493,15 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   aboutMeContainer: {
-    marginTop: 56,
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  aboutMeContent: {
+  editIconContainer: {
+    flex: 1,
     flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    justifyContent: 'center'
   },
   textContainer: {
 
@@ -389,15 +511,15 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderBottomRightRadius: 8,
     borderBottomLeftRadius: 8,
-    paddingLeft: 16,
+    padding: 16,
+    marginTop: 4,
     flexDirection: 'row',
-    justifyContent: 'flex-start',
     alignItems: 'center',
   },
   midTextContainer: {
     marginTop: 2,
     borderRadius: 8,
-    paddingLeft: 16,
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
@@ -408,7 +530,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 8,
     borderBottomRightRadius: 20,
     borderBottomLeftRadius: 20,
-    paddingLeft: 16,
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
@@ -419,6 +541,17 @@ const styles = StyleSheet.create({
   },
   secondaryText: {
     fontSize: 16,
+  },
+  appSettingsContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  appSettingsIcon: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    justifyContent: 'center'
   },
   loginButton: {
     justifyContent: 'center',
