@@ -21,6 +21,7 @@
     "@react-native-google-signin/google-signin": "^15.0.0",
     "@react-native-vector-icons/ant-design": "^12.3.0",
     "@react-native-vector-icons/entypo": "^12.3.0",
+    "@react-native-vector-icons/feather": "^12.3.0",
     "@react-native-vector-icons/fontawesome": "^12.3.0",
     "@react-native-vector-icons/fontawesome5": "^12.2.0",
     "@react-native-vector-icons/fontawesome6": "^12.2.0",
