@@ -3,15 +3,10 @@ import {
     Dimensions,
     StyleSheet,
     View,
-    ViewStyle,
 } from 'react-native';
+import { WrapperProps } from '../types/WrapperProps';
 
-type BottomSheetWrapperProps = {
-    children: React.ReactNode;
-    style?: ViewStyle;
-};
-
-export const BottomSheetWrapper = ({ children, style }: BottomSheetWrapperProps) => {
+export const BottomSheetWrapper = ({ children, style }: WrapperProps) => {
     const { width } = Dimensions.get('window');
 
     return (

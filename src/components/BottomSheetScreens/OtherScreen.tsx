@@ -112,7 +112,7 @@ const OtherScreen = ({ bottomSheetRef, notesProp }: OtherScreenProps) => {
                     timestamp: timestamp,
                     title: noteData.Title,
                     message: noteData.Description ?? '',
-                    recurrenceType: RecurrenceType.ONCE,
+                    recurrenceType: RecurrenceType.DAILY,
                 });
                 console.log('Alarm scheduled ✅ with code:', requestCode);
                 console.log('Time: ', noteData.Time);
@@ -137,7 +137,7 @@ const OtherScreen = ({ bottomSheetRef, notesProp }: OtherScreenProps) => {
                     timestamp: timestamp,
                     title: noteData.Title,
                     message: noteData.Description ?? '',
-                    recurrenceType: RecurrenceType.ONCE,
+                    recurrenceType: RecurrenceType.DAILY,
                 });
                 console.log('Alarm scheduled ✅ with code:', requestCode);
                 console.log('Time: ', noteData.Time);

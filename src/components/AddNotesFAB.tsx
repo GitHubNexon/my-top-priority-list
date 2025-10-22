@@ -27,8 +27,6 @@ type FloatingActionButtonAddProp = {
 const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
     const { theme } = useTheme();
 
-    const primaryThemeColor = theme.myColors?.primary;
-    const analogousThemColor = theme.myColors?.analogous;
     const triadicThemeColor = theme.myColors?.triadic;
     const complementaryThemeColor = theme.myColors?.complementary;
 

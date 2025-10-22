@@ -17,12 +17,16 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import Feather from '@react-native-vector-icons/feather';
-import Fontisto from "@react-native-vector-icons/fontisto";
 import Ionicons from '@react-native-vector-icons/ionicons';
 import { navigationRef, useProfileNavigation } from "../../../hooks/useNavigation";
 import Toast from "../../../components/ToastMessage";
 import { ScrollView } from "react-native-gesture-handler";
+import { BoxWrapper } from "../../../components/Profile/BoxWrapper";
+import { TopBoxWrapper } from "../../../components/Profile/TopBoxWrapper";
+import { MidBoxWrapper } from "../../../components/Profile/MidBoxWrapper";
+import { BottomBoxWrapper } from "../../../components/Profile/BottomBoxWrapper";
+import { EditIcon } from "../../../components/Profile/EditIcon";
+import { AngleRightIcon } from "../../../components/Profile/AngleRightIcon";
 
 const ProfileScreen = () => {
   const { width, height } = Dimensions.get('window');
@@ -116,6 +120,10 @@ const ProfileScreen = () => {
     }
   };
 
+  const handleVibration = async () => {
+    setVibrationEnabled(prev => !prev);
+  };
+
   return (
     <View style={[styles.container, {
       backgroundColor: triadicThemeColor,
@@ -196,12 +204,8 @@ const ProfileScreen = () => {
           <Text style={styles.title}>
             About Me
           </Text>
-          <View style={styles.aboutMeContainer}>
-            <View style={[styles.topTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+          <BoxWrapper>
+            <TopBoxWrapper style={{backgroundColor: primaryThemeColor}}>
               <View style={[styles.textContainer, {
                 width: width * .25,
                 height: height * .05,
@@ -216,21 +220,9 @@ const ProfileScreen = () => {
               }]}>
                 John McDonald S. Doe Sr.
               </Text>
-              <TouchableOpacity
-                style={styles.editIconContainer}
-              >
-                <Feather
-                  name='edit'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </TouchableOpacity>
-            </View>
-            <View style={[styles.midTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <EditIcon />
+            </TopBoxWrapper>
+            <MidBoxWrapper style={{backgroundColor: primaryThemeColor}}>
               <View style={[styles.textContainer, {
                 width: width * .25,
                 height: height * .05,
@@ -245,12 +237,9 @@ const ProfileScreen = () => {
               }]}>
                 January 2
               </Text>
-            </View>
-            <View style={[styles.midTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <EditIcon />
+            </MidBoxWrapper>
+            <MidBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .25,
                 height: height * .05,
@@ -265,12 +254,9 @@ const ProfileScreen = () => {
               }]}>
                 Prefer not to say
               </Text>
-            </View>
-            <View style={[styles.bottomTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <EditIcon />
+            </MidBoxWrapper>
+            <BottomBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .25,
                 height: height * .05,
@@ -285,19 +271,18 @@ const ProfileScreen = () => {
               }]}>
                 21 - 30
               </Text>
-            </View>
-          </View>
+              <EditIcon />
+            </BottomBoxWrapper>
+          </BoxWrapper>
           <Text style={[styles.title, {
             marginTop: 38,
           }]}>
             App Settings
           </Text>
-          <View style={styles.appSettingsContainer}>
-            <TouchableOpacity style={[styles.topTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+          <BoxWrapper>
+            <TopBoxWrapper style={{
+              backgroundColor: primaryThemeColor
+            }}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -310,21 +295,12 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Default: App ringtone</Text>
               </View>
-              <View style={[styles.appSettingsIcon, {
-                height: height * .05,
-              }]}>
-                <Fontisto
-                  name='angle-right'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-            <View style={[styles.midTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <AngleRightIcon />
+            </TopBoxWrapper>
+            <MidBoxWrapper
+              onPress={handleVibration}
+              style={{ backgroundColor: primaryThemeColor }}
+            >
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -341,22 +317,18 @@ const ProfileScreen = () => {
                 height: height * .05,
               }]}>
                 <Switch
-                  style={[styles.switch, {
-                    width: width * .1,
-                    height: height * .05,
-                  }]}
                   value={vibrationEnabled}
                   onValueChange={handleToggleVibration}
                   trackColor={{ false: '#767577', true: analogousThemColor }}
                   thumbColor={vibrationEnabled ? complementaryThemeColor : '#f4f3f4'}
+                  style={{
+                    width: width * .1,
+                    height: height * .05,
+                  }}
                 />
               </View>
-            </View>
-            <TouchableOpacity style={[styles.midTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+            </MidBoxWrapper>
+            <MidBoxWrapper style={{backgroundColor: primaryThemeColor}}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -369,23 +341,9 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Duration: 0s - Infinite</Text>
               </View>
-              <View
-                style={[styles.appSettingsIcon, {
-                  height: height * .05,
-                }]}
-              >
-                <Feather
-                  name='edit'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.midTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <EditIcon />
+            </MidBoxWrapper>
+            <MidBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -398,21 +356,9 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Action: Snooze</Text>
               </View>
-              <View style={[styles.appSettingsIcon, {
-                height: height * .05,
-              }]}>
-                <Fontisto
-                  name='angle-right'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.bottomTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <AngleRightIcon />
+            </MidBoxWrapper>
+            <BottomBoxWrapper style={{backgroundColor: primaryThemeColor}}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -425,30 +371,19 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Default: System</Text>
               </View>
-              <View style={[styles.appSettingsIcon, {
-                height: height * .05,
-              }]}>
-                <Fontisto
-                  name='angle-right'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
+              <AngleRightIcon />
+            </BottomBoxWrapper>
+          </BoxWrapper>
           <Text style={[styles.title, {
             marginTop: 38,
           }]}>
             Account Settings
           </Text>
-          <View style={styles.appSettingsContainer}>
-            <TouchableOpacity
+          <BoxWrapper>
+            <TopBoxWrapper
               onPress={syncMyData}
-              style={[styles.topTextContainer, {
-                backgroundColor: primaryThemeColor,
-                width: width * .93,
-                height: height * .07,
-              }]}>
+              style={{ backgroundColor: primaryThemeColor }}
+            >
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -461,21 +396,9 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Sync your local data from the cloud.</Text>
               </View>
-              <View style={[styles.appSettingsIcon, {
-                height: height * .05,
-              }]}>
-                <Fontisto
-                  name='angle-right'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.midTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <AngleRightIcon />
+            </TopBoxWrapper>
+            <MidBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -488,23 +411,9 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Multi-factor Authentication Code : Off</Text>
               </View>
-              <View
-                style={[styles.appSettingsIcon, {
-                  height: height * .05,
-                }]}
-              >
-                <Feather
-                  name='edit'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.midTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <EditIcon />
+            </MidBoxWrapper>
+            <MidBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -517,23 +426,9 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>johnDoe.xzy1234@gmail.com</Text>
               </View>
-              <View
-                style={[styles.appSettingsIcon, {
-                  height: height * .05,
-                }]}
-              >
-                <Feather
-                  name='edit'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.midTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <EditIcon />
+            </MidBoxWrapper>
+            <MidBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -546,23 +441,9 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>* * * * * * * *</Text>
               </View>
-              <View
-                style={[styles.appSettingsIcon, {
-                  height: height * .05,
-                }]}
-              >
-                <Feather
-                  name='edit'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.bottomTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <EditIcon />
+            </MidBoxWrapper>
+            <BottomBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -575,28 +456,16 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Request account deletion takes time.</Text>
               </View>
-              <View style={[styles.appSettingsIcon, {
-                height: height * .05,
-              }]}>
-                <Fontisto
-                  name='angle-right'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
+              <AngleRightIcon />
+            </BottomBoxWrapper>
+          </BoxWrapper>
           <Text style={[styles.title, {
             marginTop: 38,
           }]}>
             App Information
           </Text>
-          <View style={styles.appSettingsContainer}>
-            <TouchableOpacity style={[styles.topTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+          <BoxWrapper>
+            <TopBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -609,21 +478,9 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>App Features and Tutorials</Text>
               </View>
-              <View style={[styles.appSettingsIcon, {
-                height: height * .05,
-              }]}>
-                <Fontisto
-                  name='angle-right'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.midTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <AngleRightIcon />
+            </TopBoxWrapper>
+            <MidBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -636,21 +493,9 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Beta : v1.0.0</Text>
               </View>
-              <View style={[styles.appSettingsIcon, {
-                height: height * .05,
-              }]}>
-                <Fontisto
-                  name='angle-right'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.midTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <AngleRightIcon />
+            </MidBoxWrapper>
+            <MidBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -663,21 +508,9 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>@findingshrek</Text>
               </View>
-              <View style={[styles.appSettingsIcon, {
-                height: height * .05,
-              }]}>
-                <Fontisto
-                  name='angle-right'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.midTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <AngleRightIcon />
+            </MidBoxWrapper>
+            <MidBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -690,21 +523,9 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>App privacy and policy</Text>
               </View>
-              <View style={[styles.appSettingsIcon, {
-                height: height * .05,
-              }]}>
-                <Fontisto
-                  name='angle-right'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.bottomTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <AngleRightIcon />
+            </MidBoxWrapper>
+            <BottomBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -717,30 +538,19 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Please read carefully</Text>
               </View>
-              <View style={[styles.appSettingsIcon, {
-                height: height * .05,
-              }]}>
-                <Fontisto
-                  name='angle-right'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
+              <AngleRightIcon />
+            </BottomBoxWrapper>
+          </BoxWrapper>
           <Text style={[styles.title, {
             marginTop: 38,
           }]}>
             Customer Support
           </Text>
-          <View style={styles.appSettingsContainer}>
-            <TouchableOpacity
+          <BoxWrapper>
+            <TopBoxWrapper
               onPress={faqHandle}
-              style={[styles.topTextContainer, {
-                backgroundColor: primaryThemeColor,
-                width: width * .93,
-                height: height * .07,
-              }]}>
+              style={{ backgroundColor: primaryThemeColor }}
+            >
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -753,21 +563,9 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Frequently Asks Question</Text>
               </View>
-              <View style={[styles.appSettingsIcon, {
-                height: height * .05,
-              }]}>
-                <Fontisto
-                  name='angle-right'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.bottomTextContainer, {
-              backgroundColor: primaryThemeColor,
-              width: width * .93,
-              height: height * .07,
-            }]}>
+              <AngleRightIcon />
+            </TopBoxWrapper>
+            <BottomBoxWrapper style={{ backgroundColor: primaryThemeColor }}>
               <View style={[styles.textContainer, {
                 width: width * .7,
                 height: height * .05,
@@ -780,19 +578,9 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Report Bugs or Suggestion and Improvement</Text>
               </View>
-              <View
-                style={[styles.appSettingsIcon, {
-                  height: height * .05,
-                }]}
-              >
-                <Feather
-                  name='edit'
-                  color={analogousThemColor}
-                  size={width * .046}
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
+              <EditIcon />
+            </BottomBoxWrapper>
+          </BoxWrapper>
           <TouchableOpacity
             onPress={isLoggedIn ? handleSignOut : handleSignIn}
             style={[styles.signOutButton, {
@@ -882,49 +670,9 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 20,
   },
-  aboutMeContainer: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  editIconContainer: {
-    flex: 1,
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    justifyContent: 'center'
-  },
   textContainer: {
     justifyContent: 'center',
     alignItems: 'flex-start'
-  },
-  topTextContainer: {
-    borderTopRightRadius: 20,
-    borderTopLeftRadius: 20,
-    borderBottomRightRadius: 8,
-    borderBottomLeftRadius: 8,
-    padding: 16,
-    marginTop: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  midTextContainer: {
-    marginTop: 2,
-    borderRadius: 8,
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  bottomTextContainer: {
-    marginTop: 2,
-    borderTopRightRadius: 8,
-    borderTopLeftRadius: 8,
-    borderBottomRightRadius: 20,
-    borderBottomLeftRadius: 20,
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
   },
   primaryText: {
     fontSize: 16,
@@ -935,18 +683,11 @@ const styles = StyleSheet.create({
     width: 'auto',
     textAlignVertical: 'center'
   },
-  appSettingsContainer: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   appSettingsIcon: {
     flex: 1,
     flexDirection: 'column',
     alignItems: 'flex-end',
     justifyContent: 'center'
-  },
-  switch: {
   },
   signOutButton: {
     flexDirection: 'row',
