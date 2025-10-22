@@ -71,7 +71,7 @@ const LoginScreen = () => {
       if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
+
       throw errorMessage;
     }
   };
