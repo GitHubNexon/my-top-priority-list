@@ -44,7 +44,6 @@ const ProfileScreen = () => {
   const primaryFontColor = theme.fontColors?.primary;
   const secondaryFontColor = theme.fontColors?.secondary;
 
-  const profileView = false;
   const profileImage = require('../../../assets/images/catMeme.jpg');
 
   const syncMyData = async () => {
@@ -77,6 +76,12 @@ const ProfileScreen = () => {
     } finally {
       setIsSyncing(false);
     };
+  };
+
+  const handleSignIn = () => {
+    navigationRef.current?.navigate('Auth', {
+      screen: 'Login',
+    });
   };
 
   const handleSignOut = async () => {
@@ -115,11 +120,25 @@ const ProfileScreen = () => {
     <View style={[styles.container, {
       backgroundColor: triadicThemeColor,
     }]}>
-
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={styles.scrollView}
       >
+        {!!isSyncing &&
+          <ActivityIndicator
+            size={'large'}
+            color={'#2E6F40'}
+            style={[styles.loading, {
+              right: (width * .5) - 18,
+              bottom: height * .6,
+            }]}
+          />
+        }
+        <Toast
+          message={toastMessage ?? ''}
+          visible={showToast}
+          onHide={() => setShowToast(false)}
+        />
         <View style={styles.scrollViewContainer}>
           <View style={[styles.accountImageContainer, {
             width: width * .24,
@@ -143,7 +162,7 @@ const ProfileScreen = () => {
                 <Ionicons
                   name="camera"
                   color={complementaryThemeColor}
-                  size={20}
+                  size={width * .046}
                 />
               </View>
             </TouchableOpacity>
@@ -181,10 +200,11 @@ const ProfileScreen = () => {
             <View style={[styles.topTextContainer, {
               backgroundColor: primaryThemeColor,
               width: width * .93,
-              height: height * .06,
+              height: height * .07,
             }]}>
               <View style={[styles.textContainer, {
-                width: width * .2
+                width: width * .25,
+                height: height * .05,
               }]}>
                 <Text style={[styles.primaryText, {
                   color: primaryFontColor,
@@ -192,6 +212,7 @@ const ProfileScreen = () => {
               </View>
               <Text style={[styles.secondaryText, {
                 color: secondaryFontColor,
+                height: height * .05,
               }]}>
                 John McDonald S. Doe Sr.
               </Text>
@@ -201,17 +222,18 @@ const ProfileScreen = () => {
                 <Feather
                   name='edit'
                   color={analogousThemColor}
-                  size={20}
+                  size={width * .046}
                 />
               </TouchableOpacity>
             </View>
             <View style={[styles.midTextContainer, {
               backgroundColor: primaryThemeColor,
               width: width * .93,
-              height: height * .06,
+              height: height * .07,
             }]}>
               <View style={[styles.textContainer, {
-                width: width * .2
+                width: width * .25,
+                height: height * .05,
               }]}>
                 <Text style={[styles.primaryText, {
                   color: primaryFontColor,
@@ -219,6 +241,7 @@ const ProfileScreen = () => {
               </View>
               <Text style={[styles.secondaryText, {
                 color: secondaryFontColor,
+                height: height * .05,
               }]}>
                 January 2
               </Text>
@@ -226,10 +249,11 @@ const ProfileScreen = () => {
             <View style={[styles.midTextContainer, {
               backgroundColor: primaryThemeColor,
               width: width * .93,
-              height: height * .06,
+              height: height * .07,
             }]}>
               <View style={[styles.textContainer, {
-                width: width * .2
+                width: width * .25,
+                height: height * .05,
               }]}>
                 <Text style={[styles.primaryText, {
                   color: primaryFontColor,
@@ -237,6 +261,7 @@ const ProfileScreen = () => {
               </View>
               <Text style={[styles.secondaryText, {
                 color: secondaryFontColor,
+                height: height * .05,
               }]}>
                 Prefer not to say
               </Text>
@@ -244,10 +269,11 @@ const ProfileScreen = () => {
             <View style={[styles.bottomTextContainer, {
               backgroundColor: primaryThemeColor,
               width: width * .93,
-              height: height * .06,
+              height: height * .07,
             }]}>
               <View style={[styles.textContainer, {
-                width: width * .2
+                width: width * .25,
+                height: height * .05,
               }]}>
                 <Text style={[styles.primaryText, {
                   color: primaryFontColor,
@@ -255,6 +281,7 @@ const ProfileScreen = () => {
               </View>
               <Text style={[styles.secondaryText, {
                 color: secondaryFontColor,
+                height: height * .05,
               }]}>
                 21 - 30
               </Text>
@@ -269,10 +296,11 @@ const ProfileScreen = () => {
             <TouchableOpacity style={[styles.topTextContainer, {
               backgroundColor: primaryThemeColor,
               width: width * .93,
-              height: height * .06,
+              height: height * .07,
             }]}>
               <View style={[styles.textContainer, {
-                width: width * .7
+                width: width * .7,
+                height: height * .05,
               }]}>
                 <Text style={[styles.primaryText, {
                   color: primaryFontColor,
@@ -282,21 +310,24 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Default: App ringtone</Text>
               </View>
-              <View style={styles.appSettingsIcon}>
+              <View style={[styles.appSettingsIcon, {
+                height: height * .05,
+              }]}>
                 <Fontisto
                   name='angle-right'
                   color={analogousThemColor}
-                  size={20}
+                  size={width * .046}
                 />
               </View>
             </TouchableOpacity>
             <View style={[styles.midTextContainer, {
               backgroundColor: primaryThemeColor,
               width: width * .93,
-              height: height * .06,
+              height: height * .07,
             }]}>
               <View style={[styles.textContainer, {
-                width: width * .7
+                width: width * .7,
+                height: height * .05,
               }]}>
                 <Text style={[styles.primaryText, {
                   color: primaryFontColor,
@@ -306,8 +337,14 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Status: On</Text>
               </View>
-              <View style={styles.appSettingsIcon}>
+              <View style={[styles.appSettingsIcon, {
+                height: height * .05,
+              }]}>
                 <Switch
+                  style={[styles.switch, {
+                    width: width * .1,
+                    height: height * .05,
+                  }]}
                   value={vibrationEnabled}
                   onValueChange={handleToggleVibration}
                   trackColor={{ false: '#767577', true: analogousThemColor }}
@@ -318,10 +355,11 @@ const ProfileScreen = () => {
             <TouchableOpacity style={[styles.midTextContainer, {
               backgroundColor: primaryThemeColor,
               width: width * .93,
-              height: height * .06,
+              height: height * .07,
             }]}>
               <View style={[styles.textContainer, {
-                width: width * .7
+                width: width * .7,
+                height: height * .05,
               }]}>
                 <Text style={[styles.primaryText, {
                   color: primaryFontColor,
@@ -332,22 +370,25 @@ const ProfileScreen = () => {
                 }]}>Duration: 0s - Infinite</Text>
               </View>
               <View
-                style={styles.appSettingsIcon}
+                style={[styles.appSettingsIcon, {
+                  height: height * .05,
+                }]}
               >
                 <Feather
                   name='edit'
                   color={analogousThemColor}
-                  size={20}
+                  size={width * .046}
                 />
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.bottomTextContainer, {
+            <TouchableOpacity style={[styles.midTextContainer, {
               backgroundColor: primaryThemeColor,
               width: width * .93,
-              height: height * .06,
+              height: height * .07,
             }]}>
               <View style={[styles.textContainer, {
-                width: width * .7
+                width: width * .7,
+                height: height * .05,
               }]}>
                 <Text style={[styles.primaryText, {
                   color: primaryFontColor,
@@ -357,65 +398,415 @@ const ProfileScreen = () => {
                   color: secondaryFontColor,
                 }]}>Action: Snooze</Text>
               </View>
-              <View style={styles.appSettingsIcon}>
+              <View style={[styles.appSettingsIcon, {
+                height: height * .05,
+              }]}>
                 <Fontisto
                   name='angle-right'
                   color={analogousThemColor}
-                  size={20}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.bottomTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .07,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Theme</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>Default: System</Text>
+              </View>
+              <View style={[styles.appSettingsIcon, {
+                height: height * .05,
+              }]}>
+                <Fontisto
+                  name='angle-right'
+                  color={analogousThemColor}
+                  size={width * .046}
                 />
               </View>
             </TouchableOpacity>
           </View>
+          <Text style={[styles.title, {
+            marginTop: 38,
+          }]}>
+            Account Settings
+          </Text>
+          <View style={styles.appSettingsContainer}>
+            <TouchableOpacity
+              onPress={syncMyData}
+              style={[styles.topTextContainer, {
+                backgroundColor: primaryThemeColor,
+                width: width * .93,
+                height: height * .07,
+              }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Sync Data</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>Sync your local data from the cloud.</Text>
+              </View>
+              <View style={[styles.appSettingsIcon, {
+                height: height * .05,
+              }]}>
+                <Fontisto
+                  name='angle-right'
+                  color={analogousThemColor}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.midTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .07,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Enable MFA</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>Multi-factor Authentication Code : Off</Text>
+              </View>
+              <View
+                style={[styles.appSettingsIcon, {
+                  height: height * .05,
+                }]}
+              >
+                <Feather
+                  name='edit'
+                  color={analogousThemColor}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.midTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .07,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Change Email</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>johnDoe.xzy1234@gmail.com</Text>
+              </View>
+              <View
+                style={[styles.appSettingsIcon, {
+                  height: height * .05,
+                }]}
+              >
+                <Feather
+                  name='edit'
+                  color={analogousThemColor}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.midTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .07,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Change Password</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>* * * * * * * *</Text>
+              </View>
+              <View
+                style={[styles.appSettingsIcon, {
+                  height: height * .05,
+                }]}
+              >
+                <Feather
+                  name='edit'
+                  color={analogousThemColor}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.bottomTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .07,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Delete Account</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>Request account deletion takes time.</Text>
+              </View>
+              <View style={[styles.appSettingsIcon, {
+                height: height * .05,
+              }]}>
+                <Fontisto
+                  name='angle-right'
+                  color={analogousThemColor}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
+          <Text style={[styles.title, {
+            marginTop: 38,
+          }]}>
+            App Information
+          </Text>
+          <View style={styles.appSettingsContainer}>
+            <TouchableOpacity style={[styles.topTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .07,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>About App</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>App Features and Tutorials</Text>
+              </View>
+              <View style={[styles.appSettingsIcon, {
+                height: height * .05,
+              }]}>
+                <Fontisto
+                  name='angle-right'
+                  color={analogousThemColor}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.midTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .07,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Version</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>Beta : v1.0.0</Text>
+              </View>
+              <View style={[styles.appSettingsIcon, {
+                height: height * .05,
+              }]}>
+                <Fontisto
+                  name='angle-right'
+                  color={analogousThemColor}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.midTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .07,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Developer Info</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>@findingshrek</Text>
+              </View>
+              <View style={[styles.appSettingsIcon, {
+                height: height * .05,
+              }]}>
+                <Fontisto
+                  name='angle-right'
+                  color={analogousThemColor}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.midTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .07,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Privacy and Policy</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>App privacy and policy</Text>
+              </View>
+              <View style={[styles.appSettingsIcon, {
+                height: height * .05,
+              }]}>
+                <Fontisto
+                  name='angle-right'
+                  color={analogousThemColor}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.bottomTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .07,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Term of Service</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>Please read carefully</Text>
+              </View>
+              <View style={[styles.appSettingsIcon, {
+                height: height * .05,
+              }]}>
+                <Fontisto
+                  name='angle-right'
+                  color={analogousThemColor}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
+          <Text style={[styles.title, {
+            marginTop: 38,
+          }]}>
+            Customer Support
+          </Text>
+          <View style={styles.appSettingsContainer}>
+            <TouchableOpacity
+              onPress={faqHandle}
+              style={[styles.topTextContainer, {
+                backgroundColor: primaryThemeColor,
+                width: width * .93,
+                height: height * .07,
+              }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>FaQ</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>Frequently Asks Question</Text>
+              </View>
+              <View style={[styles.appSettingsIcon, {
+                height: height * .05,
+              }]}>
+                <Fontisto
+                  name='angle-right'
+                  color={analogousThemColor}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.bottomTextContainer, {
+              backgroundColor: primaryThemeColor,
+              width: width * .93,
+              height: height * .07,
+            }]}>
+              <View style={[styles.textContainer, {
+                width: width * .7,
+                height: height * .05,
+              }]}>
+                <Text style={[styles.primaryText, {
+                  color: primaryFontColor,
+                }]}>Report a Problem</Text>
+                <Text style={[styles.secondaryText, {
+                  fontSize: 12,
+                  color: secondaryFontColor,
+                }]}>Report Bugs or Suggestion and Improvement</Text>
+              </View>
+              <View
+                style={[styles.appSettingsIcon, {
+                  height: height * .05,
+                }]}
+              >
+                <Feather
+                  name='edit'
+                  color={analogousThemColor}
+                  size={width * .046}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            onPress={isLoggedIn ? handleSignOut : handleSignIn}
+            style={[styles.signOutButton, {
+              backgroundColor: isLoggedIn ? '#D66767' : '#68BA7F',
+              width: width * .4,
+              height: height * .05
+            }]}
+          >
+            <Text style={styles.signOutText}>
+              {isLoggedIn ? 'Sign Out' : 'Sign In'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
-
-      {!!profileView && <View>
-        {!!isSyncing &&
-          <ActivityIndicator
-            size={'large'}
-            color={'#2E6F40'}
-            style={[styles.loading, {
-              right: (width * .5) - 18,
-              bottom: height * .6,
-            }]}
-          />
-        }
-        <Toast
-          message={toastMessage ?? ''}
-          visible={showToast}
-          onHide={() => setShowToast(false)}
-        />
-        <Text style={[styles.primaryText, {
-          color: primaryFontColor,
-        }]}>My Profile</Text>
-
-        <Pressable
-          onPress={faqHandle}
-          style={styles.loginButton}
-        >
-          <Text style={styles.loginText}>
-            FaQ
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={syncMyData}
-          style={styles.loginButton}
-        >
-          <Text style={styles.loginText}>
-            Sync Data
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={handleSignOut}
-          style={styles.loginButton}
-        >
-          <Text style={styles.loginText}>
-            Log Out
-          </Text>
-        </Pressable>
-      </View>}
     </View>
   );
 };
@@ -441,7 +832,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: 48,
+    paddingBottom: 40,
   },
   accountImageContainer: {
     justifyContent: 'center',
@@ -503,7 +894,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   textContainer: {
-
+    justifyContent: 'center',
+    alignItems: 'flex-start'
   },
   topTextContainer: {
     borderTopRightRadius: 20,
@@ -540,6 +932,8 @@ const styles = StyleSheet.create({
   },
   secondaryText: {
     fontSize: 16,
+    width: 'auto',
+    textAlignVertical: 'center'
   },
   appSettingsContainer: {
     flexDirection: 'column',
@@ -552,20 +946,19 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'center'
   },
-  loginButton: {
-    justifyContent: 'center',
-    width: 320,
-    height: 60,
-    marginBottom: 50,
-    paddingHorizontal: 30,
-    borderRadius: 30,
-    outlineWidth: 2,
-    outlineColor: '#e9e9e942',
-    backgroundColor: '#68BA7F',
+  switch: {
   },
-  loginText: {
+  signOutButton: {
+    flexDirection: 'row',
+    marginTop: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+    borderRadius: 40,
+  },
+  signOutText: {
     textAlign: 'center',
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 600,
     letterSpacing: 2,
   },
