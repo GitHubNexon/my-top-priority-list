@@ -2,7 +2,7 @@
 import LoginBG from '../../assets/images/loginBg.png';
 import Toast from '../../components/ToastMessage';
 import { useAuth } from '../../hooks';
-import { useNavigationTyped } from '../../hooks/useNavigation';
+import { navigationRef, useNavigationTyped } from '../../hooks/useNavigation';
 import { UserCredentials } from '../../types/UserCredentials';
 import Entypo from '@react-native-vector-icons/entypo';
 import Ionicons from '@react-native-vector-icons/ionicons';

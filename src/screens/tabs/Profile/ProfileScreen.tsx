@@ -11,24 +11,23 @@ import {
   Alert,
   Dimensions,
   Image,
-  Pressable,
   StyleSheet,
   Switch,
   Text,
   TouchableOpacity,
   View
 } from "react-native";
-import Ionicons from '@react-native-vector-icons/ionicons';
 import Feather from '@react-native-vector-icons/feather';
 import Fontisto from "@react-native-vector-icons/fontisto";
-import { useProfileNavigation } from "../../../hooks/useNavigation";
+import Ionicons from '@react-native-vector-icons/ionicons';
+import { navigationRef, useProfileNavigation } from "../../../hooks/useNavigation";
 import Toast from "../../../components/ToastMessage";
 import { ScrollView } from "react-native-gesture-handler";
 
 const ProfileScreen = () => {
   const { width, height } = Dimensions.get('window');
   const { theme } = useTheme();
-  const { uid, signOut } = useAuth();
+  const { uid, signOut, isLoggedIn } = useAuth();
   const { getNotesFromFirestore, syncAllData } = useFirestore();
   const { syncNotesFromCloud, clearNotes } = useNotes();
   const navigation = useProfileNavigation();

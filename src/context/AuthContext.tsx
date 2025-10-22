@@ -1,9 +1,11 @@
+import { CommonActions } from '@react-navigation/native';
 import {
     ENCRYPTED_AUTH_STATES_KEY,
     ENCRYPTED_AUTH_STATES_PASSWORD_KEY,
     MMKV_AUTH_STATES_ID,
     MMKV_AUTH_STATES_KEY
 } from '../constant/keys';
+import { navigationRef } from '../hooks/useNavigation';
 import { AuthServices } from '../services/AuthServices';
 import { FireStoreServices } from '../services/FirestoreServices';
 import { SecureStorage } from '../storage/SecureStorage';
