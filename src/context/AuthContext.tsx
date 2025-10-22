@@ -80,6 +80,12 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
     const applyAuthState = async (userUid: string): Promise<void> => {
         setUid(userUid)
         setIsLoggedIn(true)
+        navigationRef.current?.dispatch(
+            CommonActions.reset({
+                index: 0,
+                routes: [{name: 'Main'}],
+            })
+        );
         try {
             return await storeAuthState({ isLoggedIn: true, uid: userUid });
         } catch (error: unknown) {
