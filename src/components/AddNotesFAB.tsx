@@ -18,12 +18,20 @@ import Animated, {
     withSpring,
     withTiming
 } from 'react-native-reanimated';
+import { useTheme } from '../hooks';
 
 type FloatingActionButtonAddProp = {
     onPress: (screenName: string) => void;
 };
 
 const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
+    const { theme } = useTheme();
+
+    const primaryThemeColor = theme.myColors?.primary;
+    const analogousThemColor = theme.myColors?.analogous;
+    const triadicThemeColor = theme.myColors?.triadic;
+    const complementaryThemeColor = theme.myColors?.complementary;
+
     const workIconValue = useSharedValue(30);
     const healthIconValue = useSharedValue(30);
     const financeIconValue = useSharedValue(30);
@@ -166,8 +174,10 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
                             <Text style={styles.textMenu}>Work</Text>
                         </View>
                         <View style={styles.iconPosition}>
-                            <View style={styles.iconContainer}>
-                                <NotesCategoryIcons icon={'work'} size={24} color="#CFFFDC" />
+                            <View style={[styles.iconContainer, {
+                                backgroundColor: triadicThemeColor
+                            }]}>
+                                <NotesCategoryIcons icon={'work'} size={24} color={complementaryThemeColor} />
                             </View>
                         </View>
                     </View>
@@ -182,8 +192,10 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
                             <Text style={styles.textMenu}>Health</Text>
                         </View>
                         <View style={styles.iconPosition}>
-                            <View style={styles.iconContainer}>
-                                <NotesCategoryIcons icon={'health'} size={24} color="#CFFFDC" />
+                            <View style={[styles.iconContainer, {
+                                backgroundColor: triadicThemeColor
+                            }]}>
+                                <NotesCategoryIcons icon={'health'} size={24} color={complementaryThemeColor} />
                             </View>
                         </View>
                     </View>
@@ -198,8 +210,10 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
                             <Text style={styles.textMenu}>Spiritual</Text>
                         </View>
                         <View style={styles.iconPosition}>
-                            <View style={styles.iconContainer}>
-                                <NotesCategoryIcons icon={'spiritual'} size={24} color="#CFFFDC" />
+                            <View style={[styles.iconContainer, {
+                                backgroundColor: triadicThemeColor
+                            }]}>
+                                <NotesCategoryIcons icon={'spiritual'} size={24} color={complementaryThemeColor} />
                             </View>
                         </View>
                     </View>
@@ -214,8 +228,10 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
                             <Text style={styles.textMenu}>Finance</Text>
                         </View>
                         <View style={styles.iconPosition}>
-                            <View style={styles.iconContainer}>
-                                <NotesCategoryIcons icon={'finance'} size={24} color="#CFFFDC" />
+                            <View style={[styles.iconContainer, {
+                                backgroundColor: triadicThemeColor
+                            }]}>
+                                <NotesCategoryIcons icon={'finance'} size={24} color={complementaryThemeColor} />
                             </View>
                         </View>
                     </View>
@@ -230,8 +246,10 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
                             <Text style={styles.textMenu}>Hobby</Text>
                         </View>
                         <View style={styles.iconPosition}>
-                            <View style={styles.iconContainer}>
-                                <NotesCategoryIcons icon={'hobby'} size={24} color="#CFFFDC" />
+                            <View style={[styles.iconContainer, {
+                                backgroundColor: triadicThemeColor
+                            }]}>
+                                <NotesCategoryIcons icon={'hobby'} size={24} color={complementaryThemeColor} />
                             </View>
                         </View>
                     </View>
@@ -246,8 +264,10 @@ const AddNotesFAB = ({ onPress }: FloatingActionButtonAddProp) => {
                             <Text style={styles.textMenu}>Other</Text>
                         </View>
                         <View style={styles.iconPosition}>
-                            <View style={styles.iconContainer}>
-                                <NotesCategoryIcons icon={'other'} size={24} color="#CFFFDC" />
+                            <View style={[styles.iconContainer, {
+                                backgroundColor: triadicThemeColor
+                            }]}>
+                                <NotesCategoryIcons icon={'other'} size={24} color={complementaryThemeColor} />
                             </View>
                         </View>
                     </View>
@@ -300,6 +320,7 @@ const styles = StyleSheet.create({
     },
     textMenu: {
         fontSize: 14,
+        fontWeight: 400,
         color: '#000000'
     },
 });
