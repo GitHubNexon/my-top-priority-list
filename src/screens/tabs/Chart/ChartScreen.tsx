@@ -5,7 +5,6 @@ import {
   Alert,
   FlatList,
   Modal,
-  ScrollView,
   StyleSheet,
   Switch,
   Text,

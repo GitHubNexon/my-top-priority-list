@@ -296,7 +296,6 @@ const styles = StyleSheet.create({
         width: 38,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#2E6F40',
         borderRadius: 80,
     },
     iconMenuContainer: {
