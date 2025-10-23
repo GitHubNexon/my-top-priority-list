@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable react-native/no-inline-styles */
 import WIP from '../../../assets/images/undraw_programming_65t2.svg';
 import {
