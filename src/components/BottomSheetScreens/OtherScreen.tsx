@@ -20,7 +20,7 @@ import CustomDateTimePicker from '../CustomDateTimePicker';
 import DropdownTypeofNotes from '../DropdownTypeofNotes';
 import { BottomSheetWrapper } from '../Wrapper';
 import { RecurrenceType } from '../../types/Alarm';
-import { getOneTimeAlarmFromUtcString } from '../../utils/alarm';
+import { getNextDailyAlarmFromUtcString } from '../../utils/alarm';
 
 type OtherScreenProps = BottomSheetScreenProps & {
     notesProp?: Notes;
@@ -107,7 +107,7 @@ const OtherScreen = ({ bottomSheetRef, notesProp }: OtherScreenProps) => {
             try {
                 updateNote(id, updatedFields);
                 updateNoteInFirestore(uid ?? '', id, noteData);
-                const timestamp = getOneTimeAlarmFromUtcString(noteData.Time ?? '', noteData.Date)
+                const timestamp = getNextDailyAlarmFromUtcString(noteData.Time ?? '')
                 const requestCode = alarmManager?.scheduleAlarm({
                     timestamp: timestamp,
                     title: noteData.Title,
@@ -132,7 +132,7 @@ const OtherScreen = ({ bottomSheetRef, notesProp }: OtherScreenProps) => {
             try {
                 addNote(noteData);
                 uploadNoteInFirestore(noteData);
-                const timestamp = getOneTimeAlarmFromUtcString(noteData.Time ?? '',noteData.Date)
+                const timestamp = getNextDailyAlarmFromUtcString(noteData.Time ?? '')
                 const requestCode = alarmManager?.scheduleAlarm({
                     timestamp: timestamp,
                     title: noteData.Title,
