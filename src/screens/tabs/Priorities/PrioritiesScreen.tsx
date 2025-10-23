@@ -244,7 +244,7 @@ const PrioritiesScreen = () => {
   return (
     <>
       <View style={[styles.container, {
-        backgroundColor: themeColor,
+        backgroundColor: triadicThemeColor,
       }]}>
         {!!isSyncing &&
           <ActivityIndicator
