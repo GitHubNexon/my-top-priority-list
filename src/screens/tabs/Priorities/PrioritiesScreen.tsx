@@ -41,10 +41,14 @@ import React, {
 import {
   ActivityIndicator,
   Dimensions,
-  FlatList,
+  Image,
   StyleSheet,
+  Text,
+  TouchableOpacity,
   View
 } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { usePrioritiesNavigation } from '../../../hooks/useNavigation';
 
 type HandlePressArgs = {
   screen?: string;
@@ -54,7 +58,33 @@ type HandlePressArgs = {
 const PrioritiesScreen = () => {
   const { width, height } = Dimensions.get('window');
   const { theme } = useTheme();
-  const themeColor = theme.myColors?.triadic;
+  const navigation = usePrioritiesNavigation();
+  const scrollY = useSharedValue(0);
+
+  const triadicThemeColor = theme.myColors?.triadic;
+  const complementaryThemeColor = theme.myColors?.complementary;
+  const primaryFontColor = theme.fontColors?.primary;
+  const profileImage = require('../../../assets/images/catMeme.jpg');
+
+  /**
+   * This can break usage such as persisting and restoring state.
+   * This might happen if you passed non-serializable values such as function,
+   * class instances etc. in params.
+   * If you need to use components with callbacks in your options,
+   * you can use 'navigation.setOptions' instead.
+   * See https://reactnavigation.org/docs/troubleshooting#i-get-the-warning-non-serializable-values-were-found-in-the-navigation-state
+   * for more details.
+   */
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  // Pass scrollY to header via navigation params
+  useEffect(() => {
+    navigation.setParams({ scrollY });
+  }, [navigation, scrollY]);
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -246,7 +276,7 @@ const PrioritiesScreen = () => {
           height='100%'
           style={styles.backgroundImage}
         />
-        <FlatList
+        <Animated.FlatList
           data={notes}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => {
@@ -261,11 +291,54 @@ const PrioritiesScreen = () => {
               return null
             }
           }}
+          ListHeaderComponent={() => (
+            <View style={[styles.listHeaderContainer, {
+              marginHorizontal: width * .04,
+              marginBottom: height * .02,
+            }]}>
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require('../../../assets/bootsplash/priority.png')}
+                  style={{
+                    width: width * .125,
+                    height: width * .125,
+                  }}
+                  resizeMode='contain'
+                />
+              </View>
+              <Text style={[styles.largeTitle, {
+                color: primaryFontColor,
+              }]}>Priorities</Text>
+              <View style={styles.accountImageContainer}>
+                <View style={[styles.accountImageOutline, {
+                  width: width * .140,
+                  height: width * .140,
+                  backgroundColor: complementaryThemeColor,
+                }]}>
+                  <TouchableOpacity style={styles.imageButton}>
+                    <Image
+                      style={[styles.accountImage, {
+                        height: width * .125,
+                        width: width * .125,
+                      }]}
+                      source={profileImage}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          )}
+          contentContainerStyle={{
+            width: width,
+            alignSelf: 'flex-start',
+          }}
           extraData={notes}
           removeClippedSubviews={false}//Helps with animation glitches
           initialNumToRender={8}
           maxToRenderPerBatch={7}
           style={styles.flatlist}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
         />
       </View>
     </>
@@ -287,6 +360,41 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
+  },
+  listHeaderContainer: {
+    flexDirection: 'row',
+  },
+  largeTitle: {
+    fontSize: 40,
+    letterSpacing: 3,
+    fontWeight: 600,
+    textAlignVertical: 'center',
+  },
+  logoContainer: {
+    justifyContent: 'center',
+    //alignItems: 'flex-end',
+    //marginLeft: 40,
+    marginRight: 16,
+  },
+  accountImageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingBottom: 32,
+    paddingRight: 8,
+  },
+  accountImageOutline: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 200,
+  },
+  imageButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 200,
+  },
+  accountImage: {
+    borderRadius: 200,
   },
   flatlist: {
     paddingBottom: 10,

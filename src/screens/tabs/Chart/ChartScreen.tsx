@@ -16,11 +16,13 @@ import {
 import { AlarmTimeoutAction, Ringtone } from '../../../types/AlarmConfig';
 import { useAlarmManager, useAlarmSettings, useTheme } from '../../../hooks';
 import { RecurrenceType } from '../../../types/Alarm';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 const ChartScreen = () => {
   const { theme } = useTheme();
   const themeColor = theme.myColors?.triadic;
   const primaryFontColor = theme.fontColors?.primary;
+  const scrollY = useSharedValue(0);
 
   // Use all hooks - these now come from Context providers
   const alarmSettings = useAlarmSettings();
@@ -42,6 +44,12 @@ const ChartScreen = () => {
   useEffect(() => {
     loadInitialSettings();
   }, []);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
 
   const loadInitialSettings = async () => {
     try {
@@ -272,9 +280,13 @@ const ChartScreen = () => {
     <View style={[styles.container, {
       backgroundColor: themeColor,
     }]}>
-      <ScrollView style={{
-        backgroundColor: 'transparent'
-      }}>
+      <Animated.ScrollView
+        style={{
+          backgroundColor: 'transparent'
+        }}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+      >
 
         <Text style={{
           fontSize: 20,
@@ -646,7 +658,7 @@ const ChartScreen = () => {
             <Text style={{ color: primaryFontColor }}>Loading...</Text>
           </View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   )
 };

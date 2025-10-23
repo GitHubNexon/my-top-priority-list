@@ -1,4 +1,5 @@
 import { NavigatorScreenParams } from "@react-navigation/native";
+import { SharedValue } from "react-native-reanimated";
 
 export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
@@ -25,7 +26,7 @@ export type ProfileTabStackParamList = {
 };
 
 export type PrioritiesTabStackParamList = {
-  PrioritiesScreen: undefined;
+  PrioritiesScreen: { scrollY?: SharedValue<number> } | undefined;
   NoteDetailsScreen: undefined;
 };
 
