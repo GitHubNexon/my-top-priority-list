@@ -1,0 +1,157 @@
+import axios, {
+  AxiosError,
+  AxiosRequestConfig,
+  AxiosResponse,
+  AxiosRequestHeaders,
+} from "axios";
+import EncryptedStorage from "react-native-encrypted-storage";
+import { API_BASE_URL } from "./different-domain-config";
+
+// Extend Axios config for retry logic
+interface CustomRequestConfig extends AxiosRequestConfig {
+  _retry?: boolean;
+}
+
+// Backend error shape
+interface AxiosErrorResponse {
+  message?: string | string[] | { message?: string };
+}
+
+const axiosClientInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 15000,
+});
+
+// 🔹 Token storage helpers
+const tokenStorage = {
+  async getAccess() {
+    return await EncryptedStorage.getItem("access_token");
+  },
+  async setAccess(token: string) {
+    await EncryptedStorage.setItem("access_token", token);
+  },
+  async getRefresh() {
+    return await EncryptedStorage.getItem("refresh_token");
+  },
+  async setRefresh(token: string) {
+    await EncryptedStorage.setItem("refresh_token", token);
+  },
+  async clear() {
+    await EncryptedStorage.clear();
+  },
+};
+
+// 🔹 Auto-refresh access token on startup if only refresh token exists
+(async () => {
+  const accessToken = await tokenStorage.getAccess();
+  const refreshToken = await tokenStorage.getRefresh();
+
+  if (!accessToken && refreshToken) {
+    try {
+      const res = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+        refreshToken,
+      });
+
+      if (res.data?.accessToken) {
+        await tokenStorage.setAccess(res.data.accessToken);
+      }
+    } catch (err) {
+      console.warn("Auto-refresh failed:", err);
+      await tokenStorage.clear();
+    }
+  }
+})();
+
+// 🔹 Request interceptor
+axiosClientInstance.interceptors.request.use(async (config) => {
+  const token = await tokenStorage.getAccess();
+  config.headers = config.headers || ({} as AxiosRequestHeaders);
+
+  const url = config.url || "";
+  const method = config.method?.toUpperCase();
+
+  const authRoutes = [
+    "/auth/refresh",
+    "/auth/check",
+    "/auth/sign-in",
+    "/auth/logout",
+    "/auth/verify-passkey",
+    "/auth/register",
+  ];
+
+  const isAuthRoute = authRoutes.some((path) => url.includes(path));
+
+  if (token) {
+    config.headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  // CORS/cookie is not applicable in RN, so we skip xsrfToken
+  if (
+    !isAuthRoute &&
+    ["POST", "PUT", "PATCH", "DELETE"].includes(method || "")
+  ) {
+    // Optionally include custom headers or version here
+  }
+
+  return config;
+});
+
+// 🔹 Response interceptor (auto-refresh logic)
+axiosClientInstance.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  async (error: unknown) => {
+    if (!(error instanceof AxiosError)) {
+      console.error("Unexpected error:", error);
+      return Promise.reject(error);
+    }
+
+    const axiosError = error as AxiosError;
+    const originalRequest = axiosError.config as CustomRequestConfig;
+
+    // Normalize backend error message
+    const data = axiosError.response?.data as AxiosErrorResponse | undefined;
+    let errMsg: string;
+    if (typeof data?.message === "string") errMsg = data.message;
+    else if (Array.isArray(data?.message)) errMsg = data.message.join(", ");
+    else if (typeof data?.message === "object" && data.message?.message)
+      errMsg = data.message.message;
+    else errMsg = axiosError.message || "Server Error";
+
+    console.error("API Error:", errMsg);
+
+    // Auto-refresh token if 401 and not already retried and not the refresh endpoint itself
+    if (
+      axiosError.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes("/auth/refresh")
+    ) {
+      originalRequest._retry = true;
+      try {
+        const refreshToken = await tokenStorage.getRefresh();
+        if (!refreshToken) {
+          await tokenStorage.clear();
+          return Promise.reject(error);
+        }
+
+        const res = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+          refreshToken,
+        });
+
+        const { accessToken } = res.data;
+        if (accessToken) {
+          await tokenStorage.setAccess(accessToken);
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers["Authorization"] = `Bearer ${accessToken}`;
+          return axiosClientInstance(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error("Refresh token failed:", refreshError);
+        await tokenStorage.clear();
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default axiosClientInstance;

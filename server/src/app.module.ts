@@ -4,8 +4,9 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ModulesModule } from './modules.module';
+import { SharedModule } from './shared.module';
 // import { UsersModule } from './modules/users/users.module';
-import { AuthModule } from './modules/auth/auth.module';
+import { JwtGlobalModule } from './jwt.module';
 
 @Module({
   // imports: [UsersModule],
@@ -33,7 +34,8 @@ import { AuthModule } from './modules/auth/auth.module';
       },
     }),
     ModulesModule,
-    AuthModule,
+    SharedModule,
+    JwtGlobalModule,
   ],
   controllers: [AppController],
   providers: [AppService],
