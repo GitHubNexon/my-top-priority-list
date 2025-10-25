@@ -1,0 +1,8 @@
+<resources>
+    <color name="bootsplash_background">#CFFFDC</color>
+    <color name="iconBackground">#CFFFDC</color>
+    <color name="alarm_dark_background">#121212</color>
+    <color name="snooze_bg">#33FFFFFF</color> <!-- translucent white -->
+    <color name="snooze_outline">#66FFFFFF</color> <!-- subtle white border -->
+    <color name="stop_bg">#FFFFFF</color> <!-- solid white -->
+</resources>
